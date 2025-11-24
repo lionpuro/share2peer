@@ -1,0 +1,12 @@
+name: share2peer-dev
+services:
+  shell:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: ["/app/entry.sh"]
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+    network_mode: "host"

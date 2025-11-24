@@ -1,0 +1,19 @@
+FROM golang:1.25.4-bookworm
+
+RUN groupadd -g 1000 dev && \
+	useradd -l -u 1000 -g dev dev
+RUN mkdir /home/dev
+RUN chown -R dev:dev /home/dev /go
+
+# Install Node.js
+RUN apt-get update && \
+	apt-get upgrade -y && \
+	apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+	apt-get install -y nodejs build-essential
+
+RUN go install github.com/bokwoon95/wgo@latest
+
+WORKDIR /app
+
+USER dev

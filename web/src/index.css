@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+	--color-white: #f2f2f2;
+	--color-black: #272727;
+
+	--color-focus: #3b82f6;
+}
+
+:root {
+	font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
+
+	color: var(--color-black);
+	background-color: var(--color-white);
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+}
+
+html,
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+#root {
+	min-height: 100%;
+}
+
+@layer base {
+	button,
+	a {
+		@apply cursor-pointer;
+	}
+}
+
+@layer components {
+	input:focus-visible,
+	textarea:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
+	}
+}

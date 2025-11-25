@@ -13,6 +13,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 	apt-get install -y nodejs build-essential
 
 RUN go install github.com/bokwoon95/wgo@latest
+RUN go install -tags "postgres" "github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.0"
 
 WORKDIR /app
 

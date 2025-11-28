@@ -7,7 +7,7 @@
 		"web"
 	],
 	"scripts": {
-		"format": "prettier --write ."
+		"format": "prettier --write . && gofmt -l -s -w server"
 	},
 	"devDependencies": {
 		"prettier": "^3.6.2",

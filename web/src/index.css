@@ -5,6 +5,18 @@
 	--color-black: #272727;
 
 	--color-focus: #3b82f6;
+
+	--color-primary-50: #fdf3f3;
+	--color-primary-100: #fce4e5;
+	--color-primary-200: #faced0;
+	--color-primary-300: #f5acaf;
+	--color-primary-400: #ed7c80;
+	--color-primary-500: #e15257;
+	--color-primary-600: #cd353b;
+	--color-primary-700: #ac292e;
+	--color-primary-800: #92262a;
+	--color-primary-900: #772528;
+	--color-primary-950: #400f11;
 }
 
 :root {
@@ -31,6 +43,8 @@ body {
 }
 
 #root {
+	display: flex;
+	flex-direction: column;
 	min-height: 100%;
 }
 

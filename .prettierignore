@@ -6,3 +6,6 @@ yarn.lock
 **/public
 **/dist
 **/build
+# Generated files
+**/*.gen.ts
+**/.tanstack

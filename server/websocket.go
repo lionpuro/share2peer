@@ -1,0 +1,168 @@
+package main
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/websocket"
+)
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+type WebSocketHandler struct {
+	sessions *SessionStore
+}
+
+func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn) error {
+	c := createClient(conn)
+	log.Printf("connect client: %s", c.ID)
+	defer func() {
+		defer conn.Close()
+		log.Printf("disconnect client: %s", c.ID)
+
+		if c.sessionID == "" {
+			return
+		}
+
+		sess, err := wh.sessions.Get(c.sessionID)
+		if err != nil {
+			return
+		}
+		sess.RemoveClient(c.ID)
+		if len(sess.Clients) < 1 {
+			wh.sessions.Delete(sess.ID)
+			return
+		}
+		err = wh.broadcast(conn, Message{
+			Type:    MessageSessionInfo,
+			Payload: sess,
+		}, c.sessionID)
+		if err != nil {
+			log.Printf("broadcast message: %v", err)
+		}
+	}()
+
+	conn.WriteJSON(Message{
+		Type:    MessageIdentity,
+		Payload: c,
+	})
+
+	for {
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				return fmt.Errorf("read message: %v", err)
+			}
+			return nil
+		}
+
+		var message Message
+		if err := json.Unmarshal(msg, &message); err != nil {
+			log.Printf("unmarshal message: %s", err.Error())
+			continue
+		}
+
+		if err := wh.handleResponse(c, message); err != nil {
+			return err
+		}
+	}
+}
+
+func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, sessionID string) error {
+	sess, err := wh.sessions.Get(sessionID)
+	if err != nil {
+		return err
+	}
+
+	sess.ForEachClient(func(client *Client) {
+		if client.conn == sender {
+			return
+		}
+		if err := client.conn.WriteJSON(json); err != nil {
+			log.Printf("write json: %s", err.Error())
+		}
+	})
+
+	return nil
+}
+
+func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
+	switch msg.Type {
+	case MessageRequestSession:
+		return wh.handleRequestSession(c, msg)
+	case MessageJoinSession:
+		return wh.handleJoinSession(c, msg)
+	default:
+		return ErrUnknownMessageType
+	}
+}
+
+func (wh *WebSocketHandler) handleRequestSession(c *Client, msg Message) error {
+	sess, err := wh.sessions.Create()
+	if err != nil {
+		return err
+	}
+
+	if err := sess.AddClient(c); err != nil {
+		return err
+	}
+
+	return c.conn.WriteJSON(Message{
+		Type:    MessageSessionCreated,
+		Payload: sess,
+	})
+}
+
+func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
+	var payload struct {
+		SessionID string `json:"session_id"`
+	}
+	bytes, err := json.Marshal(msg.Payload)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, &payload); err != nil {
+		return err
+	}
+
+	sess, err := wh.sessions.Get(payload.SessionID)
+	if err != nil {
+		if !errors.Is(err, ErrSessionNotExists) {
+			return err
+		}
+		return c.conn.WriteJSON(Message{
+			Type:    MessageError,
+			Payload: ErrSessionNotExists.Error(),
+		})
+	}
+
+	if err := sess.AddClient(c); err != nil {
+		if !errors.Is(err, ErrSessionFull) {
+			return err
+		}
+		return c.conn.WriteJSON(Message{
+			Type:    MessageError,
+			Payload: ErrSessionFull.Error(),
+		})
+	}
+
+	err = c.conn.WriteJSON(Message{
+		Type:    MessageSessionJoined,
+		Payload: sess,
+	})
+	if err != nil {
+		return err
+	}
+
+	return wh.broadcast(c.conn, Message{
+		Type:    MessageSessionInfo,
+		Payload: sess,
+	}, sess.ID)
+}

@@ -99,6 +99,8 @@ func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
 		return wh.handleRequestSession(c, msg)
 	case MessageJoinSession:
 		return wh.handleJoinSession(c, msg)
+	case MessageLeaveSession:
+		return wh.handleLeaveSession(c, msg)
 	default:
 		return ErrUnknownMessageType
 	}
@@ -110,20 +112,14 @@ func (wh *WebSocketHandler) handleRequestSession(c *Client, msg Message) error {
 		return err
 	}
 
-	if err := sess.AddClient(c); err != nil {
-		return err
-	}
-
 	return c.conn.WriteJSON(Message{
 		Type:    MessageSessionCreated,
-		Payload: sess,
+		Payload: SessionIDPayload{SessionID: sess.ID},
 	})
 }
 
 func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
-	var payload struct {
-		SessionID string `json:"session_id"`
-	}
+	var payload SessionIDPayload
 	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return err
@@ -147,6 +143,14 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		if !errors.Is(err, ErrSessionFull) {
 			return err
 		}
+		for _, cl := range sess.Clients {
+			if cl.conn == c.conn {
+				return c.conn.WriteJSON(Message{
+					Type:    MessageSessionJoined,
+					Payload: sess,
+				})
+			}
+		}
 		return c.conn.WriteJSON(Message{
 			Type:    MessageError,
 			Payload: ErrSessionFull.Error(),
@@ -160,6 +164,40 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 	if err != nil {
 		return err
 	}
+
+	return wh.broadcast(c.conn, Message{
+		Type:    MessageSessionInfo,
+		Payload: sess,
+	}, sess.ID)
+}
+
+func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
+	var payload SessionIDPayload
+	bytes, err := json.Marshal(msg.Payload)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, &payload); err != nil {
+		return err
+	}
+
+	sess, err := wh.sessions.Get(payload.SessionID)
+	if err != nil {
+		if !errors.Is(err, ErrSessionNotExists) {
+			return err
+		}
+		return c.conn.WriteJSON(Message{
+			Type:    MessageError,
+			Payload: ErrSessionNotExists.Error(),
+		})
+	}
+
+	sess.RemoveClient(c.ID)
+
+	c.conn.WriteJSON(Message{
+		Type:    MessageSessionLeft,
+		Payload: sess,
+	})
 
 	return wh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,

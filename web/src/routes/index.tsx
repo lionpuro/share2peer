@@ -1,30 +1,35 @@
-import { useState } from "react";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useStore } from "@nanostores/react";
-import { $isConnected, $session, websocket } from "../lib/socket";
-import { MessageType } from "../lib/message";
+import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSocket } from "../lib/socket";
 import { Main } from "../components/main";
+import { useSession } from "../lib/session";
 
 export const Route = createFileRoute("/")({
 	component: Component,
 });
 
 function Component() {
-	const session = useStore($session);
-	const connected = useStore($isConnected);
-	const [requested, setRequested] = useState(false);
+	const { session, requestSession, leaveSession } = useSession();
 	const [shareCode, setShareCode] = useState("");
-	async function handleCreate() {
+	const { connected } = useSocket();
+
+	function handleCreate() {
 		if (!connected) {
 			console.log("WebSocket not connected, waiting for a reconnect...");
 			return;
 		}
-		websocket.send({ type: MessageType.RequestSession });
-		setRequested(true);
+		requestSession();
 	}
-	if (requested && session?.id) {
-		return <Navigate to="/s/$code" params={{ code: session.id }} />;
-	}
+
+	useEffect(() => {
+		if (!connected) {
+			return;
+		}
+		if (session?.id) {
+			leaveSession(session.id);
+		}
+	}, [connected, session, leaveSession]);
+
 	return (
 		<Main>
 			<h3 className="mb-2 text-xl font-semibold">Share</h3>
@@ -44,13 +49,13 @@ function Component() {
 					maxLength={6}
 					value={shareCode}
 					onChange={(e) => setShareCode(e.target.value.toUpperCase())}
-					className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+					className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 font-mono text-sm"
 				/>
 				<Link
 					to="/s/$code"
 					params={{ code: shareCode }}
-					className="rounded-lg bg-primary-600/90 px-3 py-1.75 text-sm font-medium text-white disabled:bg-neutral-300/60 disabled:text-neutral-500"
-					disabled={!shareCode}
+					className={`rounded-lg px-3 py-1.75 text-sm font-medium ${shareCode.length !== 6 ? "bg-neutral-300/60 text-neutral-500" : "bg-primary-600/90 text-white"}`}
+					disabled={shareCode.length !== 6}
 				>
 					Enter
 				</Link>

@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { $isConnected, $session, websocket } from "../../lib/socket";
-import { useEffect, useState } from "react";
-import { useStore } from "@nanostores/react";
-import { MessageType } from "../../lib/message";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSocket } from "../../lib/socket";
+import { type MessageEventListener } from "../../lib/message";
 import { Loader } from "../../components/loader";
 import { IconCheck, IconCopy } from "../../icons";
 import { Main } from "../../components/main";
+import { useSession } from "../../lib/session";
 
 export const Route = createFileRoute("/s/$code")({
 	component: Component,
@@ -13,33 +13,47 @@ export const Route = createFileRoute("/s/$code")({
 
 function Component() {
 	const { code } = Route.useParams();
-	const session = useStore($session);
-	const connected = useStore($isConnected);
+	const { session, joinSession } = useSession();
 	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${code}`;
 	const [copied, setCopied] = useState(false);
+	const { socket, connected } = useSocket();
+
+	const joinedRef = useRef(false);
+
+	const handleJoined: MessageEventListener<"session-joined"> =
+		useCallback(() => {
+			joinedRef.current = false;
+		}, []);
+
 	useEffect(() => {
-		if (!connected) {
+		if (!connected || session !== null) {
 			return;
 		}
-		if (!session?.id || session?.id !== code) {
-			websocket.send({
-				type: MessageType.JoinSession,
-				payload: { session_id: code },
-			});
+
+		socket.addEventListener("session-joined", handleJoined);
+
+		if (!joinedRef.current) {
+			joinedRef.current = true;
+			joinSession(code);
 		}
-	}, [code, session, connected]);
-	if (!connected) {
-		return <Loader text="Connecting..." />;
-	}
-	if (!session) {
-		return "Session not found";
-	}
+		return () => {
+			socket.removeEventListener("session-joined", handleJoined);
+		};
+	}, [code, socket, connected, session, joinSession, handleJoined]);
+
 	function handleCopy() {
 		setCopied(true);
 		navigator.clipboard.writeText(sessionURL);
 		setTimeout(() => {
 			setCopied(false);
 		}, 1000);
+	}
+
+	if (!connected) {
+		return <Loader text="Connecting..." />;
+	}
+	if (!session) {
+		return "Session not found";
 	}
 	return (
 		<Main>
@@ -64,8 +78,8 @@ function Component() {
 						{copied ? <IconCheck size={22} /> : <IconCopy size={18} />}
 					</button>
 				</div>
-				<div>Connected users: {session.clients.length}/2</div>
-				{session.clients.length < 2
+				<div>Connected users: {session.clients?.length ?? 0}/2</div>
+				{(session.clients?.length ?? 1) < 2
 					? "Waiting for a peer to connect"
 					: "Ready to share files"}
 			</div>

@@ -10,6 +10,7 @@ services:
     network_mode: "host"
     environment:
       DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+      SERVER_PORT: 3000
     volumes:
       - .:/app
     depends_on:

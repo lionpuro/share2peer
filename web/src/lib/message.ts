@@ -1,5 +1,11 @@
+import z from "zod";
 import type { CustomEventTarget } from "./events";
-import type { Client, Session } from "./session";
+import {
+	ClientSchema,
+	SessionSchema,
+	type Client,
+	type Session,
+} from "./session";
 
 export const MessageType = {
 	Error: "error",
@@ -54,3 +60,35 @@ export function isMessageType(input: unknown): input is SocketMessageType {
 	}
 	return Object.values(MessageType).some((v) => v === input);
 }
+
+// Validation
+
+export const ErrorSchema = z.object({
+	type: z.literal(MessageType.Error),
+	payload: z.string(),
+});
+
+export const IdentitySchema = z.object({
+	type: z.literal(MessageType.Identity),
+	payload: ClientSchema,
+});
+
+export const SessionInfoSchema = z.object({
+	type: z.literal(MessageType.SessionInfo),
+	payload: SessionSchema,
+});
+
+export const SessionCreatedSchema = z.object({
+	type: z.literal(MessageType.SessionCreated),
+	payload: z.object({ session_id: z.string() }),
+});
+
+export const SessionJoinedSchema = z.object({
+	type: z.literal(MessageType.SessionJoined),
+	payload: SessionSchema,
+});
+
+export const SessionLeftSchema = z.object({
+	type: z.literal(MessageType.SessionLeft),
+	payload: SessionSchema,
+});

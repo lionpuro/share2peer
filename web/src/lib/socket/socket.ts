@@ -1,7 +1,12 @@
 import { atom } from "nanostores";
 import {
+	ErrorSchema,
+	IdentitySchema,
 	isMessageType,
 	MessageType,
+	SessionCreatedSchema,
+	SessionInfoSchema,
+	SessionJoinedSchema,
 	SocketMessageEvent,
 	type Message,
 	type SocketMessageEventTarget,
@@ -48,26 +53,21 @@ class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 				}
 				switch (message.type) {
 					case MessageType.Error:
-						console.error(message.payload);
+						console.error(ErrorSchema.parse(message).payload);
 						break;
 					case MessageType.Identity:
-						if (!message.payload.id) {
-							console.error("invalid identity payload");
-							break;
-						}
-						$identity.set({ id: message.payload.id });
+						$identity.set({ id: IdentitySchema.parse(message).payload.id });
 						break;
 					case MessageType.SessionInfo:
-						$session.set(message.payload);
+						$session.set(SessionInfoSchema.parse(message).payload || null);
 						break;
 					case MessageType.SessionCreated:
-						$session.set({ id: message.payload.session_id });
+						$session.set({
+							id: SessionCreatedSchema.parse(message).payload.session_id,
+						});
 						break;
 					case MessageType.SessionJoined:
-						if (typeof message.payload?.id !== "string") {
-							return console.error("failed to join session");
-						}
-						$session.set(message.payload);
+						$session.set(SessionJoinedSchema.parse(message).payload);
 						break;
 					case MessageType.SessionLeft:
 						$session.set(null);

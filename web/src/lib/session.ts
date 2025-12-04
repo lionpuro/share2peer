@@ -1,16 +1,21 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
+import * as z from "zod/mini";
 import { socket } from "./socket";
 import { MessageType } from "./message";
 
-export type Client = {
-	id: string;
-};
+export type Client = z.infer<typeof ClientSchema>;
 
-export type Session = {
-	id: string;
-	clients?: Client[];
-};
+export type Session = z.infer<typeof SessionSchema>;
+
+export const ClientSchema = z.object({
+	id: z.string(),
+});
+
+export const SessionSchema = z.object({
+	id: z.string(),
+	clients: z.optional(z.array(ClientSchema)),
+});
 
 export const $session = atom<Session | null>(null);
 

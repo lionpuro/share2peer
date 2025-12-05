@@ -7,14 +7,14 @@ import { IconCheck, IconCopy } from "../../icons";
 import { Main } from "../../components/main";
 import { useSession } from "../../lib/session";
 
-export const Route = createFileRoute("/s/$code")({
+export const Route = createFileRoute("/s/$id")({
 	component: Component,
 });
 
 function Component() {
-	const { code } = Route.useParams();
+	const { id } = Route.useParams();
 	const { session, joinSession } = useSession();
-	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${code}`;
+	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${id}`;
 	const [copied, setCopied] = useState(false);
 	const { socket, connected } = useSocket();
 
@@ -34,12 +34,12 @@ function Component() {
 
 		if (!joinedRef.current) {
 			joinedRef.current = true;
-			joinSession(code);
+			joinSession(id);
 		}
 		return () => {
 			socket.removeEventListener("session-joined", handleJoined);
 		};
-	}, [code, socket, connected, session, joinSession, handleJoined]);
+	}, [id, socket, connected, session, joinSession, handleJoined]);
 
 	function handleCopy() {
 		setCopied(true);
@@ -59,7 +59,7 @@ function Component() {
 		<Main>
 			<div className="mx-auto my-auto flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border-2 border-neutral-300/80 p-8">
 				<div className="rounded-lg bg-neutral-200 px-4 py-2 font-mono text-5xl font-semibold">
-					{code}
+					{id}
 				</div>
 				<p className="text-center text-sm">
 					Input this session code on another device or join using the link.

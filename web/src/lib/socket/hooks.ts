@@ -12,7 +12,7 @@ export function useSocket() {
 		useCallback(
 			(e) => {
 				const msg = e.detail;
-				navigate({ to: "/s/$code", params: { code: msg.payload.session_id } });
+				navigate({ to: "/s/$id", params: { id: msg.payload.session_id } });
 			},
 			[navigate],
 		);

@@ -52,8 +52,8 @@ function Component() {
 					className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 font-mono text-sm"
 				/>
 				<Link
-					to="/s/$code"
-					params={{ code: shareCode }}
+					to="/s/$id"
+					params={{ id: shareCode }}
 					className={`rounded-lg px-3 py-1.75 text-sm font-medium ${shareCode.length !== 6 ? "bg-neutral-300/60 text-neutral-500" : "bg-primary-600/90 text-white"}`}
 					disabled={shareCode.length !== 6}
 				>

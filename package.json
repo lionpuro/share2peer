@@ -7,6 +7,9 @@
 		"web"
 	],
 	"scripts": {
+		"build": "npm run build:web",
+		"build:web": "npm run build -w web",
+		"lint": "npm run lint --workspaces --if-present",
 		"format": "prettier --write . && gofmt -l -s -w server"
 	},
 	"devDependencies": {

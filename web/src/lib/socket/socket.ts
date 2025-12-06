@@ -126,5 +126,4 @@ class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 	}
 }
 
-const url = `${import.meta.env.VITE_WS_PROTOCOL}://${import.meta.env.VITE_WS_HOST}/ws`;
-export const socket = new WebSocketManager(url);
+export const socket = new WebSocketManager(import.meta.env.VITE_WS_URL);

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSocket } from "../../lib/socket";
 import { type MessageEventListener } from "../../lib/message";
@@ -13,7 +13,8 @@ export const Route = createFileRoute("/s/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
-	const { session, joinSession } = useSession();
+	const navigate = useNavigate();
+	const { session, joinSession, leaveSession } = useSession();
 	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${id}`;
 	const [copied, setCopied] = useState(false);
 	const { socket, connected } = useSocket();
@@ -49,6 +50,12 @@ function Component() {
 		}, 1000);
 	}
 
+	function handleLeave() {
+		if (!session) return;
+		leaveSession(session.id);
+		navigate({ to: "/" });
+	}
+
 	if (!connected) {
 		return <Loader text="Connecting..." />;
 	}
@@ -82,6 +89,12 @@ function Component() {
 				{(session.clients?.length ?? 1) < 2
 					? "Waiting for a peer to connect"
 					: "Ready to share files"}
+				<button
+					onClick={handleLeave}
+					className="mt-2 rounded-lg bg-primary-600/90 px-4 py-1.5 text-white hover:bg-primary-600"
+				>
+					Leave
+				</button>
 			</div>
 		</Main>
 	);

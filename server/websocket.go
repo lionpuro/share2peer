@@ -24,8 +24,12 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn) error {
 	c := createClient(conn)
 	log.Printf("connect client: %s", c.ID)
 	defer func() {
-		defer conn.Close()
-		log.Printf("disconnect client: %s", c.ID)
+		defer func() {
+			if err := conn.Close(); err != nil {
+				log.Printf("close connection: %v", err)
+			}
+			log.Printf("disconnect client: %s", c.ID)
+		}()
 
 		if c.sessionID == "" {
 			return
@@ -49,10 +53,12 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn) error {
 		}
 	}()
 
-	conn.WriteJSON(Message{
+	if err := conn.WriteJSON(Message{
 		Type:    MessageIdentity,
 		Payload: c,
-	})
+	}); err != nil {
+		return err
+	}
 
 	for {
 		_, msg, err := conn.ReadMessage()
@@ -194,10 +200,12 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 
 	sess.RemoveClient(c.ID)
 
-	c.conn.WriteJSON(Message{
+	if err := c.conn.WriteJSON(Message{
 		Type:    MessageSessionLeft,
 		Payload: sess,
-	})
+	}); err != nil {
+		return err
+	}
 
 	return wh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,

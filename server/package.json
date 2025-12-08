@@ -1,0 +1,9 @@
+{
+	"name": "@share2peer/server",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"lint": "golangci-lint run"
+	}
+}

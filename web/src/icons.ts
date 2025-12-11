@@ -6,3 +6,9 @@ export {
 	BiExit as IconExit,
 	BiX as IconX,
 } from "react-icons/bi";
+export {
+	FaFileImage as IconFileImage,
+	FaFileVideo as IconFileVideo,
+	FaFileAudio as IconFileAudio,
+	FaFileAlt as IconFileDefault,
+} from "react-icons/fa";

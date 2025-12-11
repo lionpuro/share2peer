@@ -8,6 +8,10 @@ import {
 	IconCopy,
 	IconDownload,
 	IconExit,
+	IconFileAudio,
+	IconFileDefault,
+	IconFileImage,
+	IconFileVideo,
 	IconX,
 } from "../../icons";
 import { Main } from "../../components/main";
@@ -195,16 +199,28 @@ type FileListProps = {
 	files: FileMetadata[];
 };
 
+function FileIcon({ mime }: { mime: string }) {
+	const parts = mime.split("/");
+	switch (parts[0]) {
+		case "image":
+			return <IconFileImage />;
+		case "video":
+			return <IconFileVideo />;
+		case "audio":
+			return <IconFileAudio />;
+		default:
+			return <IconFileDefault />;
+	}
+}
+
 function FileList({ files }: FileListProps) {
 	return (
 		<div className="flex flex-col">
 			{files.map((file) => (
-				<div
-					key={file.id}
-					className="flex items-center justify-between py-2 font-medium"
-				>
+				<div key={file.id} className="flex items-center gap-2 py-2 font-medium">
+					<FileIcon mime={file.mime} />
 					<p className="text-sm font-medium">{file.name}</p>
-					<span className="text-sm text-neutral-500">
+					<span className="ml-auto text-sm text-neutral-500">
 						{formatFileSize(file.size)}
 					</span>
 				</div>

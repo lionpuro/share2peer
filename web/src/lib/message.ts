@@ -1,11 +1,14 @@
 import * as z from "zod/mini";
 import type { CustomEventTarget } from "./events";
 import { ClientSchema, SessionSchema } from "./session";
+import {
+	RTCIceCandidateSchema,
+	RTCSessionDescriptionInitSchema,
+} from "./webrtc";
 
 export const MessageType = {
 	Error: "error",
 	Identity: "identity",
-	// Sessions
 	SessionInfo: "session-info",
 	JoinSession: "join-session",
 	LeaveSession: "leave-session",
@@ -13,6 +16,11 @@ export const MessageType = {
 	SessionCreated: "session-created",
 	SessionJoined: "session-joined",
 	SessionLeft: "session-left",
+	ClientJoined: "client-joined",
+	ClientLeft: "client-left",
+	Offer: "offer",
+	Answer: "answer",
+	ICECandidate: "ice-candidate",
 } as const;
 
 export type SocketMessageType = (typeof MessageType)[keyof typeof MessageType];
@@ -29,6 +37,11 @@ export type MessageEventMap = {
 	[MessageType.SessionCreated]: CustomEvent<SessionCreatedMessage>;
 	[MessageType.SessionJoined]: CustomEvent<SessionJoinedMessage>;
 	[MessageType.SessionLeft]: CustomEvent<SessionLeftMessage>;
+	[MessageType.ClientJoined]: CustomEvent<ClientJoinedMessage>;
+	[MessageType.ClientLeft]: CustomEvent<ClientLeftMessage>;
+	[MessageType.Offer]: CustomEvent<OfferMessage>;
+	[MessageType.Answer]: CustomEvent<AnswerMessage>;
+	[MessageType.ICECandidate]: CustomEvent<ICECandidateMessage>;
 };
 
 export class SocketMessageEvent<
@@ -86,6 +99,56 @@ export const SessionLeftSchema = z.object({
 });
 
 export type SessionLeftMessage = z.infer<typeof SessionLeftSchema>;
+
+export const ClientJoinedSchema = z.object({
+	type: z.literal(MessageType.ClientJoined),
+	payload: ClientSchema,
+});
+
+export type ClientJoinedMessage = z.infer<typeof ClientJoinedSchema>;
+
+export const ClientLeftSchema = z.object({
+	type: z.literal(MessageType.ClientLeft),
+	payload: ClientSchema,
+});
+
+export type ClientLeftMessage = z.infer<typeof ClientLeftSchema>;
+
+export const OfferSchema = z.object({
+	type: z.literal(MessageType.Offer),
+	payload: z.object({
+		session_id: z.string(),
+		offer: RTCSessionDescriptionInitSchema,
+		from: z.string(),
+		to: z.string(),
+	}),
+});
+
+export type OfferMessage = z.infer<typeof OfferSchema>;
+
+export const AnswerSchema = z.object({
+	type: z.literal(MessageType.Answer),
+	payload: z.object({
+		session_id: z.string(),
+		answer: RTCSessionDescriptionInitSchema,
+		from: z.string(),
+		to: z.string(),
+	}),
+});
+
+export type AnswerMessage = z.infer<typeof AnswerSchema>;
+
+export const ICECandidateSchema = z.object({
+	type: z.literal(MessageType.ICECandidate),
+	payload: z.object({
+		session_id: z.string(),
+		candidate: RTCIceCandidateSchema,
+		from: z.string(),
+		to: z.string(),
+	}),
+});
+
+export type ICECandidateMessage = z.infer<typeof ICECandidateSchema>;
 
 export function isMessageType(input: unknown): input is SocketMessageType {
 	if (typeof input !== "string") {

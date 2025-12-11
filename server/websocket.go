@@ -107,6 +107,8 @@ func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
 		return wh.handleJoinSession(c, msg)
 	case MessageLeaveSession:
 		return wh.handleLeaveSession(c, msg)
+	case MessageAnswer, MessageOffer, MessageICECandidate:
+		return wh.handleWebRTCMessage(c, msg)
 	default:
 		return ErrUnknownMessageType
 	}
@@ -171,9 +173,16 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		return err
 	}
 
-	return wh.broadcast(c.conn, Message{
+	if err := wh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,
 		Payload: sess,
+	}, sess.ID); err != nil {
+		return err
+	}
+
+	return wh.broadcast(c.conn, Message{
+		Type:    MessageClientJoined,
+		Payload: c,
 	}, sess.ID)
 }
 
@@ -207,8 +216,28 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 		return err
 	}
 
-	return wh.broadcast(c.conn, Message{
+	if err := wh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,
 		Payload: sess,
+	}, sess.ID); err != nil {
+		return err
+	}
+
+	return wh.broadcast(c.conn, Message{
+		Type:    MessageClientLeft,
+		Payload: c,
 	}, sess.ID)
+}
+
+func (wh *WebSocketHandler) handleWebRTCMessage(c *Client, msg Message) error {
+	var payload SessionIDPayload
+	bytes, err := json.Marshal(msg.Payload)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, &payload); err != nil {
+		return err
+	}
+
+	return wh.broadcast(c.conn, msg, c.sessionID)
 }

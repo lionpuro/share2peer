@@ -1,6 +1,10 @@
 import { atom } from "nanostores";
 import {
+	ClientJoinedSchema,
+	OfferSchema,
+	AnswerSchema,
 	ErrorSchema,
+	ICECandidateSchema,
 	IdentitySchema,
 	isMessageType,
 	MessageType,
@@ -12,11 +16,18 @@ import {
 	type SocketMessageEventTarget,
 } from "../message";
 import { $session, type Client } from "../session";
+import {
+	closePeerConnection,
+	createOffer,
+	handleAnswer,
+	handleICECandidate,
+	handleOffer,
+} from "../webrtc";
 
 export const $identity = atom<Client | null>(null);
 export const $isConnected = atom<boolean>(false);
 
-class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
+export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 	#url: string;
 	#ws: WebSocket | null = null;
 	constructor(url: string) {
@@ -36,6 +47,7 @@ class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 		});
 		this.#ws.addEventListener("close", () => {
 			$isConnected.set(false);
+			closePeerConnection();
 			setTimeout(() => {
 				this.connect();
 			}, 1000);
@@ -71,6 +83,25 @@ class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 						break;
 					case MessageType.SessionLeft:
 						$session.set(null);
+						closePeerConnection();
+						break;
+					case MessageType.ClientJoined:
+						await createOffer(
+							this,
+							ClientJoinedSchema.parse(message).payload.id,
+						);
+						break;
+					case MessageType.ClientLeft:
+						closePeerConnection();
+						break;
+					case MessageType.Offer:
+						await handleOffer(this, OfferSchema.parse(message));
+						break;
+					case MessageType.Answer:
+						await handleAnswer(AnswerSchema.parse(message));
+						break;
+					case MessageType.ICECandidate:
+						await handleICECandidate(ICECandidateSchema.parse(message));
 						break;
 					default:
 						console.error(`WebSocket: unknown message type '${message.type}'`);

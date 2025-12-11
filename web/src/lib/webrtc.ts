@@ -11,15 +11,13 @@ import {
 import {
 	$downloadState,
 	$uploads,
-	addDownloadableFile,
-	cancelShare,
-	shareFile,
+	setDownloads,
 	FileMetadataSchema,
 	saveChunk,
 	sendFile,
 	type FileMetadata,
-	handleCancelShare,
 	stopTransfer,
+	shareUploads,
 } from "./file";
 
 export type Peer = {
@@ -51,7 +49,7 @@ export function sendToPeer(peer: Peer, msg: DataChannelMessage) {
 }
 
 const DataChannelEvents = {
-	ShareFile: "share-file",
+	ShareFiles: "share-files",
 	RequestFile: "request-file",
 	CancelShare: "cancel-share",
 	ReadyToReceive: "ready-to-receive",
@@ -60,12 +58,12 @@ const DataChannelEvents = {
 export type DataChannelMessageType =
 	(typeof DataChannelEvents)[keyof typeof DataChannelEvents];
 
-export const ShareFileSchema = z.object({
-	type: z.literal(DataChannelEvents.ShareFile),
-	payload: FileMetadataSchema,
+export const ShareFilesSchema = z.object({
+	type: z.literal(DataChannelEvents.ShareFiles),
+	payload: z.object({ files: z.array(FileMetadataSchema) }),
 });
 
-export type ShareFileMessage = z.infer<typeof ShareFileSchema>;
+export type ShareFilesMessage = z.infer<typeof ShareFilesSchema>;
 
 export const RequestFileSchema = z.object({
 	type: z.literal(DataChannelEvents.RequestFile),
@@ -76,7 +74,6 @@ export type RequestFileMessage = z.infer<typeof RequestFileSchema>;
 
 export const CancelShareSchema = z.object({
 	type: z.literal(DataChannelEvents.CancelShare),
-	payload: z.object({ file_id: z.string() }),
 });
 
 export type CancelShareMessage = z.infer<typeof CancelShareSchema>;
@@ -89,7 +86,7 @@ export const ReadyToReceiveSchema = z.object({
 export type ReadyToReceiveMessage = z.infer<typeof ReadyToReceiveSchema>;
 
 export type DataChannelMessage =
-	| ShareFileMessage
+	| ShareFilesMessage
 	| RequestFileMessage
 	| CancelShareMessage
 	| ReadyToReceiveMessage;
@@ -261,16 +258,19 @@ function registerDataChannelListeners(peer: Peer) {
 			}
 			switch (data.type) {
 				case DataChannelEvents.ReadyToReceive:
-					$uploads.get().forEach((u) => shareFile(u.file));
+					if ($uploads.get().length < 1) {
+						return;
+					}
+					shareUploads($uploads.get());
 					break;
-				case DataChannelEvents.ShareFile:
-					addDownloadableFile(ShareFileSchema.parse(data).payload);
+				case DataChannelEvents.ShareFiles:
+					handleShareFiles(ShareFilesSchema.parse(data));
 					break;
 				case DataChannelEvents.RequestFile:
 					await handleRequestFile(RequestFileSchema.parse(data));
 					break;
 				case DataChannelEvents.CancelShare:
-					handleCancelShare(CancelShareSchema.parse(data).payload.file_id);
+					handleCancelShare();
 					break;
 				default:
 					console.warn(
@@ -285,10 +285,18 @@ function registerDataChannelListeners(peer: Peer) {
 	});
 }
 
+function handleShareFiles(data: ShareFilesMessage) {
+	stopTransfer();
+	setDownloads(data.payload.files);
+}
+
 async function handleRequestFile(data: RequestFileMessage) {
-	const upload = $uploads.get().find((f) => f.id === data.payload.file_id);
+	const uploads = $uploads.get();
+	const upload = uploads.find((f) => f.id === data.payload.file_id);
 	if (!upload) {
-		cancelShare(data.payload.file_id);
+		if (uploads.length > 0) {
+			shareUploads(uploads);
+		}
 		return;
 	}
 	const peer = $peer.get();
@@ -296,11 +304,18 @@ async function handleRequestFile(data: RequestFileMessage) {
 	await sendFile(peer, upload.file);
 }
 
+function handleCancelShare() {
+	stopTransfer();
+	const peer = $peer.get();
+	if (!peer) return;
+	$peer.set({ ...peer, files: [] });
+}
+
 export function closePeerConnection() {
+	stopTransfer();
 	const peer = $peer.get();
 	if (!peer) return;
 	peer.connection.close();
 	peer.dataChannel?.close();
 	$peer.set(null);
-	stopTransfer();
 }

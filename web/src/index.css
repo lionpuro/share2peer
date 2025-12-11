@@ -62,3 +62,28 @@ body {
 		outline-offset: -1px;
 	}
 }
+
+.progress {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	border: none;
+	color: var(--color-primary-400);
+	background-color: var(--color-neutral-200);
+	border-radius: var(--radius-lg);
+}
+
+.progress::-webkit-progress-bar {
+	background-color: var(--color-neutral-200);
+	border-radius: var(--radius-lg);
+}
+
+.progress::-webkit-progress-value {
+	background-color: var(--color-primary-400);
+	border-radius: var(--radius-lg);
+}
+
+.progress::-moz-progress-bar {
+	background-color: var(--color-primary-400);
+	border-radius: var(--radius-lg);
+}

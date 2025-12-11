@@ -82,7 +82,6 @@ export function FileInput({
 			<input
 				id="file-upload"
 				name="file-upload"
-				multiple={false}
 				type="file"
 				className="hidden"
 				{...props}

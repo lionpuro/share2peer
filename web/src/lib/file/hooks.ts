@@ -2,47 +2,39 @@ import { useStore } from "@nanostores/react";
 import {
 	$downloadState,
 	$uploads,
-	cancelShare,
-	shareFile,
+	sendCancelShare,
+	shareFiles,
 	startDownload,
-	type FileMetadata,
 } from "./file";
 
 export function useUpload() {
 	const uploads = useStore($uploads);
-	const removeUploads = () => uploads.forEach((u) => cancelShare(u.id));
-	const uploadFile = (file: File) => shareFile(file);
+	const removeUploads = () => {
+		sendCancelShare();
+		$uploads.set([]);
+	};
+	const uploadFiles = (files: File[]) => shareFiles(files);
 	return {
 		uploads,
-		uploadFile,
+		uploadFiles,
 		removeUploads,
 	};
 }
 
-type UseDownloadValue = {
-	metadata: FileMetadata | null;
-	status: null | "receiving" | "complete";
-	progress: number;
-	result: Blob | null;
-	start: typeof startDownload;
-};
-
-export function useDownload(): UseDownloadValue {
-	const downloadState = useStore($downloadState);
-	if (!downloadState) {
-		return {
-			metadata: null,
-			status: null,
-			progress: 0,
-			result: null,
-			start: startDownload,
-		};
-	}
+export function useDownload() {
+	const { currentFile, queue, results } = useStore($downloadState);
 	return {
-		metadata: downloadState.file,
-		status: downloadState.result ? "complete" : "receiving",
-		progress: Math.round((downloadState.bytes / downloadState.file.size) * 100),
-		result: downloadState.result,
+		currentFile: currentFile,
+		queue: queue,
+		results: results,
+		status: currentFile
+			? "receiving"
+			: queue.length === 0 && results.length > 0
+				? "complete"
+				: "initial",
+		progress: currentFile
+			? Math.round((currentFile.bytes / currentFile.metadata.size) * 100)
+			: 0,
 		start: startDownload,
 	};
 }

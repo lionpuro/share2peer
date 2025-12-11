@@ -1,4 +1,4 @@
-import { atom } from "nanostores";
+import { atom, map } from "nanostores";
 import { nanoid } from "nanoid";
 import * as z from "zod/mini";
 import { $peer, sendToPeer, type Peer } from "../webrtc";
@@ -25,66 +25,77 @@ type FileUpload = FileMetadata & { file: File };
 
 export const $uploads = atom<FileUpload[]>([]);
 
-function deleteUpload(id: string) {
-	$uploads.set($uploads.get().filter((f) => f.id !== id));
+export function shareFiles(files: File[]) {
+	const uploads: FileUpload[] = files.map((file) => {
+		const meta = createFileMetadata(file);
+		return { ...meta, file: file };
+	});
+	$uploads.set(uploads);
+	shareUploads(uploads);
 }
 
-export function shareFile(file: File) {
-	const meta = createFileMetadata(file);
-	const u: FileUpload = {
-		...meta,
-		file: file,
-	};
-	$uploads.set([u]);
+export function shareUploads(uploads: FileUpload[]) {
+	if (uploads.length < 1) return;
 	const peer = $peer.get();
-	if (!peer || !peer.dataChannel) return;
+	if (!peer) return;
+	const files = uploads.map((u) => ({
+		id: u.id,
+		name: u.name,
+		mime: u.mime,
+		size: u.size,
+	}));
 	sendToPeer(peer, {
-		type: "share-file",
-		payload: meta,
+		type: "share-files",
+		payload: { files },
 	});
 }
 
-export function cancelShare(id: string) {
-	deleteUpload(id);
+export function sendCancelShare() {
 	const peer = $peer.get();
-	if (!peer || !peer.dataChannel) return;
-	sendToPeer(peer, {
-		type: "cancel-share",
-		payload: { file_id: id },
-	});
+	if (!peer) return;
+	sendToPeer(peer, { type: "cancel-share" });
 }
 
 type DownloadState = {
-	file: FileMetadata;
-	chunks: ArrayBuffer[];
-	bytes: number;
-	result: Blob | null;
+	currentFile: {
+		metadata: FileMetadata;
+		chunks: ArrayBuffer[];
+		bytes: number;
+	} | null;
+	queue: FileMetadata[];
+	results: {
+		metadata: FileMetadata;
+		blob: Blob;
+	}[];
 };
 
-export const $downloadState = atom<DownloadState | null>(null);
+export const $downloadState = map<DownloadState>({
+	currentFile: null,
+	queue: [],
+	results: [],
+});
 
-export function startDownload(id: string) {
-	const peer = $peer.get();
-	if (!peer) return;
-	const file = peer.files.find((f) => f.id === id);
-	if (!file) {
-		console.error("file with provided id not found");
-		return;
-	}
-	$downloadState.set({
-		file: file,
-		chunks: [],
-		bytes: 0,
-		result: null,
-	});
-	requestFile(id);
+function stopDownloads() {
+	$downloadState.set({ currentFile: null, queue: [], results: [] });
 }
 
-export function handleCancelShare(id: string) {
-	$downloadState.set(null);
+export function setDownloads(files: FileMetadata[]) {
 	const peer = $peer.get();
 	if (!peer) return;
-	$peer.set({ ...peer, files: peer.files.filter((f) => f.id !== id) });
+	$peer.set({ ...peer, files: files });
+}
+
+export function startDownload() {
+	const peer = $peer.get();
+	if (!peer) return;
+	if (peer.files.length < 1) return;
+	const file = peer.files[0];
+	$downloadState.set({
+		currentFile: { metadata: file, chunks: [], bytes: 0 },
+		queue: peer.files,
+		results: [],
+	});
+	requestFile(file.id);
 }
 
 function requestFile(id: string) {
@@ -164,19 +175,43 @@ export function constructFile(chunks: ArrayBuffer[], type: string): Blob {
 
 export function saveChunk(chunk: ArrayBuffer) {
 	const prev = $downloadState.get();
-	if (!prev) {
+	if (!prev.currentFile) {
+		console.warn("save chunk: no current file");
 		return;
 	}
-	const curr = {
-		...prev,
-		chunks: [...prev.chunks, chunk],
-		bytes: prev.bytes + chunk.byteLength,
+	const currentFile = {
+		...prev.currentFile,
+		chunks: [...prev.currentFile.chunks, chunk],
+		bytes: prev.currentFile.bytes + chunk.byteLength,
 	};
-	if (curr.bytes >= curr.file.size) {
-		const blob = constructFile(curr.chunks, curr.file.mime);
-		curr.result = blob;
+
+	if (currentFile.bytes >= currentFile.metadata.size) {
+		const blob = constructFile(currentFile.chunks, currentFile.metadata.mime);
+		$downloadState.set({
+			currentFile: null,
+			queue: prev.queue.filter((f) => f.id !== currentFile.metadata.id),
+			results: [
+				...prev.results,
+				{ metadata: currentFile.metadata, blob: blob },
+			],
+		});
+
+		const state = $downloadState.get();
+
+		if (state.queue.length < 1) {
+			state.results.forEach((f) => downloadBlob(f.blob, f.metadata.name));
+			return;
+		}
+
+		const next = state.queue[0];
+		$downloadState.set({
+			...state,
+			currentFile: { metadata: next, chunks: [], bytes: 0 },
+		});
+		requestFile(next.id);
+		return;
 	}
-	$downloadState.set(curr);
+	$downloadState.set({ ...prev, currentFile: currentFile });
 }
 
 export function downloadBlob(blob: Blob, name: string) {
@@ -185,19 +220,11 @@ export function downloadBlob(blob: Blob, name: string) {
 	a.style.display = "none";
 	a.href = url;
 	a.download = name;
-	document.body.appendChild(a);
 	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
-}
-
-export function addDownloadableFile(meta: FileMetadata) {
-	const peer = $peer.get();
-	if (!peer) return;
-	$peer.set({ ...peer, files: [...peer.files, meta] });
+	setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 export function stopTransfer() {
 	$uploadState.set(null);
-	$downloadState.set(null);
+	stopDownloads();
 }

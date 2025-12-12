@@ -23,7 +23,7 @@ func main() {
 			}
 			return
 		}
-		if err := wh.handleWebSocket(conn); err != nil {
+		if err := wh.handleWebSocket(conn, r.Header); err != nil {
 			log.Printf("websocket handler: %s", err.Error())
 			return
 		}

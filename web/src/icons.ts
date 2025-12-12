@@ -11,4 +11,7 @@ export {
 	FaFileVideo as IconFileVideo,
 	FaFileAudio as IconFileAudio,
 	FaFileAlt as IconFileDefault,
+	FaDesktop as IconDesktop,
+	FaTabletAlt as IconTablet,
+	FaMobileAlt as IconMobile,
 } from "react-icons/fa";

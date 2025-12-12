@@ -1,21 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSocket } from "../../lib/socket";
+import { $identity, useSocket } from "../../lib/socket";
 import { type MessageEventListener } from "../../lib/message";
 import { Loader } from "../../components/loader";
 import {
 	IconCheck,
 	IconCopy,
+	IconDesktop,
 	IconDownload,
 	IconExit,
 	IconFileAudio,
 	IconFileDefault,
 	IconFileImage,
 	IconFileVideo,
+	IconMobile,
+	IconTablet,
 	IconX,
 } from "../../icons";
 import { Main } from "../../components/main";
-import { useSession } from "../../lib/session";
+import { useSession, type DeviceType } from "../../lib/session";
 import { $peer } from "../../lib/webrtc";
 import { useStore } from "@nanostores/react";
 import { FileInput } from "../../components/file-input";
@@ -81,6 +84,7 @@ function Component() {
 	}
 
 	const peer = useStore($peer);
+	const identity = useStore($identity);
 
 	if (!connected) {
 		return <Loader text="Connecting..." />;
@@ -116,6 +120,26 @@ function Component() {
 						{(session.clients?.length ?? 1) < 2 || !peer
 							? "Waiting for a peer to connect"
 							: null}
+						{session.clients && session.clients.length > 1 && (
+							<div className="flex w-full flex-col">
+								<h2 className="mb-2 text-xl font-bold">Connected peers</h2>
+								<div className="flex">
+									{session.clients
+										.filter((c) => c.id !== identity?.id)
+										.map((c) => (
+											<div
+												key={"client" + c.id}
+												className="flex flex-col items-center gap-1 p-2 text-sm"
+											>
+												<span className="rounded-full bg-primary p-3 text-white">
+													<DeviceIcon deviceType={c.device_type} />
+												</span>
+												{c.device_name}
+											</div>
+										))}
+								</div>
+							</div>
+						)}
 					</div>
 				) : null}
 				{peer && peer.files.length > 0 ? (
@@ -188,6 +212,20 @@ function Component() {
 			</div>
 		</Main>
 	);
+}
+
+function DeviceIcon({ deviceType }: { deviceType: DeviceType }) {
+	const props = { className: "size-6 sm:size-8" };
+	switch (deviceType) {
+		case "desktop":
+			return <IconDesktop {...props} />;
+		case "tablet":
+			return <IconTablet {...props} />;
+		case "mobile":
+			return <IconMobile {...props} />;
+		default:
+			return <IconDesktop {...props} />;
+	}
 }
 
 type FileListProps = {

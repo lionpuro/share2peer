@@ -68,7 +68,7 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 						console.error(ErrorSchema.parse(message).payload);
 						break;
 					case MessageType.Identity:
-						$identity.set({ id: IdentitySchema.parse(message).payload.id });
+						$identity.set(IdentitySchema.parse(message).payload);
 						break;
 					case MessageType.SessionInfo:
 						$session.set(SessionInfoSchema.parse(message).payload || null);

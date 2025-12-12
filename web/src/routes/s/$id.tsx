@@ -90,10 +90,10 @@ function Component() {
 	}
 	return (
 		<Main>
-			<div className="mx-auto my-auto flex w-full max-w-sm flex-col gap-4 rounded-xl border-2 border-neutral-300/80 p-8">
+			<div className="mx-auto my-auto flex w-full max-w-sm flex-col gap-4 rounded-xl border-2 border-secondary bg-white p-8">
 				{!peer || peer.files.length < 1 ? (
 					<div className="flex w-full max-w-sm flex-col items-center gap-4">
-						<div className="rounded-lg bg-neutral-200 px-4 py-2 font-mono text-5xl font-semibold">
+						<div className="rounded-lg bg-secondary/50 px-4 py-2 font-mono text-5xl font-semibold">
 							{id}
 						</div>
 						<p className="text-center text-sm">
@@ -108,7 +108,7 @@ function Component() {
 							<button
 								disabled={copied}
 								onClick={handleCopy}
-								className="flex size-10 items-center justify-center rounded-lg bg-neutral-200 hover:bg-neutral-300/80"
+								className="flex size-10 items-center justify-center rounded-lg bg-secondary hover:bg-secondary-darker/80"
 							>
 								{copied ? <IconCheck size={22} /> : <IconCopy size={18} />}
 							</button>
@@ -141,7 +141,7 @@ function Component() {
 							</>
 						)}
 						<button
-							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-blue-700/70 py-2 text-sm font-medium text-white hover:bg-blue-800/75 disabled:bg-neutral-200 disabled:text-neutral-500"
+							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
 							onClick={handleDownload}
 							disabled={download.status === "receiving"}
 						>
@@ -161,7 +161,7 @@ function Component() {
 							}))}
 						/>
 						<button
-							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-neutral-200 py-2 text-sm font-medium hover:bg-neutral-300/80"
+							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
 							onClick={handleCancel}
 						>
 							<IconX size={18} />
@@ -171,7 +171,7 @@ function Component() {
 				) : (
 					<div className="mt-4">
 						<FileInput
-							className="rounded-xl bg-neutral-200/50"
+							className="rounded-xl bg-background/50"
 							multiple={true}
 							labelText="Upload files"
 							onFileInput={(files) => uploadFiles(files)}
@@ -180,7 +180,7 @@ function Component() {
 				)}
 				<button
 					onClick={handleLeave}
-					className="flex items-center justify-center gap-1.5 rounded-md bg-red-600/80 py-2 text-sm font-medium text-white hover:bg-red-700/80"
+					className="flex items-center justify-center gap-1.5 rounded-md bg-destructive py-2 text-sm font-medium text-white hover:bg-destructive-darker"
 				>
 					<IconExit size={18} />
 					Leave session

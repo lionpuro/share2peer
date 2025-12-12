@@ -65,7 +65,7 @@ export function FileInput({
 		<>
 			<label
 				htmlFor="file-upload"
-				className={`flex flex-col items-center justify-center border-2 border-dashed p-12 hover:border-blue-400 ${dragging ? "border-blue-400" : "border-neutral-400/80"} cursor-pointer ${className || ""} overflow-hidden`}
+				className={`flex flex-col items-center justify-center border-2 border-dashed p-12 hover:border-primary/80 ${dragging ? "border-primary/80" : "border-neutral-400/80"} cursor-pointer ${className || ""} overflow-hidden`}
 				onDrop={onDrop}
 				onDragOver={onDragOver}
 				onDragEnter={onDragEnter}
@@ -73,7 +73,7 @@ export function FileInput({
 			>
 				<IconUpload
 					size={48}
-					className={`pointer-events-none ${dragging ? "fill-blue-400" : "fill-neutral-400"}`}
+					className={`pointer-events-none ${dragging ? "fill-primary" : "fill-neutral-400"}`}
 				/>
 				<span className="pointer-events-none mt-2 text-center font-medium">
 					{labelText}

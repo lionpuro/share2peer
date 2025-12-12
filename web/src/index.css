@@ -1,22 +1,36 @@
 @import "tailwindcss";
 
 @theme {
-	--color-white: #f2f2f2;
+	--color-brand-50: #f2fbf5;
+	--color-brand-100: #e0f8e8;
+	--color-brand-200: #c3efd2;
+	--color-brand-300: #95e0b0;
+	--color-brand-400: #5eca86;
+	--color-brand-500: #3cb96a;
+	--color-brand-600: #2a8f4f;
+	--color-brand-700: #247141;
+	--color-brand-800: #215a37;
+	--color-brand-900: #1d4a2f;
+	--color-brand-950: #0b2817;
+
+	--color-white: #fafafa;
 	--color-black: #272727;
 
-	--color-focus: #3b82f6;
+	--color-background: #f2f2f2;
+	--color-foreground: var(--color-black);
+	--color-card: var(--color-white);
+	--color-primary: var(--color-brand-500);
+	--color-primary-darker: var(--color-brand-600);
+	--color-primary-foreground: var(--color-brand-50);
+	--color-secondary: var(--color-neutral-200);
+	--color-secondary-darker: var(--color-neutral-300);
+	--color-secondary-foreground: var(--color-foreground);
+	--color-muted: var(--color-neutral-200);
+	--color-muted-foreground: var(--color-neutral-500);
 
-	--color-primary-50: #fdf3f3;
-	--color-primary-100: #fce4e5;
-	--color-primary-200: #faced0;
-	--color-primary-300: #f5acaf;
-	--color-primary-400: #ed7c80;
-	--color-primary-500: #e15257;
-	--color-primary-600: #cd353b;
-	--color-primary-700: #ac292e;
-	--color-primary-800: #92262a;
-	--color-primary-900: #772528;
-	--color-primary-950: #400f11;
+	--color-focus: #3b82f6;
+	--color-destructive: #e91923;
+	--color-destructive-darker: #d7141e;
 }
 
 :root {
@@ -24,8 +38,8 @@
 	line-height: 1.5;
 	font-weight: 400;
 
-	color: var(--color-black);
-	background-color: var(--color-white);
+	color: var(--color-foreground);
+	background-color: var(--color-background);
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
@@ -68,7 +82,7 @@ body {
 	-moz-appearance: none;
 	appearance: none;
 	border: none;
-	color: var(--color-primary-400);
+	color: var(--color-brand-400);
 	background-color: var(--color-neutral-200);
 	border-radius: var(--radius-lg);
 }
@@ -79,11 +93,11 @@ body {
 }
 
 .progress::-webkit-progress-value {
-	background-color: var(--color-primary-400);
+	background-color: var(--color-brand-400);
 	border-radius: var(--radius-lg);
 }
 
 .progress::-moz-progress-bar {
-	background-color: var(--color-primary-400);
+	background-color: var(--color-brand-400);
 	border-radius: var(--radius-lg);
 }

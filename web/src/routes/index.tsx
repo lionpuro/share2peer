@@ -34,7 +34,7 @@ function Component() {
 		<Main>
 			<h3 className="mb-2 text-xl font-semibold">Share</h3>
 			<button
-				className="mb-4 w-fit rounded-md bg-primary-600/90 px-3 py-1.5 text-sm text-white hover:bg-primary-600"
+				className="mb-4 w-fit rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary-darker"
 				onClick={handleCreate}
 			>
 				Create session
@@ -54,7 +54,7 @@ function Component() {
 				<Link
 					to="/s/$id"
 					params={{ id: shareCode }}
-					className={`rounded-lg px-3 py-1.75 text-sm font-medium ${shareCode.length !== 6 ? "bg-neutral-300/60 text-neutral-500" : "bg-primary-600/90 text-white"}`}
+					className={`rounded-lg px-3 py-1.75 text-sm font-medium ${shareCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
 					disabled={shareCode.length !== 6}
 				>
 					Enter

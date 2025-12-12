@@ -94,9 +94,9 @@ function Component() {
 	}
 	return (
 		<Main>
-			<div className="mx-auto my-auto flex w-full max-w-sm flex-col gap-4 rounded-xl border-2 border-secondary bg-white p-8">
+			<div className="m-auto flex w-full max-w-md flex-col gap-4 rounded-xl border-2 border-secondary bg-white p-6 max-sm:h-full sm:p-8">
 				{!peer || peer.files.length < 1 ? (
-					<div className="flex w-full max-w-sm flex-col items-center gap-4">
+					<div className="flex w-full flex-col items-center gap-4">
 						<div className="rounded-lg bg-secondary/50 px-4 py-2 font-mono text-5xl font-semibold">
 							{id}
 						</div>
@@ -107,7 +107,7 @@ function Component() {
 							<input
 								readOnly={true}
 								value={sessionURL}
-								className="grow rounded-lg border border-neutral-300 px-2 py-1.5 outline-none"
+								className="flex-1 overflow-x-scroll rounded-lg border border-neutral-300 px-2 py-1.5 outline-none"
 							/>
 							<button
 								disabled={copied}

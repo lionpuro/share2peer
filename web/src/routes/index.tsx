@@ -34,7 +34,7 @@ function Component() {
 		<Main>
 			<h3 className="mb-2 text-xl font-semibold">Share</h3>
 			<button
-				className="mb-4 w-fit rounded-md bg-primary px-3 py-1.5 text-sm text-white hover:bg-primary-darker"
+				className="mb-4 w-fit rounded-md bg-primary px-3 py-1.5 text-white hover:bg-primary-darker"
 				onClick={handleCreate}
 			>
 				Create session
@@ -49,12 +49,12 @@ function Component() {
 					maxLength={6}
 					value={shareCode}
 					onChange={(e) => setShareCode(e.target.value.toUpperCase())}
-					className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 font-mono text-sm"
+					className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 font-mono"
 				/>
 				<Link
 					to="/s/$id"
 					params={{ id: shareCode }}
-					className={`rounded-lg px-3 py-1.75 text-sm font-medium ${shareCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
+					className={`rounded-lg px-4 py-1.75 font-medium ${shareCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
 					disabled={shareCode.length !== 6}
 				>
 					Enter

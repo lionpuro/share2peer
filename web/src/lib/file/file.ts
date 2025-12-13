@@ -1,7 +1,7 @@
 import { atom, map } from "nanostores";
 import { nanoid } from "nanoid";
 import * as z from "zod/mini";
-import { $peer, sendToPeer, type Peer } from "../webrtc";
+import { $peer, sendToChannel } from "../webrtc";
 
 export const FileMetadataSchema = z.object({
 	id: z.string(),
@@ -44,7 +44,7 @@ export function shareUploads(uploads: FileUpload[]) {
 		mime: u.mime,
 		size: u.size,
 	}));
-	sendToPeer(peer, {
+	sendToChannel(peer.dataChannel, {
 		type: "share-files",
 		payload: { files },
 	});
@@ -53,7 +53,7 @@ export function shareUploads(uploads: FileUpload[]) {
 export function sendCancelShare() {
 	const peer = $peer.get();
 	if (!peer) return;
-	sendToPeer(peer, { type: "cancel-share" });
+	sendToChannel(peer.dataChannel, { type: "cancel-share" });
 }
 
 type DownloadState = {
@@ -101,7 +101,10 @@ export function startDownload() {
 function requestFile(id: string) {
 	const peer = $peer.get();
 	if (!peer) return;
-	sendToPeer(peer, { type: "request-file", payload: { file_id: id } });
+	sendToChannel(peer.dataChannel, {
+		type: "request-file",
+		payload: { file_id: id },
+	});
 }
 
 type UploadState = {
@@ -129,13 +132,16 @@ function waitForBufferedAmountLow(chan: RTCDataChannel): Promise<void> {
 	});
 }
 
-export async function sendFile(peer: Peer, file: File): Promise<void> {
-	if (!peer.dataChannel || peer.dataChannel.readyState !== "open") {
+export async function sendFile(
+	chan: RTCDataChannel | undefined,
+	file: File,
+): Promise<void> {
+	if (!chan || chan.readyState !== "open") {
 		console.warn("data channel is not ready");
 		return;
 	}
 
-	peer.dataChannel.bufferedAmountLowThreshold = chunkSize;
+	chan.bufferedAmountLowThreshold = chunkSize;
 
 	const chunks = sliceFile(file);
 	const totalChunks = chunks.length;
@@ -149,8 +155,8 @@ export async function sendFile(peer: Peer, file: File): Promise<void> {
 			return;
 		}
 		const chunk = await chunks[i].arrayBuffer();
-		await waitForBufferedAmountLow(peer.dataChannel);
-		peer.dataChannel.send(chunk);
+		await waitForBufferedAmountLow(chan);
+		chan.send(chunk);
 		bytesSent += chunk.byteLength;
 		$uploadState.set({ ...uploadState, bytes: bytesSent });
 	}

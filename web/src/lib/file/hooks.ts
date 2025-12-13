@@ -5,11 +5,13 @@ import {
 	sendCancelShare,
 	shareFiles,
 	startDownload,
+	stopTransfer,
 } from "./file";
 
 export function useUpload() {
 	const uploads = useStore($uploads);
 	const removeUploads = () => {
+		stopTransfer();
 		sendCancelShare();
 		$uploads.set([]);
 	};

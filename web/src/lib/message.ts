@@ -1,10 +1,6 @@
 import * as z from "zod/mini";
 import type { CustomEventTarget } from "./events";
 import { ClientSchema, SessionSchema } from "./session";
-import {
-	RTCIceCandidateSchema,
-	RTCSessionDescriptionInitSchema,
-} from "./webrtc";
 
 export const MessageType = {
 	Error: "error",
@@ -114,6 +110,25 @@ export const ClientLeftSchema = z.object({
 
 export type ClientLeftMessage = z.infer<typeof ClientLeftSchema>;
 
+export const RTCSessionDescriptionInitSchema = z.object({
+	type: z.union([
+		z.literal("answer"),
+		z.literal("offer"),
+		z.literal("pranswer"),
+		z.literal("rollback"),
+	]),
+	sdp: z.optional(z.string()),
+});
+
+export const RTCIceCandidateSchema = z.object({
+	candidate: z.optional(z.string()),
+	sdpMid: z.optional(z.union([z.string(), z.null()])),
+	sdpMLineIndex: z.optional(z.union([z.number(), z.null()])),
+	usernameFragment: z.optional(z.union([z.string(), z.null()])),
+});
+
+export type ICECandidateMessage = z.infer<typeof ICECandidateSchema>;
+
 export const OfferSchema = z.object({
 	type: z.literal(MessageType.Offer),
 	payload: z.object({
@@ -147,8 +162,6 @@ export const ICECandidateSchema = z.object({
 		to: z.string(),
 	}),
 });
-
-export type ICECandidateMessage = z.infer<typeof ICECandidateSchema>;
 
 export function isMessageType(input: unknown): input is SocketMessageType {
 	if (typeof input !== "string") {

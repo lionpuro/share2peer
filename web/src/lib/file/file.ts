@@ -1,7 +1,9 @@
 import { atom, map } from "nanostores";
 import { nanoid } from "nanoid";
 import * as z from "zod/mini";
-import { $peer, sendToChannel } from "../webrtc";
+import { $peer, DataChannelMessageQueue, sendToChannel } from "../webrtc";
+import { decodeChunk, encodeChunk } from "./encoding";
+import { CHUNK_DATA_SIZE, MESSAGE_SIZE } from "../constants";
 
 export const FileMetadataSchema = z.object({
 	id: z.string(),
@@ -20,6 +22,11 @@ function createFileMetadata(file: File): FileMetadata {
 		size: file.size,
 	};
 }
+
+export type Chunk = {
+	fileID: string;
+	data: Uint8Array;
+};
 
 type FileUpload = FileMetadata & { file: File };
 
@@ -56,48 +63,6 @@ export function sendCancelShare() {
 	sendToChannel(peer.dataChannel, { type: "cancel-share" });
 }
 
-type DownloadState = {
-	currentFile: {
-		metadata: FileMetadata;
-		chunks: ArrayBuffer[];
-		bytes: number;
-	} | null;
-	queue: FileMetadata[];
-	results: {
-		metadata: FileMetadata;
-		blob: Blob;
-	}[];
-};
-
-export const $downloadState = map<DownloadState>({
-	currentFile: null,
-	queue: [],
-	results: [],
-});
-
-function stopDownloads() {
-	$downloadState.set({ currentFile: null, queue: [], results: [] });
-}
-
-export function setDownloads(files: FileMetadata[]) {
-	const peer = $peer.get();
-	if (!peer) return;
-	$peer.set({ ...peer, files: files });
-}
-
-export function startDownload() {
-	const peer = $peer.get();
-	if (!peer) return;
-	if (peer.files.length < 1) return;
-	const file = peer.files[0];
-	$downloadState.set({
-		currentFile: { metadata: file, chunks: [], bytes: 0 },
-		queue: peer.files,
-		results: [],
-	});
-	requestFile(file.id);
-}
-
 function requestFile(id: string) {
 	const peer = $peer.get();
 	if (!peer) return;
@@ -109,115 +74,107 @@ function requestFile(id: string) {
 
 type UploadState = {
 	file: File;
-	bytes: number;
+	progress: number;
 };
 
 export const $uploadState = atom<UploadState | null>(null);
 
-function waitForBufferedAmountLow(chan: RTCDataChannel): Promise<void> {
-	return new Promise((resolve) => {
-		const threshold = chunkSize * 8;
-		if (chan.bufferedAmount < threshold) {
-			return resolve();
-		}
-		const handler = () => {
-			if (chan.bufferedAmount < threshold) {
-				chan.removeEventListener("bufferedamountlow", handler);
-				resolve();
-			}
-		};
-		chan.addEventListener("bufferedamountlow", handler);
-		// fallback resolve after a timeout
-		setTimeout(resolve, 2000);
-	});
-}
-
-export async function sendFile(
+export function sendFile(
 	chan: RTCDataChannel | undefined,
 	file: File,
-): Promise<void> {
+	meta: FileMetadata,
+) {
 	if (!chan || chan.readyState !== "open") {
 		console.warn("data channel is not ready");
 		return;
 	}
 
-	chan.bufferedAmountLowThreshold = chunkSize;
+	chan.bufferedAmountLowThreshold = MESSAGE_SIZE;
 
-	const chunks = sliceFile(file);
-	const totalChunks = chunks.length;
-
-	$uploadState.set({ file: file, bytes: 0 });
-
-	let bytesSent = 0;
-	for (let i = 0; i < totalChunks; i++) {
-		const uploadState = $uploadState.get();
-		if (!uploadState) {
+	let sentBytes = 0;
+	const queue = new DataChannelMessageQueue(chan, (msg) => {
+		if (!(msg instanceof ArrayBuffer)) {
 			return;
 		}
-		const chunk = await chunks[i].arrayBuffer();
-		await waitForBufferedAmountLow(chan);
-		chan.send(chunk);
-		bytesSent += chunk.byteLength;
-		$uploadState.set({ ...uploadState, bytes: bytesSent });
-	}
-}
+		try {
+			const chunk = decodeChunk(new Uint8Array(msg));
+			sentBytes += chunk.data.byteLength;
+			const val = $uploadState.get();
+			if (!val) return;
+			$uploadState.set({
+				...val,
+				progress: (sentBytes / file.size) * 100,
+			});
+		} catch (err) {
+			console.error(err);
+		}
+	});
 
-const chunkSize = 16 * 1024; // 16KB
-
-function sliceFile(file: File): Blob[] {
-	const chunks: Blob[] = [];
+	const reader = new FileReader();
 	let offset = 0;
-	while (offset < file.size) {
-		const slice = file.slice(offset, offset + chunkSize);
-		chunks.push(slice);
-		offset += chunkSize;
-	}
-	return chunks;
-}
-
-export function constructFile(chunks: ArrayBuffer[], type: string): Blob {
-	return new Blob(chunks, { type });
-}
-
-export function saveChunk(chunk: ArrayBuffer) {
-	const prev = $downloadState.get();
-	if (!prev.currentFile) {
-		console.warn("save chunk: no current file");
-		return;
-	}
-	const currentFile = {
-		...prev.currentFile,
-		chunks: [...prev.currentFile.chunks, chunk],
-		bytes: prev.currentFile.bytes + chunk.byteLength,
-	};
-
-	if (currentFile.bytes >= currentFile.metadata.size) {
-		const blob = constructFile(currentFile.chunks, currentFile.metadata.mime);
-		$downloadState.set({
-			currentFile: null,
-			queue: prev.queue.filter((f) => f.id !== currentFile.metadata.id),
-			results: [
-				...prev.results,
-				{ metadata: currentFile.metadata, blob: blob },
-			],
-		});
-
-		const state = $downloadState.get();
-
-		if (state.queue.length < 1) {
-			state.results.forEach((f) => downloadBlob(f.blob, f.metadata.name));
+	reader.addEventListener("load", (e) => {
+		const result = e.target?.result;
+		if (!result || !(result instanceof ArrayBuffer)) {
 			return;
 		}
 
-		const next = state.queue[0];
-		$downloadState.set({
-			...state,
-			currentFile: { metadata: next, chunks: [], bytes: 0 },
-		});
-		requestFile(next.id);
-		return;
-	}
-	$downloadState.set({ ...prev, currentFile: currentFile });
+		const chunk: Chunk = {
+			fileID: meta.id,
+			data: new Uint8Array(result),
+		};
+		const c = encodeChunk(chunk);
+		const buf = c.buffer.slice(c.byteOffset, c.byteLength + c.byteOffset);
+		queue.enqueue(buf);
+
+		offset += result.byteLength;
+		if (offset < file.size) {
+			readSlice(offset);
+		}
+	});
+	const readSlice = (o: number) => {
+		const slice = file.slice(offset, o + CHUNK_DATA_SIZE);
+		reader.readAsArrayBuffer(slice);
+	};
+	readSlice(0);
+}
+
+async function createDownloadStream(
+	fileID: string,
+	chunks: Uint8Array[],
+): Promise<ReadableStream<Uint8Array>> {
+	let currentChunk = 0;
+
+	return new ReadableStream<Uint8Array>({
+		async pull(controller) {
+			try {
+				if (currentChunk >= chunks.length) {
+					controller.close();
+					return;
+				}
+
+				const chunk = chunks[currentChunk];
+				if (!chunk) {
+					controller.error(
+						new Error(`missing chunk ${currentChunk} for file ${fileID}`),
+					);
+					return;
+				}
+
+				const data = new Uint8Array(chunk);
+				controller.enqueue(data);
+				currentChunk++;
+			} catch (err) {
+				controller.error(err);
+			}
+		},
+	});
+}
+
+async function createBlob(file: Download): Promise<Blob> {
+	const stream = await createDownloadStream(file.id, file.chunks);
+	const response = new Response(stream);
+	const blob = await response.blob();
+	return blob;
 }
 
 export function downloadBlob(blob: Blob, name: string) {
@@ -232,5 +189,123 @@ export function downloadBlob(blob: Blob, name: string) {
 
 export function stopTransfer() {
 	$uploadState.set(null);
-	stopDownloads();
+	downloadManager.reset();
+}
+
+type DownloadProgress = {
+	downloading: boolean;
+	totalCount: number;
+	downloadedCount: number;
+	progress: number;
+};
+
+export const $downloadProgress = map<DownloadProgress>({
+	downloading: false,
+	totalCount: 0,
+	downloadedCount: 0,
+	progress: 0,
+});
+
+function resetDownloadProgress() {
+	$downloadProgress.set({
+		downloading: false,
+		totalCount: 0,
+		downloadedCount: 0,
+		progress: 0,
+	});
+}
+
+type Download = FileMetadata & {
+	chunks: Uint8Array[];
+	downloadedBytes: number;
+};
+
+class DownloadManager {
+	current: string | null = null;
+	downloads: Map<string, Download> = new Map();
+
+	setFiles(files: FileMetadata[]) {
+		files.forEach((file) => {
+			this.downloads.set(file.id, {
+				...file,
+				chunks: [],
+				downloadedBytes: 0,
+			});
+		});
+	}
+
+	removeFile(id: string) {
+		if (this.current === id) {
+			this.current = null;
+		}
+		this.downloads.delete(id);
+	}
+
+	startDownload(id: string) {
+		const download = this.downloads.get(id);
+		if (!download) {
+			console.error("start download: file not found");
+			return;
+		}
+		$downloadProgress.setKey("totalCount", this.downloads.size);
+		$downloadProgress.setKey("downloading", true);
+		this.current = id;
+		requestFile(id);
+	}
+
+	async handleChunk(chunk: Chunk) {
+		const file = this.downloads.get(chunk.fileID);
+		if (!file) {
+			return;
+		}
+
+		file.downloadedBytes += chunk.data.byteLength;
+		file.chunks.push(chunk.data);
+		this.downloads.set(chunk.fileID, file);
+
+		const progress = (file.downloadedBytes / file.size) * 100;
+		if ($downloadProgress.get().progress !== progress) {
+			$downloadProgress.setKey("progress", progress);
+		}
+
+		try {
+			if (file.downloadedBytes >= file.size) {
+				$downloadProgress.setKey(
+					"downloadedCount",
+					$downloadProgress.get().downloadedCount + 1,
+				);
+				await createBlob(file).then((blob) => downloadBlob(blob, file.name));
+				const next = findMapKey(
+					this.downloads,
+					(f) => f.downloadedBytes < f.size,
+				);
+				if (!next) {
+					this.current = null;
+					return;
+				}
+				this.startDownload(next);
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	reset() {
+		this.current = null;
+		this.downloads.clear();
+		resetDownloadProgress();
+	}
+}
+export const downloadManager = new DownloadManager();
+
+function findMapKey<K, V>(
+	map: Map<K, V>,
+	callback: (val: V) => boolean,
+): K | undefined {
+	for (const [key, val] of map.entries()) {
+		if (callback(val)) {
+			return key;
+		}
+	}
+	return undefined;
 }

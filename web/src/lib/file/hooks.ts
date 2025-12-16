@@ -1,12 +1,13 @@
 import { useStore } from "@nanostores/react";
 import {
-	$downloadState,
+	$downloadProgress,
 	$uploads,
 	sendCancelShare,
 	shareFiles,
-	startDownload,
 	stopTransfer,
+	downloadManager,
 } from "./file";
+import { $peer } from "../webrtc";
 
 export function useUpload() {
 	const uploads = useStore($uploads);
@@ -24,19 +25,25 @@ export function useUpload() {
 }
 
 export function useDownload() {
-	const { currentFile, queue, results } = useStore($downloadState);
+	const manager = downloadManager;
+	const { downloading, downloadedCount, totalCount, progress } =
+		useStore($downloadProgress);
+	const peer = useStore($peer);
+	const start = () => {
+		if (!peer || peer.files.length === 0) {
+			return;
+		}
+		manager.startDownload(peer.files[0].id);
+	};
 	return {
-		currentFile: currentFile,
-		queue: queue,
-		results: results,
-		status: currentFile
-			? "receiving"
-			: queue.length === 0 && results.length > 0
-				? "complete"
-				: "initial",
-		progress: currentFile
-			? Math.round((currentFile.bytes / currentFile.metadata.size) * 100)
-			: 0,
-		start: startDownload,
+		status: (progress === 100 && downloadedCount === totalCount
+			? "complete"
+			: downloading
+				? "downloading"
+				: undefined) as "complete" | "downloading" | undefined,
+		progress: progress,
+		downloadedFiles: downloadedCount,
+		totalFiles: totalCount,
+		start: start,
 	};
 }

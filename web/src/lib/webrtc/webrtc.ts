@@ -8,13 +8,11 @@ import {
 	type OfferMessage,
 } from "../message";
 import {
-	$downloadState,
 	$uploads,
-	setDownloads,
-	saveChunk,
 	sendFile,
 	stopTransfer,
 	shareUploads,
+	downloadManager,
 } from "../file";
 import {
 	DataChannelEvents,
@@ -24,6 +22,7 @@ import {
 	type RequestFileMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
+import { decodeChunk } from "../file/encoding";
 
 export async function createOffer(socket: WebSocketManager, target: string) {
 	const session = $session.get();
@@ -154,18 +153,20 @@ function registerDataChannelListeners(peer: Peer) {
 		console.log("data channel closed");
 	});
 	peer.dataChannel.addEventListener("message", async (e) => {
-		if (e.data instanceof ArrayBuffer) {
-			if (!$downloadState.get()) {
-				console.error("received chunk without metadata");
+		try {
+			if (e.data instanceof ArrayBuffer) {
+				if (!downloadManager.current) {
+					console.error("received chunk without metadata");
+					return;
+				}
+				downloadManager.handleChunk(
+					decodeChunk(new Uint8Array(e.data as ArrayBuffer)),
+				);
 				return;
 			}
-			saveChunk(e.data as ArrayBuffer);
-			return;
-		}
-		if (typeof e.data !== "string") {
-			return;
-		}
-		try {
+			if (typeof e.data !== "string") {
+				return;
+			}
 			const data = JSON.parse(e.data) as unknown;
 			if (!data || typeof data !== "object" || !("type" in data)) {
 				console.warn("data channel: invalid message format");
@@ -216,7 +217,10 @@ function handleReadyToReceive(peer: Peer) {
 
 function handleShareFiles(data: ShareFilesMessage) {
 	stopTransfer();
-	setDownloads(data.payload.files);
+	downloadManager.setFiles(data.payload.files);
+	const peer = $peer.get();
+	if (!peer) return;
+	$peer.set({ ...peer, files: data.payload.files });
 }
 
 async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
@@ -228,11 +232,13 @@ async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
 		}
 		return;
 	}
-	await sendFile(peer.dataChannel, upload.file);
+	const { file, ...meta } = upload;
+	sendFile(peer.dataChannel, file, meta);
 }
 
 function handleCancelShare() {
 	stopTransfer();
+	downloadManager.reset();
 	const peer = $peer.get();
 	if (!peer) return;
 	$peer.set({ ...peer, files: [] });

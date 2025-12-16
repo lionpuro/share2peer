@@ -147,15 +147,15 @@ function Component() {
 						<h2 className="mb-4 text-xl font-bold">Files</h2>
 						<FileList files={peer.files} />
 						<span
-							className={`${download.status === "receiving" ? "mt-4" : "mt-6"} mb-2 text-center text-sm`}
+							className={`${download.status === "downloading" ? "mt-4" : "mt-6"} mb-2 text-center text-sm`}
 						>
-							{download.status === "receiving"
-								? `Transferring file ${download.results.length + 1} / ${download.queue.length + download.results.length}`
-								: download.results.length > 0
+							{download.status === "downloading"
+								? `Transferring file ${download.downloadedFiles + 1} / ${download.totalFiles}`
+								: download.status === "complete"
 									? "Download complete"
 									: "Ready to download files"}
 						</span>
-						{download.status === "receiving" && (
+						{download.status === "downloading" && (
 							<>
 								<progress
 									value={download.progress}
@@ -167,7 +167,7 @@ function Component() {
 						<button
 							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
 							onClick={handleDownload}
-							disabled={download.status === "receiving"}
+							disabled={download.status === "downloading"}
 						>
 							<IconDownload size={18} />
 							Start download

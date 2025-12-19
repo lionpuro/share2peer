@@ -1,28 +1,6 @@
 import { useStore } from "@nanostores/react";
-import {
-	$downloadProgress,
-	$uploads,
-	sendCancelShare,
-	shareFiles,
-	stopTransfer,
-	downloadManager,
-} from "./file";
-import { $peer } from "../webrtc";
-
-export function useUpload() {
-	const uploads = useStore($uploads);
-	const removeUploads = () => {
-		stopTransfer();
-		sendCancelShare();
-		$uploads.set([]);
-	};
-	const uploadFiles = (files: File[]) => shareFiles(files);
-	return {
-		uploads,
-		uploadFiles,
-		removeUploads,
-	};
-}
+import { $downloadProgress, downloadManager } from "../lib/file";
+import { $peer } from "../lib/webrtc";
 
 export function useDownload() {
 	const manager = downloadManager;

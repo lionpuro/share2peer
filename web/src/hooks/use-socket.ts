@@ -1,8 +1,8 @@
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@tanstack/react-router";
-import { $isConnected, socket } from "./socket";
 import { useCallback, useEffect } from "react";
-import { type MessageEventListener, MessageType } from "../message";
+import { $isConnected, socket } from "../lib/socket";
+import { type MessageEventListener, MessageType } from "../lib/message";
 
 export function useSocket() {
 	const navigate = useNavigate();

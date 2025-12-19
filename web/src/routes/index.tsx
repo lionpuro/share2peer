@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSocket } from "../lib/socket";
 import { Main } from "../components/main";
-import { useSession } from "../lib/session";
+import { useSocket } from "../hooks/use-socket";
+import { useSession } from "../hooks/use-session";
 
 export const Route = createFileRoute("/")({
 	component: Component,

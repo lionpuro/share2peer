@@ -1,4 +1,3 @@
-import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import * as z from "zod/mini";
 import { socket } from "./socket";
@@ -30,26 +29,20 @@ export type Session = z.infer<typeof SessionSchema>;
 
 export const $session = atom<Session | null>(null);
 
-function joinSession(id: string) {
+export function joinSession(id: string) {
 	socket.send({
 		type: MessageType.JoinSession,
 		payload: { session_id: id },
 	});
 }
 
-function leaveSession(id: string) {
+export function leaveSession(id: string) {
 	socket.send({
 		type: MessageType.LeaveSession,
 		payload: { session_id: id },
 	});
 }
 
-function requestSession() {
+export function requestSession() {
 	socket.send({ type: MessageType.RequestSession });
-}
-
-export function useSession() {
-	const session = useStore($session);
-
-	return { session, requestSession, joinSession, leaveSession };
 }

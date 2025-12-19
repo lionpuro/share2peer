@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { $identity, useSocket } from "../../lib/socket";
+import { $identity } from "../../lib/socket";
 import { type MessageEventListener } from "../../lib/message";
 import { Loader } from "../../components/loader";
 import {
@@ -18,12 +18,16 @@ import {
 	IconX,
 } from "../../icons";
 import { Main } from "../../components/main";
-import { useSession, type DeviceType } from "../../lib/session";
+import { type DeviceType } from "../../lib/session";
+import { useSession } from "../../hooks/use-session";
 import { $peer } from "../../lib/webrtc";
 import { useStore } from "@nanostores/react";
 import { FileInput } from "../../components/file-input";
-import { useDownload, useUpload, type FileMetadata } from "../../lib/file";
+import { type FileMetadata } from "../../lib/file";
+import { useDownload } from "../../hooks/use-download";
+import { useUpload } from "../../hooks/use-upload";
 import { formatFileSize } from "../../lib/helper";
+import { useSocket } from "../../hooks/use-socket";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,

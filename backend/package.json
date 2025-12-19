@@ -1,5 +1,5 @@
 {
-	"name": "@share2peer/server",
+	"name": "@share2peer/backend",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",

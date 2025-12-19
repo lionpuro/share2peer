@@ -6,5 +6,5 @@
 	"printWidth": 80,
 	"plugins": ["prettier-plugin-tailwindcss"],
 	"overrides": [],
-	"tailwindStylesheet": "./web/src/index.css"
+	"tailwindStylesheet": "./frontend/src/index.css"
 }

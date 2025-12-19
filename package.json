@@ -4,14 +4,14 @@
 	"private": true,
 	"type": "module",
 	"workspaces": [
-		"server",
-		"web"
+		"backend",
+		"frontend"
 	],
 	"scripts": {
-		"build": "npm run build:web",
-		"build:web": "npm run build -w web",
+		"build": "npm run build:frontend",
+		"build:frontend": "npm run build -w frontend",
 		"lint": "npm run lint --workspaces --if-present",
-		"format": "prettier --write . && gofmt -l -s -w server"
+		"format": "prettier --write . && gofmt -l -s -w backend"
 	},
 	"devDependencies": {
 		"prettier": "^3.6.2",

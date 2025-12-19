@@ -10,6 +10,7 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@fontsource-variable/open-sans": "^5.2.7",
 		"@nanostores/react": "^1.0.0",
 		"@tailwindcss/vite": "^4.1.17",
 		"@tanstack/react-router": "^1.139.10",

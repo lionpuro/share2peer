@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource-variable/open-sans";
 
 @theme {
 	--color-brand-50: #f2fbf5;
@@ -34,7 +35,8 @@
 }
 
 :root {
-	font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+	font-family:
+		"Open Sans Variable", system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;
 	font-weight: 400;
 

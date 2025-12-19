@@ -144,19 +144,20 @@ export function sendFile(
 
 async function createDownloadStream(
 	fileID: string,
-	chunks: Chunk[],
+	chunks: Download["chunks"],
 ): Promise<ReadableStream<Uint8Array>> {
+	const chunkCount = Object.keys(chunks).length;
 	let current = 0;
 
 	return new ReadableStream<Uint8Array>({
 		async pull(controller) {
 			try {
-				if (current >= chunks.length) {
+				if (current >= chunkCount) {
 					controller.close();
 					return;
 				}
 
-				const chunk = chunks.find((c) => c.index === current);
+				const chunk = chunks[current];
 				if (!chunk) {
 					controller.error(
 						new Error(`missing chunk ${current} for file ${fileID}`),
@@ -164,7 +165,7 @@ async function createDownloadStream(
 					return;
 				}
 
-				controller.enqueue(chunk.data);
+				controller.enqueue(chunk);
 				current++;
 			} catch (err) {
 				controller.error(err);
@@ -219,7 +220,7 @@ function resetDownloadProgress() {
 }
 
 type Download = FileMetadata & {
-	chunks: Chunk[];
+	chunks: { [key: number]: Uint8Array };
 	downloadedBytes: number;
 };
 
@@ -231,7 +232,7 @@ class DownloadManager {
 		files.forEach((file) => {
 			this.downloads.set(file.id, {
 				...file,
-				chunks: [],
+				chunks: {},
 				downloadedBytes: 0,
 			});
 		});
@@ -263,7 +264,7 @@ class DownloadManager {
 		}
 
 		file.downloadedBytes += chunk.data.byteLength;
-		file.chunks.push(chunk);
+		file.chunks[chunk.index] = chunk.data;
 		this.downloads.set(chunk.fileID, file);
 
 		const progress = (file.downloadedBytes / file.size) * 100;

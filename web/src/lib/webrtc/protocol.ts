@@ -1,5 +1,13 @@
-import { CHUNK_INDEX_SIZE, FILE_ID_SIZE } from "../constants";
-import type { Chunk } from "./file";
+export const PACKET_SIZE = 16 * 1024;
+export const FILE_ID_SIZE = 16;
+export const CHUNK_INDEX_SIZE = 4;
+export const CHUNK_DATA_SIZE = PACKET_SIZE - FILE_ID_SIZE - CHUNK_INDEX_SIZE;
+
+export type Chunk = {
+	fileID: string;
+	index: number;
+	data: Uint8Array;
+};
 
 /**
  * Creates a binary packet with the following structure:

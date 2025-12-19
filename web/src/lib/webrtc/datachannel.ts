@@ -1,6 +1,6 @@
 import * as z from "zod/mini";
 import { FileMetadataSchema } from "../file";
-import { MESSAGE_SIZE } from "../constants";
+import { PACKET_SIZE } from "./protocol";
 
 export const DataChannelEvents = {
 	ShareFiles: "share-files",
@@ -68,7 +68,7 @@ export class DataChannelMessageQueue {
 		channel: RTCDataChannel,
 		onSend?: (message: MessageQueueMessage) => void,
 	) {
-		channel.bufferedAmountLowThreshold = MESSAGE_SIZE;
+		channel.bufferedAmountLowThreshold = PACKET_SIZE;
 		this.#channel = channel;
 		this.#onSend = onSend;
 	}
@@ -112,7 +112,7 @@ export class DataChannelMessageQueue {
 
 function waitToFreeBuffer(chan: RTCDataChannel): Promise<void> {
 	return new Promise((resolve) => {
-		const threshold = MESSAGE_SIZE * 8;
+		const threshold = PACKET_SIZE * 8;
 		if (chan.bufferedAmount < threshold) {
 			return resolve();
 		}

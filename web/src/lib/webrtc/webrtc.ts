@@ -22,7 +22,7 @@ import {
 	type RequestFileMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
-import { decodeChunk } from "../file/encoding";
+import { decodeChunk } from "./protocol";
 
 export async function createOffer(socket: WebSocketManager, target: string) {
 	const session = $session.get();

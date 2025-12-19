@@ -1,9 +1,16 @@
 import { atom, map } from "nanostores";
 import { nanoid } from "nanoid";
 import * as z from "zod/mini";
-import { $peer, DataChannelMessageQueue, sendToChannel } from "../webrtc";
-import { decodeChunk, encodeChunk } from "./encoding";
-import { CHUNK_DATA_SIZE, MESSAGE_SIZE } from "../constants";
+import {
+	$peer,
+	CHUNK_DATA_SIZE,
+	DataChannelMessageQueue,
+	decodeChunk,
+	encodeChunk,
+	PACKET_SIZE,
+	sendToChannel,
+	type Chunk,
+} from "../webrtc";
 
 export const FileMetadataSchema = z.object({
 	id: z.string(),
@@ -22,12 +29,6 @@ function createFileMetadata(file: File): FileMetadata {
 		size: file.size,
 	};
 }
-
-export type Chunk = {
-	fileID: string;
-	index: number;
-	data: Uint8Array;
-};
 
 type FileUpload = FileMetadata & { file: File };
 
@@ -90,7 +91,7 @@ export function sendFile(
 		return;
 	}
 
-	chan.bufferedAmountLowThreshold = MESSAGE_SIZE;
+	chan.bufferedAmountLowThreshold = PACKET_SIZE;
 
 	let sentBytes = 0;
 	const queue = new DataChannelMessageQueue(chan, (msg) => {

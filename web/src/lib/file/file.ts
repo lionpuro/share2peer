@@ -25,6 +25,7 @@ function createFileMetadata(file: File): FileMetadata {
 
 export type Chunk = {
 	fileID: string;
+	index: number;
 	data: Uint8Array;
 };
 
@@ -97,7 +98,7 @@ export function sendFile(
 			return;
 		}
 		try {
-			const chunk = decodeChunk(new Uint8Array(msg));
+			const chunk = decodeChunk(msg);
 			sentBytes += chunk.data.byteLength;
 			const val = $uploadState.get();
 			if (!val) return;
@@ -112,21 +113,24 @@ export function sendFile(
 
 	const reader = new FileReader();
 	let offset = 0;
+	let chunkIndex = 0;
 	reader.addEventListener("load", (e) => {
 		const result = e.target?.result;
 		if (!result || !(result instanceof ArrayBuffer)) {
+			console.error("invalid reader result type");
 			return;
 		}
 
 		const chunk: Chunk = {
 			fileID: meta.id,
+			index: chunkIndex,
 			data: new Uint8Array(result),
 		};
-		const c = encodeChunk(chunk);
-		const buf = c.buffer.slice(c.byteOffset, c.byteLength + c.byteOffset);
+		const buf = encodeChunk(chunk);
 		queue.enqueue(buf);
 
 		offset += result.byteLength;
+		chunkIndex++;
 		if (offset < file.size) {
 			readSlice(offset);
 		}
@@ -140,29 +144,28 @@ export function sendFile(
 
 async function createDownloadStream(
 	fileID: string,
-	chunks: Uint8Array[],
+	chunks: Chunk[],
 ): Promise<ReadableStream<Uint8Array>> {
-	let currentChunk = 0;
+	let current = 0;
 
 	return new ReadableStream<Uint8Array>({
 		async pull(controller) {
 			try {
-				if (currentChunk >= chunks.length) {
+				if (current >= chunks.length) {
 					controller.close();
 					return;
 				}
 
-				const chunk = chunks[currentChunk];
+				const chunk = chunks.find((c) => c.index === current);
 				if (!chunk) {
 					controller.error(
-						new Error(`missing chunk ${currentChunk} for file ${fileID}`),
+						new Error(`missing chunk ${current} for file ${fileID}`),
 					);
 					return;
 				}
 
-				const data = new Uint8Array(chunk);
-				controller.enqueue(data);
-				currentChunk++;
+				controller.enqueue(chunk.data);
+				current++;
 			} catch (err) {
 				controller.error(err);
 			}
@@ -216,7 +219,7 @@ function resetDownloadProgress() {
 }
 
 type Download = FileMetadata & {
-	chunks: Uint8Array[];
+	chunks: Chunk[];
 	downloadedBytes: number;
 };
 
@@ -260,7 +263,7 @@ class DownloadManager {
 		}
 
 		file.downloadedBytes += chunk.data.byteLength;
-		file.chunks.push(chunk.data);
+		file.chunks.push(chunk);
 		this.downloads.set(chunk.fileID, file);
 
 		const progress = (file.downloadedBytes / file.size) * 100;
@@ -274,7 +277,8 @@ class DownloadManager {
 					"downloadedCount",
 					$downloadProgress.get().downloadedCount + 1,
 				);
-				await createBlob(file).then((blob) => downloadBlob(blob, file.name));
+				const blob = await createBlob(file);
+				downloadBlob(blob, file.name);
 				const next = findMapKey(
 					this.downloads,
 					(f) => f.downloadedBytes < f.size,

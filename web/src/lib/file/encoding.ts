@@ -1,21 +1,39 @@
-import { FILE_ID_SIZE } from "../constants";
+import { CHUNK_INDEX_SIZE, FILE_ID_SIZE } from "../constants";
 import type { Chunk } from "./file";
 
-export function encodeChunk(chunk: Chunk): Uint8Array<ArrayBuffer> {
-	const { fileID, data } = chunk;
+/**
+ * Creates a binary packet with the following structure:
+ * 16 bytes: file id
+ * 4 bytes: chunk index
+ * n bytes: chunk data
+ */
+export function encodeChunk(chunk: Chunk): ArrayBuffer {
+	const { fileID, index, data } = chunk;
 	const id = encodeID(fileID);
-	const result = new Uint8Array(id.byteLength + data.byteLength);
-	result.set(id, 0);
-	result.set(data, id.byteLength);
-	return result;
+
+	const buf = new ArrayBuffer(
+		FILE_ID_SIZE + CHUNK_INDEX_SIZE + data.byteLength,
+	);
+
+	const uint8 = new Uint8Array(buf);
+	uint8.set(id, 0);
+
+	const uint32 = new Uint32Array(buf, FILE_ID_SIZE, 1);
+	uint32[0] = index;
+
+	uint8.set(data, FILE_ID_SIZE + CHUNK_INDEX_SIZE);
+
+	return buf;
 }
 
-export function decodeChunk(uint8: Uint8Array): Chunk {
-	const id = uint8.subarray(0, FILE_ID_SIZE);
+export function decodeChunk(buf: ArrayBuffer): Chunk {
+	const id = new Uint8Array(buf, 0, FILE_ID_SIZE);
 	const fileID = decodeID(id);
-	const data = uint8.subarray(FILE_ID_SIZE);
+	const index = new Uint32Array(buf, FILE_ID_SIZE, 1)[0];
+	const data = new Uint8Array(buf, FILE_ID_SIZE + CHUNK_INDEX_SIZE);
 	const chunk: Chunk = {
 		fileID: fileID,
+		index: index,
 		data: data,
 	};
 	return chunk;

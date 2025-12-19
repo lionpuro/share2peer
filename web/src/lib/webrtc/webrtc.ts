@@ -159,9 +159,7 @@ function registerDataChannelListeners(peer: Peer) {
 					console.error("received chunk without metadata");
 					return;
 				}
-				downloadManager.handleChunk(
-					decodeChunk(new Uint8Array(e.data as ArrayBuffer)),
-				);
+				downloadManager.handleChunk(decodeChunk(e.data as ArrayBuffer));
 				return;
 			}
 			if (typeof e.data !== "string") {

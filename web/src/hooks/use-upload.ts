@@ -4,7 +4,7 @@ import {
 	sendCancelShare,
 	shareFiles,
 	stopTransfer,
-} from "../lib/file";
+} from "#/lib/file";
 
 export function useUpload() {
 	const uploads = useStore($uploads);

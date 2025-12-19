@@ -14,15 +14,15 @@ import {
 	SocketMessageEvent,
 	type Message,
 	type SocketMessageEventTarget,
-} from "../message";
-import { $session, type Client } from "../session";
+} from "#/lib/message";
+import { $session, type Client } from "#/lib/session";
 import {
 	closePeerConnection,
 	createOffer,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
-} from "../webrtc";
+} from "#/lib/webrtc";
 
 export const $identity = atom<Client | null>(null);
 export const $isConnected = atom<boolean>(false);

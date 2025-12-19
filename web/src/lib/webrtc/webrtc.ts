@@ -1,19 +1,19 @@
 import { $peer, createPeer, type Peer } from "./peer";
-import { $session } from "../session";
-import { $identity, type WebSocketManager } from "../socket";
+import { $session } from "#/lib/session";
+import { $identity, type WebSocketManager } from "#/lib/socket";
 import {
 	MessageType,
 	type AnswerMessage,
 	type ICECandidateMessage,
 	type OfferMessage,
-} from "../message";
+} from "#/lib/message";
 import {
 	$uploads,
 	sendFile,
 	stopTransfer,
 	shareUploads,
 	downloadManager,
-} from "../file";
+} from "#/lib/file";
 import {
 	DataChannelEvents,
 	RequestFileSchema,

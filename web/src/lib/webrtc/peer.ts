@@ -1,5 +1,5 @@
 import { atom } from "nanostores";
-import type { FileMetadata } from "../file";
+import type { FileMetadata } from "#/lib/file";
 
 export const $peer = atom<Peer | null>(null);
 

@@ -4,7 +4,7 @@ import {
 	joinSession,
 	leaveSession,
 	requestSession,
-} from "../lib/session";
+} from "#/lib/session";
 
 export function useSession() {
 	const session = useStore($session);

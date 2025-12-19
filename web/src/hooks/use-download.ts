@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
-import { $downloadProgress, downloadManager } from "../lib/file";
-import { $peer } from "../lib/webrtc";
+import { $downloadProgress, downloadManager } from "#/lib/file";
+import { $peer } from "#/lib/webrtc";
 
 export function useDownload() {
 	const manager = downloadManager;

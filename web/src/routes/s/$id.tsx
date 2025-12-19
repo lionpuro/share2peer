@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { $identity } from "../../lib/socket";
-import { type MessageEventListener } from "../../lib/message";
-import { Loader } from "../../components/loader";
+import { useStore } from "@nanostores/react";
+import { $identity } from "#/lib/socket";
+import { type MessageEventListener } from "#/lib/message";
+import { Loader } from "#/components/loader";
 import {
 	IconCheck,
 	IconCopy,
@@ -16,18 +17,17 @@ import {
 	IconMobile,
 	IconTablet,
 	IconX,
-} from "../../icons";
-import { Main } from "../../components/main";
-import { type DeviceType } from "../../lib/session";
-import { useSession } from "../../hooks/use-session";
-import { $peer } from "../../lib/webrtc";
-import { useStore } from "@nanostores/react";
-import { FileInput } from "../../components/file-input";
-import { type FileMetadata } from "../../lib/file";
-import { useDownload } from "../../hooks/use-download";
-import { useUpload } from "../../hooks/use-upload";
-import { formatFileSize } from "../../lib/helper";
-import { useSocket } from "../../hooks/use-socket";
+} from "#/icons";
+import { Main } from "#/components/main";
+import { type DeviceType } from "#/lib/session";
+import { useSession } from "#/hooks/use-session";
+import { $peer } from "#/lib/webrtc";
+import { FileInput } from "#/components/file-input";
+import { type FileMetadata } from "#/lib/file";
+import { useDownload } from "#/hooks/use-download";
+import { useUpload } from "#/hooks/use-upload";
+import { formatFileSize } from "#/lib/helper";
+import { useSocket } from "#/hooks/use-socket";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,

@@ -1,5 +1,5 @@
 import * as z from "zod/mini";
-import { FileMetadataSchema } from "../file";
+import { FileMetadataSchema } from "#/lib/file";
 import { PACKET_SIZE } from "./protocol";
 
 export const DataChannelEvents = {

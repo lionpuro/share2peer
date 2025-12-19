@@ -10,7 +10,7 @@ import {
 	PACKET_SIZE,
 	sendToChannel,
 	type Chunk,
-} from "../webrtc";
+} from "#/lib/webrtc";
 
 export const FileMetadataSchema = z.object({
 	id: z.string(),

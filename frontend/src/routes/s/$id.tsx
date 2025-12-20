@@ -168,14 +168,19 @@ function Component() {
 								></progress>
 							</>
 						)}
-						<button
-							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
-							onClick={handleDownload}
-							disabled={download.status === "downloading"}
-						>
-							<IconDownload size={18} />
-							Start download
-						</button>
+						{!(
+							download.totalFiles > 0 &&
+							download.downloadedFiles === download.totalFiles
+						) && (
+							<button
+								className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
+								onClick={handleDownload}
+								disabled={download.status === "downloading"}
+							>
+								<IconDownload size={18} />
+								Start download
+							</button>
+						)}
 					</div>
 				) : uploads.length > 0 ? (
 					<div className="flex flex-col">

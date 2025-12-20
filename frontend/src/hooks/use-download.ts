@@ -11,6 +11,7 @@ export function useDownload() {
 		if (!peer || peer.files.length === 0) {
 			return;
 		}
+		manager.setFiles(peer.files);
 		manager.startDownload(peer.files[0].id);
 	};
 	return {

@@ -215,7 +215,6 @@ function handleReadyToReceive(peer: Peer) {
 
 function handleShareFiles(data: ShareFilesMessage) {
 	stopTransfer();
-	downloadManager.setFiles(data.payload.files);
 	const peer = $peer.get();
 	if (!peer) return;
 	$peer.set({ ...peer, files: data.payload.files });

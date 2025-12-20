@@ -230,6 +230,7 @@ class DownloadManager {
 	downloads: Map<string, Download> = new Map();
 
 	setFiles(files: FileMetadata[]) {
+		resetDownloadProgress();
 		files.forEach((file) => {
 			this.downloads.set(file.id, {
 				...file,
@@ -274,7 +275,7 @@ class DownloadManager {
 		}
 
 		try {
-			if (file.downloadedBytes >= file.size) {
+			if (file.downloadedBytes === file.size) {
 				$downloadProgress.setKey(
 					"downloadedCount",
 					$downloadProgress.get().downloadedCount + 1,

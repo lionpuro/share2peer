@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Main } from "#/components/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
+import { Loader } from "#/components/loader";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -11,10 +12,10 @@ export const Route = createFileRoute("/")({
 function Component() {
 	const { session, requestSession, leaveSession } = useSession();
 	const [shareCode, setShareCode] = useState("");
-	const { connected } = useSocket();
+	const { connectionState } = useSocket();
 
 	function handleCreate() {
-		if (!connected) {
+		if (connectionState !== "open") {
 			console.log("WebSocket not connected, waiting for a reconnect...");
 			return;
 		}
@@ -22,14 +23,17 @@ function Component() {
 	}
 
 	useEffect(() => {
-		if (!connected) {
+		if (connectionState !== "open") {
 			return;
 		}
 		if (session?.id) {
 			leaveSession(session.id);
 		}
-	}, [connected, session, leaveSession]);
+	}, [connectionState, session, leaveSession]);
 
+	if (connectionState !== "open" && connectionState !== "error") {
+		return <Loader />;
+	}
 	return (
 		<Main>
 			<h3 className="mb-2 text-xl font-semibold">Share</h3>

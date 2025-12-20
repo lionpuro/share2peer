@@ -25,7 +25,10 @@ import {
 } from "#/lib/webrtc";
 
 export const $identity = atom<Client | null>(null);
-export const $isConnected = atom<boolean>(false);
+
+type ConnectionState = "closed" | "connecting" | "open" | "error";
+
+export const $connectionState = atom<ConnectionState>("closed");
 
 export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
 	#url: string;
@@ -37,16 +40,18 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 	}
 
 	connect() {
+		$connectionState.set("connecting");
 		this.#ws = new WebSocket(this.#url);
 
 		this.#ws.addEventListener("error", (e) => {
+			$connectionState.set("error");
 			console.error("WebSocket error: " + JSON.stringify(e));
 		});
 		this.#ws.addEventListener("open", () => {
-			$isConnected.set(true);
+			$connectionState.set("open");
 		});
 		this.#ws.addEventListener("close", () => {
-			$isConnected.set(false);
+			$connectionState.set("closed");
 			closePeerConnection();
 			setTimeout(() => {
 				this.connect();
@@ -143,7 +148,7 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 			this.#ws = null;
 		}
 		$session.set(null);
-		$isConnected.set(false);
+		$connectionState.set("closed");
 	}
 
 	send<T extends Message>(msg: T) {

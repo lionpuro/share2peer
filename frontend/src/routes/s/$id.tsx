@@ -39,7 +39,7 @@ function Component() {
 	const { session, joinSession, leaveSession } = useSession();
 	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${id}`;
 	const [copied, setCopied] = useState(false);
-	const { socket, connected } = useSocket();
+	const { socket, connectionState } = useSocket();
 	const { uploads, uploadFiles, removeUploads } = useUpload();
 	const download = useDownload();
 
@@ -57,7 +57,7 @@ function Component() {
 		}, []);
 
 	useEffect(() => {
-		if (!connected || session !== null) {
+		if (connectionState !== "open" || session !== null) {
 			return;
 		}
 
@@ -70,7 +70,7 @@ function Component() {
 		return () => {
 			socket.removeEventListener("session-joined", handleJoined);
 		};
-	}, [id, socket, connected, session, joinSession, handleJoined]);
+	}, [id, socket, connectionState, session, joinSession, handleJoined]);
 
 	function handleCopy() {
 		setCopied(true);
@@ -90,7 +90,7 @@ function Component() {
 	const peer = useStore($peer);
 	const identity = useStore($identity);
 
-	if (!connected) {
+	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader text="Connecting..." />;
 	}
 	if (!session) {

@@ -9,13 +9,14 @@ import {
 } from "#/lib/message";
 import {
 	$uploads,
-	sendFile,
 	stopTransfer,
 	shareUploads,
 	downloadManager,
+	transferManager,
 } from "#/lib/file";
 import {
 	DataChannelEvents,
+	DataChannelMessageQueue,
 	RequestFileSchema,
 	sendToChannel,
 	ShareFilesSchema,
@@ -34,9 +35,10 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 		return;
 	}
 	const peer = createPeer(target);
-	$peer.set(peer);
 	peer.dataChannel = peer.connection.createDataChannel("files");
 	peer.dataChannel.binaryType = "arraybuffer";
+	peer.messageQueue = new DataChannelMessageQueue(peer.dataChannel);
+	$peer.set(peer);
 	registerPeerConnectionListeners(peer, socket);
 	registerDataChannelListeners(peer);
 
@@ -131,6 +133,7 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 	peer.connection.addEventListener("datachannel", (e) => {
 		peer.dataChannel = e.channel;
 		peer.dataChannel.binaryType = "arraybuffer";
+		peer.messageQueue = new DataChannelMessageQueue(peer.dataChannel);
 		registerDataChannelListeners(peer);
 	});
 }
@@ -230,11 +233,14 @@ async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
 		return;
 	}
 	const { file, ...meta } = upload;
-	sendFile(peer.dataChannel, file, meta);
+	if (!peer.messageQueue) {
+		console.error("no message queue for peer");
+		return;
+	}
+	transferManager.sendFile(peer.messageQueue, file, meta);
 }
 
 function handleCancelShare() {
-	stopTransfer();
 	downloadManager.reset();
 	const peer = $peer.get();
 	if (!peer) return;

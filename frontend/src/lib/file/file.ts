@@ -7,7 +7,6 @@ import {
 	DataChannelMessageQueue,
 	decodeChunk,
 	encodeChunk,
-	PACKET_SIZE,
 	sendToChannel,
 	type Chunk,
 } from "#/lib/webrtc";
@@ -81,67 +80,83 @@ type UploadState = {
 
 export const $uploadState = atom<UploadState | null>(null);
 
-export function sendFile(
-	chan: RTCDataChannel | undefined,
-	file: File,
-	meta: FileMetadata,
-) {
-	if (!chan || chan.readyState !== "open") {
-		console.warn("data channel is not ready");
-		return;
+class TransferManager {
+	#current: { file: File; metadata: FileMetadata } | null = null;
+	#queue: DataChannelMessageQueue | null = null;
+	sending = false;
+
+	stop() {
+		this.sending = false;
+		this.#current = null;
+		this.#queue?.stop();
+		this.#queue?.clear();
+		this.#queue = null;
 	}
 
-	chan.bufferedAmountLowThreshold = PACKET_SIZE;
+	sendFile(queue: DataChannelMessageQueue, file: File, metadata: FileMetadata) {
+		this.#current = { file, metadata };
+		this.#queue = queue;
+		this.sending = true;
 
-	let sentBytes = 0;
-	const queue = new DataChannelMessageQueue(chan, (msg) => {
-		if (!(msg instanceof ArrayBuffer)) {
-			return;
-		}
-		try {
-			const chunk = decodeChunk(msg);
-			sentBytes += chunk.data.byteLength;
-			const val = $uploadState.get();
-			if (!val) return;
-			$uploadState.set({
-				...val,
-				progress: (sentBytes / file.size) * 100,
-			});
-		} catch (err) {
-			console.error(err);
-		}
-	});
+		let sentBytes = 0;
 
-	const reader = new FileReader();
-	let offset = 0;
-	let chunkIndex = 0;
-	reader.addEventListener("load", (e) => {
-		const result = e.target?.result;
-		if (!result || !(result instanceof ArrayBuffer)) {
-			console.error("invalid reader result type");
-			return;
-		}
-
-		const chunk: Chunk = {
-			fileID: meta.id,
-			index: chunkIndex,
-			data: new Uint8Array(result),
+		const handleSend = (e: CustomEvent<string | ArrayBuffer>) => {
+			const msg = e.detail;
+			if (!(msg instanceof ArrayBuffer)) {
+				return;
+			}
+			try {
+				const chunk = decodeChunk(msg);
+				sentBytes += chunk.data.byteLength;
+				const val = $uploadState.get();
+				if (!val) return;
+				$uploadState.set({
+					...val,
+					progress: (sentBytes / file.size) * 100,
+				});
+				if (sentBytes >= file.size) {
+					this.#queue?.removeEventListener("send", handleSend);
+				}
+			} catch (err) {
+				console.error(err);
+			}
 		};
-		const buf = encodeChunk(chunk);
-		queue.enqueue(buf);
+		this.#queue?.addEventListener("send", handleSend);
 
-		offset += result.byteLength;
-		chunkIndex++;
-		if (offset < file.size) {
-			readSlice(offset);
-		}
-	});
-	const readSlice = (o: number) => {
-		const slice = file.slice(offset, o + CHUNK_DATA_SIZE);
-		reader.readAsArrayBuffer(slice);
-	};
-	readSlice(0);
+		const reader = new FileReader();
+		let offset = 0;
+		let chunkIndex = 0;
+
+		reader.addEventListener("load", (e) => {
+			if (!this.sending || !this.#current || !this.#queue) return;
+			const result = e.target?.result;
+			if (!result || !(result instanceof ArrayBuffer)) {
+				console.error("invalid reader result type");
+				return;
+			}
+
+			const chunk: Chunk = {
+				fileID: this.#current.metadata.id,
+				index: chunkIndex,
+				data: new Uint8Array(result),
+			};
+			const buf = encodeChunk(chunk);
+			this.#queue.enqueue(buf);
+
+			offset += result.byteLength;
+			chunkIndex++;
+			if (offset < file.size) {
+				readSlice(offset);
+			}
+		});
+		const readSlice = (o: number) => {
+			const slice = file.slice(offset, o + CHUNK_DATA_SIZE);
+			reader.readAsArrayBuffer(slice);
+		};
+		readSlice(0);
+	}
 }
+export const transferManager = new TransferManager();
 
 async function createDownloadStream(
 	fileID: string,
@@ -194,7 +209,7 @@ export function downloadBlob(blob: Blob, name: string) {
 
 export function stopTransfer() {
 	$uploadState.set(null);
-	downloadManager.reset();
+	transferManager.stop();
 }
 
 type DownloadProgress = {

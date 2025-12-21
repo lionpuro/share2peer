@@ -1,6 +1,7 @@
 import * as z from "zod/mini";
 import { FileMetadataSchema } from "#/lib/file";
 import { PACKET_SIZE } from "./protocol";
+import type { CustomEventTarget } from "../events";
 
 export const DataChannelEvents = {
 	ShareFiles: "share-files",
@@ -58,27 +59,27 @@ export function sendToChannel(
 
 type MessageQueueMessage = string | ArrayBuffer;
 
-export class DataChannelMessageQueue {
+type EventMap = {
+	send: CustomEvent<MessageQueueMessage>;
+};
+
+export class DataChannelMessageQueue extends (EventTarget as CustomEventTarget<EventMap>) {
 	#channel: RTCDataChannel;
 	#queue: MessageQueueMessage[] = [];
 	#sending = false;
-	#onSend?: (message: MessageQueueMessage) => void;
 
-	constructor(
-		channel: RTCDataChannel,
-		onSend?: (message: MessageQueueMessage) => void,
-	) {
+	constructor(channel: RTCDataChannel) {
+		super();
 		channel.bufferedAmountLowThreshold = PACKET_SIZE;
 		this.#channel = channel;
-		this.#onSend = onSend;
 	}
 
 	enqueue(msg: MessageQueueMessage) {
 		this.#queue.push(msg);
-		this.flush();
+		this.#flush();
 	}
 
-	private async flush() {
+	async #flush() {
 		if (this.#sending) {
 			return;
 		}
@@ -97,7 +98,9 @@ export class DataChannelMessageQueue {
 				} else {
 					this.#channel.send(next);
 				}
-				this.#onSend?.(next);
+				this.dispatchEvent(
+					new CustomEvent<MessageQueueMessage>("send", { detail: next }),
+				);
 			} catch (err) {
 				console.error(err);
 			}
@@ -107,6 +110,10 @@ export class DataChannelMessageQueue {
 
 	stop() {
 		this.#sending = false;
+	}
+
+	clear() {
+		this.#queue = [];
 	}
 }
 

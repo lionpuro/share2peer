@@ -15,7 +15,8 @@ import {
 	type Message,
 	type SocketMessageEventTarget,
 } from "#/lib/message";
-import { $session, type Client } from "#/lib/session";
+import { $session } from "#/lib/session";
+import type { Client } from "#/lib/client";
 import {
 	closePeerConnection,
 	createOffer,

@@ -2,23 +2,7 @@ import { atom } from "nanostores";
 import * as z from "zod/mini";
 import { socket } from "./socket";
 import { MessageType } from "./message";
-
-const DeviceTypeSchema = z.union([
-	z.literal("desktop"),
-	z.literal("tablet"),
-	z.literal("mobile"),
-	z.literal("unknown"),
-]);
-
-export type DeviceType = z.infer<typeof DeviceTypeSchema>;
-
-export const ClientSchema = z.object({
-	id: z.string(),
-	device_type: DeviceTypeSchema,
-	device_name: z.string(),
-});
-
-export type Client = z.infer<typeof ClientSchema>;
+import { ClientSchema } from "./client";
 
 export const SessionSchema = z.object({
 	id: z.string(),

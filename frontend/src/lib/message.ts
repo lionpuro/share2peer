@@ -1,6 +1,7 @@
 import * as z from "zod/mini";
 import type { CustomEventTarget } from "./events";
-import { ClientSchema, SessionSchema } from "./session";
+import { SessionSchema } from "./session";
+import { ClientSchema } from "./client";
 
 export const MessageType = {
 	Error: "error",

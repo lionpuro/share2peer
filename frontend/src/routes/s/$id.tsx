@@ -19,7 +19,7 @@ import {
 	IconX,
 } from "#/icons";
 import { Main } from "#/components/main";
-import { type DeviceType } from "#/lib/session";
+import { type DeviceType } from "#/lib/client";
 import { useSession } from "#/hooks/use-session";
 import { $peer } from "#/lib/webrtc";
 import { FileInput } from "#/components/file-input";

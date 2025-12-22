@@ -1,6 +1,5 @@
 import { atom } from "nanostores";
 import type { FileMetadata } from "#/lib/file";
-import type { DataChannelMessageQueue } from "./datachannel";
 
 export const $peer = atom<Peer | null>(null);
 
@@ -8,7 +7,6 @@ export type Peer = {
 	id: string;
 	connection: RTCPeerConnection;
 	dataChannel?: RTCDataChannel;
-	messageQueue?: DataChannelMessageQueue;
 	files: FileMetadata[];
 };
 

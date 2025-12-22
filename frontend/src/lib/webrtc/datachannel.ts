@@ -1,7 +1,6 @@
 import * as z from "zod/mini";
 import { FileMetadataSchema } from "#/lib/file";
 import { PACKET_SIZE } from "./protocol";
-import type { CustomEventTarget } from "../events";
 
 export const DataChannelEvents = {
 	ShareFiles: "share-files",
@@ -57,67 +56,16 @@ export function sendToChannel(
 	chan.send(JSON.stringify(msg));
 }
 
-type MessageQueueMessage = string | ArrayBuffer;
-
-type EventMap = {
-	send: CustomEvent<MessageQueueMessage>;
-};
-
-export class DataChannelMessageQueue extends (EventTarget as CustomEventTarget<EventMap>) {
-	#channel: RTCDataChannel;
-	#queue: MessageQueueMessage[] = [];
-	#sending = false;
-
-	constructor(channel: RTCDataChannel) {
-		super();
-		channel.bufferedAmountLowThreshold = PACKET_SIZE;
-		this.#channel = channel;
-	}
-
-	enqueue(msg: MessageQueueMessage) {
-		this.#queue.push(msg);
-		this.#flush();
-	}
-
-	async #flush() {
-		if (this.#sending) {
-			return;
-		}
-		this.#sending = true;
-
-		while (this.#queue.length > 0) {
-			if (!this.#sending) {
-				return;
-			}
-			await waitToFreeBuffer(this.#channel);
-			const next = this.#queue.shift();
-			if (!next) return;
-			try {
-				if (next instanceof ArrayBuffer) {
-					this.#channel.send(next);
-				} else {
-					this.#channel.send(next);
-				}
-				this.dispatchEvent(
-					new CustomEvent<MessageQueueMessage>("send", { detail: next }),
-				);
-			} catch (err) {
-				console.error(err);
-			}
-		}
-		this.#sending = false;
-	}
-
-	stop() {
-		this.#sending = false;
-	}
-
-	clear() {
-		this.#queue = [];
-	}
+export async function sendPacket(
+	chan: RTCDataChannel,
+	packet: ArrayBuffer,
+): Promise<void> {
+	await waitToFreeBuffer(chan);
+	chan.send(packet);
 }
 
 function waitToFreeBuffer(chan: RTCDataChannel): Promise<void> {
+	chan.bufferedAmountLowThreshold = PACKET_SIZE;
 	return new Promise((resolve) => {
 		const threshold = PACKET_SIZE * 8;
 		if (chan.bufferedAmount < threshold) {

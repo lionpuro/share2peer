@@ -185,6 +185,9 @@ function registerDataChannelListeners(peer: Peer) {
 				case DataChannelEvents.CancelShare:
 					handleCancelShare();
 					break;
+				case DataChannelEvents.CancelDownload:
+					stopTransfer();
+					break;
 				default:
 					console.warn(
 						"datachannel message: unrecognized message type:",
@@ -256,6 +259,13 @@ export function closePeerConnection() {
 	peer.connection.close();
 	peer.dataChannel?.close();
 	$peer.set(null);
+}
+
+export function sendCancelDownload(chan: RTCDataChannel, fileID: string) {
+	sendToChannel(chan, {
+		type: "cancel-download",
+		payload: { file_id: fileID },
+	});
 }
 
 type TransferState = {

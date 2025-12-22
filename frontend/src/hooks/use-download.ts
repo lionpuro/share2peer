@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { $downloadProgress, downloadManager } from "#/lib/file";
-import { $peer } from "#/lib/webrtc";
+import { $peer, sendCancelDownload } from "#/lib/webrtc";
 
 export function useDownload() {
 	const manager = downloadManager;
@@ -14,6 +14,11 @@ export function useDownload() {
 		manager.setFiles(peer.files);
 		manager.startDownload(peer.files[0].id);
 	};
+	const cancel = () => {
+		if (!peer || !peer.dataChannel || !downloading || !manager.current) return;
+		sendCancelDownload(peer.dataChannel, manager.current);
+		manager.reset();
+	};
 	return {
 		status: (progress === 100 && downloadedCount === totalCount
 			? "complete"
@@ -24,5 +29,6 @@ export function useDownload() {
 		downloadedFiles: downloadedCount,
 		totalFiles: totalCount,
 		start: start,
+		cancel: cancel,
 	};
 }

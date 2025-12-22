@@ -6,6 +6,7 @@ export const DataChannelEvents = {
 	ShareFiles: "share-files",
 	RequestFile: "request-file",
 	CancelShare: "cancel-share",
+	CancelDownload: "cancel-download",
 	ReadyToReceive: "ready-to-receive",
 } as const;
 
@@ -32,6 +33,13 @@ export const CancelShareSchema = z.object({
 
 export type CancelShareMessage = z.infer<typeof CancelShareSchema>;
 
+export const CancelDownloadSchema = z.object({
+	type: z.literal(DataChannelEvents.CancelDownload),
+	payload: z.object({ file_id: z.string() }),
+});
+
+export type CancelDownloadMessage = z.infer<typeof CancelDownloadSchema>;
+
 export const ReadyToReceiveSchema = z.object({
 	type: z.literal(DataChannelEvents.ReadyToReceive),
 	payload: z.object({ client_id: z.string() }),
@@ -43,6 +51,7 @@ export type DataChannelMessage =
 	| ShareFilesMessage
 	| RequestFileMessage
 	| CancelShareMessage
+	| CancelDownloadMessage
 	| ReadyToReceiveMessage;
 
 export function sendToChannel(

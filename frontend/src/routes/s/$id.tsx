@@ -166,14 +166,20 @@ function Component() {
 								></progress>
 							</>
 						)}
-						{!(
-							download.totalFiles > 0 &&
-							download.downloadedFiles === download.totalFiles
-						) && (
+						{download.totalFiles > 0 &&
+						download.downloadedFiles ===
+							download.totalFiles ? null : download.status === "downloading" ? (
+							<button
+								className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+								onClick={download.cancel}
+							>
+								<IconX size={18} />
+								Cancel download
+							</button>
+						) : (
 							<button
 								className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
 								onClick={handleDownload}
-								disabled={download.status === "downloading"}
 							>
 								<IconDownload size={18} />
 								Start download

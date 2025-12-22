@@ -62,7 +62,7 @@ export function sendCancelShare() {
 	sendToChannel(peer.dataChannel, { type: "cancel-share" });
 }
 
-function requestFile(id: string) {
+function sendRequestFile(id: string) {
 	const peer = $peer.get();
 	if (!peer) return;
 	sendToChannel(peer.dataChannel, {
@@ -179,7 +179,7 @@ class DownloadManager {
 		$downloadProgress.setKey("totalCount", this.downloads.size);
 		$downloadProgress.setKey("downloading", true);
 		this.current = id;
-		requestFile(id);
+		sendRequestFile(id);
 	}
 
 	async handleChunk(chunk: Chunk) {

@@ -40,10 +40,8 @@ function Component() {
 	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${id}`;
 	const [copied, setCopied] = useState(false);
 	const { socket, connectionState } = useSocket();
-	const { uploads, uploadFiles, removeUploads } = useUpload();
+	const { uploads, uploadFiles, cancelShare } = useUpload();
 	const download = useDownload();
-
-	const handleCancel = () => removeUploads();
 
 	const handleDownload = () => {
 		download.start();
@@ -82,7 +80,7 @@ function Component() {
 
 	function handleLeave() {
 		if (!session) return;
-		handleCancel();
+		cancelShare();
 		leaveSession(session.id);
 		navigate({ to: "/" });
 	}
@@ -195,7 +193,7 @@ function Component() {
 						/>
 						<button
 							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
-							onClick={handleCancel}
+							onClick={cancelShare}
 						>
 							<IconX size={18} />
 							Cancel upload

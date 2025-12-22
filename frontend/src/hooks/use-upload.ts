@@ -1,14 +1,10 @@
 import { useStore } from "@nanostores/react";
-import {
-	$uploads,
-	sendCancelShare,
-	shareFiles,
-	stopTransfer,
-} from "#/lib/file";
+import { $uploads, sendCancelShare, shareFiles } from "#/lib/file";
+import { stopTransfer } from "#/lib/webrtc";
 
 export function useUpload() {
 	const uploads = useStore($uploads);
-	const removeUploads = () => {
+	const cancelShare = () => {
 		stopTransfer();
 		sendCancelShare();
 		$uploads.set([]);
@@ -17,6 +13,6 @@ export function useUpload() {
 	return {
 		uploads,
 		uploadFiles,
-		removeUploads,
+		cancelShare,
 	};
 }

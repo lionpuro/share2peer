@@ -1,3 +1,4 @@
+import { atom } from "nanostores";
 import { $peer, createPeer, type Peer } from "./peer";
 import { $session } from "#/lib/session";
 import { $identity, type WebSocketManager } from "#/lib/socket";
@@ -9,21 +10,21 @@ import {
 } from "#/lib/message";
 import {
 	$uploads,
-	stopTransfer,
 	shareUploads,
 	downloadManager,
-	transferManager,
+	ChunkReader,
+	type FileMetadata,
 } from "#/lib/file";
 import {
 	DataChannelEvents,
-	DataChannelMessageQueue,
 	RequestFileSchema,
+	sendPacket,
 	sendToChannel,
 	ShareFilesSchema,
 	type RequestFileMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
-import { decodeChunk } from "./protocol";
+import { decodeChunk, encodeChunk } from "./protocol";
 
 export async function createOffer(socket: WebSocketManager, target: string) {
 	const session = $session.get();
@@ -37,7 +38,6 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 	const peer = createPeer(target);
 	peer.dataChannel = peer.connection.createDataChannel("files");
 	peer.dataChannel.binaryType = "arraybuffer";
-	peer.messageQueue = new DataChannelMessageQueue(peer.dataChannel);
 	$peer.set(peer);
 	registerPeerConnectionListeners(peer, socket);
 	registerDataChannelListeners(peer);
@@ -133,7 +133,6 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 	peer.connection.addEventListener("datachannel", (e) => {
 		peer.dataChannel = e.channel;
 		peer.dataChannel.binaryType = "arraybuffer";
-		peer.messageQueue = new DataChannelMessageQueue(peer.dataChannel);
 		registerDataChannelListeners(peer);
 	});
 }
@@ -159,7 +158,7 @@ function registerDataChannelListeners(peer: Peer) {
 		try {
 			if (e.data instanceof ArrayBuffer) {
 				if (!downloadManager.current) {
-					console.error("received chunk without metadata");
+					console.warn("received chunk without metadata");
 					return;
 				}
 				downloadManager.handleChunk(decodeChunk(e.data as ArrayBuffer));
@@ -233,11 +232,14 @@ async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
 		return;
 	}
 	const { file, ...meta } = upload;
-	if (!peer.messageQueue) {
-		console.error("no message queue for peer");
+	if (!peer.dataChannel) {
 		return;
 	}
-	transferManager.sendFile(peer.messageQueue, file, meta);
+	try {
+		await sendFile(peer.dataChannel, file, meta);
+	} catch (err) {
+		console.error("failed to send file:", err);
+	}
 }
 
 function handleCancelShare() {
@@ -254,4 +256,40 @@ export function closePeerConnection() {
 	peer.connection.close();
 	peer.dataChannel?.close();
 	$peer.set(null);
+}
+
+type TransferState = {
+	current: FileMetadata;
+	sentBytes: number;
+};
+
+const $transfer = atom<TransferState | null>(null);
+
+export function stopTransfer() {
+	$transfer.set(null);
+}
+
+async function sendFile(chan: RTCDataChannel, file: File, meta: FileMetadata) {
+	$transfer.set({ current: meta, sentBytes: 0 });
+	let index = 0;
+	let bytes = 0;
+	const reader = new ChunkReader();
+	await reader.read(file, async (chunk) => {
+		if (!$transfer.get()) {
+			reader.stop();
+			return;
+		}
+		const packet = encodeChunk({
+			fileID: meta.id,
+			index: index,
+			data: chunk,
+		});
+		await sendPacket(chan, packet);
+		bytes += chunk.byteLength;
+		index++;
+		const prev = $transfer.get();
+		if (prev) {
+			$transfer.set({ ...prev, sentBytes: bytes });
+		}
+	});
 }

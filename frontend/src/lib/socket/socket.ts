@@ -41,6 +41,11 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 	}
 
 	connect() {
+		// close previous connection
+		if (this.#ws) {
+			this.close();
+		}
+
 		$connectionState.set("connecting");
 		this.#ws = new WebSocket(this.#url);
 

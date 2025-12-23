@@ -4,7 +4,7 @@ import {
 	type DragEvent,
 	useState,
 } from "react";
-import { IconUpload } from "#/icons";
+import { IconUpload } from "#/components/icons";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
 	labelText?: string;

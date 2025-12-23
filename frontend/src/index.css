@@ -14,12 +14,12 @@
 	--color-brand-900: #1d4a2f;
 	--color-brand-950: #0b2817;
 
-	--color-white: #fafafa;
+	--color-white: #fcfcfc;
 	--color-black: #272727;
 
-	--color-background: #f2f2f2;
+	--color-background: var(--color-white);
 	--color-foreground: var(--color-black);
-	--color-card: var(--color-white);
+	--color-card: #f2f2f2;
 	--color-primary: var(--color-brand-500);
 	--color-primary-darker: var(--color-brand-600);
 	--color-primary-foreground: var(--color-brand-50);

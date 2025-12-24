@@ -11,6 +11,7 @@ import type {
 } from "#/lib/message";
 import { SessionView } from "#/components/session";
 import { toast } from "react-toastify";
+import { IconX } from "#/components/icons";
 
 type SearchParams = {
 	s?: string;
@@ -101,17 +102,9 @@ function Component() {
 		<Main>
 			{session && <SessionView session={session} />}
 			{!session && (
-				<>
-					<h3 className="mb-2 text-xl font-semibold">New session</h3>
-					<button
-						className="mb-4 w-fit rounded-md bg-primary px-3 py-1.5 text-white hover:bg-primary-darker"
-						onClick={handleCreate}
-					>
-						Create session
-					</button>
-					<h3 className="mb-2 text-xl font-semibold">Join session</h3>
-					<div className="flex items-center gap-2">
-						<label htmlFor="input-code">Enter a code:</label>
+				<div className="mx-auto mt-4 flex w-full max-w-xs flex-col">
+					<h3 className="mb-4 text-lg font-bold">Join Session</h3>
+					<div className="relative flex">
 						<input
 							id="input-code"
 							placeholder="ABC123"
@@ -119,18 +112,41 @@ function Component() {
 							maxLength={6}
 							value={joinCode}
 							onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-							className="w-[calc(6ch+1.5rem)] rounded-md border border-neutral-300 px-2 py-1.5 font-mono"
+							className="mb-4 flex-1 rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-neutral-400"
 						/>
-						<Link
-							from={Route.fullPath}
-							search={{ s: joinCode }}
-							className={`rounded-lg px-4 py-1.75 font-medium ${joinCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
-							disabled={joinCode.length !== 6}
-						>
-							Join
-						</Link>
+						{joinCode.length > 0 && (
+							<button
+								onClick={() => setJoinCode("")}
+								className="absolute right-0 p-2"
+							>
+								<IconX
+									size={20}
+									className="text-muted-foreground hover:text-foreground"
+								/>
+							</button>
+						)}
 					</div>
-				</>
+					<Link
+						from={Route.fullPath}
+						search={{ s: joinCode }}
+						className={`rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
+						disabled={joinCode.length !== 6}
+					>
+						Join
+					</Link>
+					<div className="my-6 flex items-center gap-2">
+						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
+						<span className="text-sm font-medium text-neutral-500">OR</span>
+						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
+					</div>
+					<h3 className="mb-4 text-lg font-bold">Create session</h3>
+					<button
+						className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
+						onClick={handleCreate}
+					>
+						Create
+					</button>
+				</div>
 			)}
 		</Main>
 	);

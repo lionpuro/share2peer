@@ -40,40 +40,39 @@ export function SessionView({ session }: Props) {
 	}
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div className="mx-auto flex w-full max-w-md flex-col gap-8">
 			<SessionInfo session={session} leave={handleLeave} />
-			<div className="flex flex-col">
-				{(session.clients?.length ?? 1) < 2 || !peer
-					? "Waiting for a peer to join"
-					: null}
-				{(session.clients?.length ?? 1) > 1 && (
-					<div className="mx-auto flex w-full flex-col items-center">
-						<h2 className="mb-2 hidden text-xl font-bold">Connected clients</h2>
-						<div className="flex flex-wrap justify-center">
-							{session.clients &&
-								session.clients
-									.filter((c) => c.id !== identity?.id)
-									.map((c) => (
-										<div
-											key={"client" + c.id}
-											className="flex flex-col items-center gap-1 p-2 text-sm"
-										>
-											<span className="rounded-full bg-primary p-3 text-white">
-												<DeviceIcon
-													deviceType={c.device_type}
-													className="size-6 sm:size-8"
-												/>
-											</span>
-											{c.device_name}
-										</div>
-									))}
-						</div>
+			{(session.clients?.length ?? 1) < 2 || !peer ? (
+				<p>Waiting for a peer to join</p>
+			) : null}
+			{(peer?.files.length ?? 0) < 1 && (session.clients?.length ?? 1) > 1 && (
+				<div className="flex flex-col">
+					<h2 className="mb-2 text-lg font-bold">Connected peers</h2>
+					<div className="flex flex-col">
+						{session.clients &&
+							session.clients
+								.filter((c) => c.id !== identity?.id)
+								.map((c) => (
+									<div
+										key={"client" + c.id}
+										className="flex items-center gap-2 py-1.5 text-sm font-medium"
+									>
+										<span className="rounded-full p-1">
+											<DeviceIcon
+												deviceType={c.device_type}
+												className="text-primary"
+												size={16}
+											/>
+										</span>
+										{c.device_name}
+									</div>
+								))}
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 			{peer && peer.files.length > 0 ? (
 				<div className="flex flex-col">
-					<h2 className="mb-4 text-xl font-bold">Files</h2>
+					<h2 className="mb-2 text-lg font-bold">Files</h2>
 					<FileList files={peer.files} />
 					{download.status && (
 						<span
@@ -115,7 +114,7 @@ export function SessionView({ session }: Props) {
 				</div>
 			) : uploads.length > 0 ? (
 				<div className="flex flex-col">
-					<h2 className="mb-4 text-xl font-bold">Uploads</h2>
+					<h2 className="mb-2 text-lg font-bold">Uploads</h2>
 					<FileList
 						files={uploads.map((u) => ({
 							id: u.id,

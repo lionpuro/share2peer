@@ -80,6 +80,9 @@ function Component() {
 		if (sessionID && session?.id !== sessionID) {
 			joinSession(sessionID);
 		}
+		if (session && !sessionID) {
+			leaveSession(session.id);
+		}
 		return () => {
 			if (session?.id) {
 				leaveSession(session.id);

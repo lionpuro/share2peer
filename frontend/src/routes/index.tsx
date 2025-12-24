@@ -10,6 +10,7 @@ import type {
 	MessageType,
 } from "#/lib/message";
 import { SessionView } from "#/components/session";
+import { toast } from "react-toastify";
 
 type SearchParams = {
 	s?: string;
@@ -56,7 +57,7 @@ function Component() {
 		const handleError = (e: MessageEventMap["error"]) => {
 			const err = e.detail.payload;
 			if (err.includes("session does not exist")) {
-				console.error(err);
+				toast.error(err);
 				navigate({ from: Route.fullPath, search: {} });
 			}
 		};

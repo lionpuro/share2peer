@@ -1,5 +1,7 @@
 interface ImportMetaEnv {
-	VITE_WS_URL: string;
+	VITE_DEV_WS_SERVER?: string;
+	VITE_WS_HOST: string;
+	VITE_WS_ENDPOINT: string;
 }
 
 interface ImportMeta {

@@ -168,4 +168,16 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 	}
 }
 
-export const socket = new WebSocketManager(import.meta.env.VITE_WS_URL);
+function resolveSocketURL() {
+	const { VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
+	if (!import.meta.env.DEV || !VITE_WS_HOST.startsWith("localhost")) {
+		return new URL(VITE_WS_ENDPOINT, `ws://${VITE_WS_HOST}`).toString();
+	}
+
+	const url = new URL(
+		VITE_WS_ENDPOINT,
+		`ws://${new URL(import.meta.url).host}`,
+	);
+	return url.toString();
+}
+export const socket = new WebSocketManager(resolveSocketURL());

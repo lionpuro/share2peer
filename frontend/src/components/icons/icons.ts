@@ -7,6 +7,7 @@ export {
 	BiExit as IconExit,
 	BiX as IconX,
 } from "react-icons/bi";
+export { HiMiniSignal as IconSignal } from "react-icons/hi2";
 export {
 	FaFileImage as IconFileImage,
 	FaFileVideo as IconFileVideo,

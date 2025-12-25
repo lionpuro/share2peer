@@ -15,8 +15,8 @@ import {
 	FileIcon,
 	IconCheck,
 	IconDownload,
-	IconExit,
 	IconLink,
+	IconSignal,
 	IconX,
 } from "#/components/icons";
 
@@ -40,107 +40,120 @@ export function SessionView({ session }: Props) {
 	}
 
 	return (
-		<div className="mx-auto flex w-full max-w-md flex-col gap-8">
+		<div className="mx-auto flex w-full max-w-md flex-col gap-4">
 			<SessionInfo session={session} leave={handleLeave} />
-			{(session.clients?.length ?? 1) < 2 || !peer ? (
-				<p>Waiting for a peer to join</p>
-			) : null}
-			{(peer?.files.length ?? 0) < 1 && (session.clients?.length ?? 1) > 1 && (
-				<div className="flex flex-col">
-					<h2 className="mb-2 text-lg font-bold">Connected peers</h2>
-					<div className="flex flex-col">
-						{session.clients &&
-							session.clients
+			<div className="flex flex-col rounded-xl border border-secondary p-4">
+				{session.clients && session.clients.length > 1 ? (
+					<>
+						<h2 className="mb-3 font-bold">Peers</h2>
+						<div className="flex flex-col gap-4">
+							{session.clients
 								.filter((c) => c.id !== identity?.id)
 								.map((c) => (
-									<div
-										key={"client" + c.id}
-										className="flex items-center gap-2 py-1.5 text-sm font-medium"
-									>
-										<span className="rounded-full p-1">
-											<DeviceIcon
-												deviceType={c.device_type}
-												className="text-primary"
-												size={16}
-											/>
-										</span>
-										{c.device_name}
+									<div key={"client" + c.id} className="flex flex-wrap gap-2">
+										<div className="flex w-full items-center gap-2 rounded-md bg-secondary/50 px-1.5 py-0.5 text-sm font-medium">
+											<span className="rounded-full p-1">
+												<DeviceIcon
+													deviceType={c.device_type}
+													className="text-muted-foreground/80"
+													size={16}
+												/>
+											</span>
+											{c.device_name}
+											<span className="ml-auto flex items-center gap-1 text-sm text-neutral-600">
+												{c.id === peer?.id ? "Connected" : "Connecting"}
+												<IconSignal
+													size={18}
+													className={
+														c.id === peer?.id
+															? "text-green-600/90"
+															: "text-yellow-600/90"
+													}
+												/>
+											</span>
+										</div>
 									</div>
 								))}
-					</div>
-				</div>
-			)}
-			{peer && peer.files.length > 0 ? (
-				<div className="flex flex-col">
-					<h2 className="mb-2 text-lg font-bold">Files</h2>
-					<FileList files={peer.files} />
-					{download.status && (
-						<span
-							className={`${download.status === "downloading" ? "mt-4" : "mt-6"} mb-2 text-center text-sm`}
-						>
-							{download.status === "downloading"
-								? `Transferring file ${download.downloadedFiles + 1} / ${download.totalFiles}`
-								: "Download complete!"}
-						</span>
-					)}
-					{download.status === "downloading" && (
-						<>
-							<progress
-								value={download.progress}
-								max={100}
-								className="progress h-2"
-							></progress>
-						</>
-					)}
-					{download.totalFiles > 0 &&
-					download.downloadedFiles ===
-						download.totalFiles ? null : download.status === "downloading" ? (
+						</div>
+					</>
+				) : (
+					"Waiting for a peer to join"
+				)}
+			</div>
+			<div className="flex flex-col rounded-xl border border-secondary p-4">
+				{peer && peer.files.length > 0 ? (
+					<>
+						<h2 className="mb-2 font-bold">Files</h2>
+						<FileList files={peer.files} />
+						{download.status && (
+							<span
+								className={`${download.status === "downloading" ? "mt-4" : "mt-6"} mb-2 text-center text-sm`}
+							>
+								{download.status === "downloading"
+									? `Transferring file ${download.downloadedFiles + 1} / ${download.totalFiles}`
+									: "Download complete!"}
+							</span>
+						)}
+						{download.status === "downloading" && (
+							<>
+								<progress
+									value={download.progress}
+									max={100}
+									className="progress h-2"
+								></progress>
+							</>
+						)}
+						{download.totalFiles > 0 &&
+						download.downloadedFiles ===
+							download.totalFiles ? null : download.status === "downloading" ? (
+							<button
+								className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+								onClick={download.cancel}
+							>
+								<IconX size={18} />
+								Cancel download
+							</button>
+						) : (
+							<button
+								className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
+								onClick={download.start}
+							>
+								<IconDownload size={18} />
+								Start download
+							</button>
+						)}
+					</>
+				) : uploads.length > 0 ? (
+					<div className="flex flex-col">
+						<h2 className="mb-3 font-bold">Uploads</h2>
+						<FileList
+							files={uploads.map((u) => ({
+								id: u.id,
+								name: u.file.name,
+								mime: u.file.type,
+								size: u.file.size,
+							}))}
+						/>
 						<button
-							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
-							onClick={download.cancel}
+							className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+							onClick={cancelShare}
 						>
 							<IconX size={18} />
-							Cancel download
+							Cancel upload
 						</button>
-					) : (
-						<button
-							className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
-							onClick={download.start}
-						>
-							<IconDownload size={18} />
-							Start download
-						</button>
-					)}
-				</div>
-			) : uploads.length > 0 ? (
-				<div className="flex flex-col">
-					<h2 className="mb-2 text-lg font-bold">Uploads</h2>
-					<FileList
-						files={uploads.map((u) => ({
-							id: u.id,
-							name: u.file.name,
-							mime: u.file.type,
-							size: u.file.size,
-						}))}
-					/>
-					<button
-						className="mt-8 flex items-center justify-center gap-1.5 rounded-md bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
-						onClick={cancelShare}
-					>
-						<IconX size={18} />
-						Cancel upload
-					</button>
-				</div>
-			) : (
-				<div className="mt-4">
-					<FileInput
-						className="rounded-xl bg-background/50"
-						multiple={true}
-						labelText="Upload files"
-						onFileInput={(files) => uploadFiles(files)}
-					/>
-				</div>
-			)}
+					</div>
+				) : (
+					<>
+						<h2 className="mb-3 font-bold">Share files</h2>
+						<FileInput
+							className="rounded-xl bg-card/40"
+							multiple={true}
+							labelText="Upload files"
+							onFileInput={(files) => uploadFiles(files)}
+						/>
+					</>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -163,38 +176,46 @@ function SessionInfo({
 	}
 
 	return (
-		<div className="flex w-full flex-col gap-4 rounded-lg border border-secondary p-4">
-			<div className="flex items-center">
-				<div className="flex items-center gap-1">
-					Session:
-					<span className="rounded-lg bg-secondary/50 px-3 py-1.5 font-mono font-semibold">
+		<div className="flex w-full flex-col gap-4 rounded-xl border border-secondary p-4">
+			<div className="flex flex-wrap items-center gap-3">
+				<div className="flex w-full items-center gap-1">
+					<span className="text-sm font-semibold text-muted-foreground">
+						Session:
+					</span>
+					<span className="rounded-md bg-secondary/70 px-1.5 py-0.5 font-bold">
 						{session.id}
 					</span>
+					<button
+						onClick={() => leave(session.id)}
+						className="ml-auto flex w-fit items-center justify-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white hover:bg-destructive-darker"
+					>
+						Leave
+					</button>
 				</div>
-				<button
-					disabled={copied}
-					onClick={handleCopy}
-					className="ml-auto flex min-h-9 min-w-28 items-center justify-start gap-1 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary-darker"
-				>
-					{copied ? (
-						<>
-							<IconCheck size={20} /> Copied
-						</>
-					) : (
-						<>
-							<IconLink size={16} />
-							Copy link
-						</>
-					)}
-				</button>
+				<div className="flex w-full gap-2">
+					<input
+						readOnly={true}
+						value={sessionURL}
+						className="flex-1 overflow-x-scroll rounded-lg border border-secondary px-2 py-1.5 text-sm font-medium text-neutral-600 outline-none"
+					/>
+					<button
+						disabled={copied}
+						onClick={handleCopy}
+						className="ml-auto flex min-w-28 items-center justify-start gap-1 rounded-lg bg-primary px-3 text-sm font-medium text-white hover:bg-primary-darker"
+					>
+						{copied ? (
+							<>
+								<IconCheck size={20} /> Copied
+							</>
+						) : (
+							<>
+								<IconLink size={16} />
+								Copy link
+							</>
+						)}
+					</button>
+				</div>
 			</div>
-			<button
-				onClick={() => leave(session.id)}
-				className="flex w-fit items-center justify-center gap-1.5 rounded-lg bg-destructive py-2 pr-4 pl-3 text-sm font-medium text-white hover:bg-destructive-darker"
-			>
-				<IconExit size={16} />
-				Leave
-			</button>
 		</div>
 	);
 }

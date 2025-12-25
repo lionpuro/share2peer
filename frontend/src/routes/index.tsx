@@ -103,7 +103,7 @@ function Component() {
 			{session && <SessionView session={session} />}
 			{!session && (
 				<div className="mx-auto mt-4 flex w-full max-w-xs flex-col">
-					<h3 className="mb-4 text-lg font-bold">Join Session</h3>
+					<h3 className="mb-6 text-lg leading-none font-bold">Join Session</h3>
 					<div className="relative flex">
 						<input
 							id="input-code"
@@ -139,7 +139,9 @@ function Component() {
 						<span className="text-sm font-medium text-neutral-500">OR</span>
 						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
 					</div>
-					<h3 className="mb-4 text-lg font-bold">Create session</h3>
+					<h3 className="mb-6 text-lg leading-none font-bold">
+						Create session
+					</h3>
 					<button
 						className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
 						onClick={handleCreate}

@@ -4,6 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
+		"build": "go build -o bin/share2peer",
 		"lint": "golangci-lint run"
 	}
 }

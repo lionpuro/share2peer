@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 var (
@@ -33,16 +31,17 @@ func (s *Session) AddClient(c *Client) error {
 	return nil
 }
 
-func (s *Session) RemoveClient(id uuid.UUID) {
+func (s *Session) RemoveClient(c *Client) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	var clients []*Client
-	for _, c := range s.Clients {
-		if c.ID != id {
-			clients = append(clients, c)
+	for _, cl := range s.Clients {
+		if cl.ID != c.ID {
+			clients = append(clients, cl)
 		}
 	}
+	c.sessionID = ""
 	s.Clients = clients
 }
 

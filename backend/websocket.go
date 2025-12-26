@@ -42,7 +42,7 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.He
 		if err != nil {
 			return
 		}
-		sess.RemoveClient(c.ID)
+		sess.RemoveClient(c)
 		if len(sess.Clients) < 1 {
 			wh.sessions.Delete(sess.ID)
 			return
@@ -150,6 +150,21 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		})
 	}
 
+	// leave previous session in case the client hasn't done it already
+	if c.sessionID != "" {
+		sess, err := wh.sessions.Get(c.sessionID)
+		sess.RemoveClient(c)
+		if err == nil {
+			err = wh.broadcast(c.conn, Message{
+				Type:    MessageClientLeft,
+				Payload: c,
+			}, sess.ID)
+			if err != nil {
+				log.Printf("join session: failed to broadcast to previous session: %v", err)
+			}
+		}
+	}
+
 	if err := sess.AddClient(c); err != nil {
 		if !errors.Is(err, ErrSessionFull) {
 			return err
@@ -210,7 +225,7 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 		})
 	}
 
-	sess.RemoveClient(c.ID)
+	sess.RemoveClient(c)
 
 	if err := c.conn.WriteJSON(Message{
 		Type:    MessageSessionLeft,

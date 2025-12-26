@@ -11,6 +11,7 @@ export type DeviceType = z.infer<typeof DeviceTypeSchema>;
 
 export const ClientSchema = z.object({
 	id: z.string(),
+	display_name: z.string(),
 	device_type: DeviceTypeSchema,
 	device_name: z.string(),
 });

@@ -7,19 +7,21 @@ import (
 )
 
 type Client struct {
-	ID         uuid.UUID       `json:"id"`
-	DeviceType string          `json:"device_type"`
-	DeviceName string          `json:"device_name"`
-	conn       *websocket.Conn `json:"-"`
-	sessionID  string          `json:"-"`
+	ID          uuid.UUID       `json:"id"`
+	DisplayName string          `json:"display_name"`
+	DeviceType  string          `json:"device_type"`
+	DeviceName  string          `json:"device_name"`
+	conn        *websocket.Conn `json:"-"`
+	sessionID   string          `json:"-"`
 }
 
 func createClient(conn *websocket.Conn, deviceType string, deviceName string) *Client {
 	return &Client{
-		ID:         uuid.New(),
-		DeviceType: deviceType,
-		DeviceName: deviceName,
-		conn:       conn,
+		ID:          uuid.New(),
+		DisplayName: generateName(),
+		DeviceType:  deviceType,
+		DeviceName:  deviceName,
+		conn:        conn,
 	}
 }
 

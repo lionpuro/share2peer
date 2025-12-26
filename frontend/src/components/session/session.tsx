@@ -16,7 +16,6 @@ import {
 	IconCheck,
 	IconDownload,
 	IconLink,
-	IconSignal,
 	IconX,
 } from "#/components/icons";
 
@@ -45,33 +44,29 @@ export function SessionView({ session }: Props) {
 			<div className="flex flex-col rounded-xl border border-secondary p-4">
 				{session.clients && session.clients.length > 1 ? (
 					<>
-						<h2 className="mb-3 font-bold">Peers</h2>
+						<h2 className="mb-3 text-lg font-bold">Peers</h2>
 						<div className="flex flex-col gap-4">
 							{session.clients
 								.filter((c) => c.id !== identity?.id)
 								.map((c) => (
-									<div key={"client" + c.id} className="flex flex-wrap gap-2">
-										<div className="flex w-full items-center gap-2 rounded-md bg-secondary/50 px-1.5 py-0.5 text-sm font-medium">
-											<span className="rounded-full p-1">
-												<DeviceIcon
-													deviceType={c.device_type}
-													className="text-muted-foreground/80"
-													size={16}
-												/>
-											</span>
+									<div
+										key={"client" + c.id}
+										className="flex flex-wrap items-center gap-1 rounded-md bg-secondary/50 px-2 py-1"
+									>
+										<span className="font-medium">{c.display_name}</span>
+										<span className="ml-3 flex items-center gap-1 text-sm font-medium text-muted-foreground">
+											<DeviceIcon
+												deviceType={c.device_type}
+												className="text-muted-foreground/80"
+												size={12}
+											/>
 											{c.device_name}
-											<span className="ml-auto flex items-center gap-1 text-sm text-neutral-600">
-												{c.id === peer?.id ? "Connected" : "Connecting"}
-												<IconSignal
-													size={18}
-													className={
-														c.id === peer?.id
-															? "text-green-600/90"
-															: "text-yellow-600/90"
-													}
-												/>
-											</span>
-										</div>
+										</span>
+										<span
+											className={`before:mr-1 before:content-['●'] ${c.id === peer?.id ? "before:text-green-600/90" : "before:text-yellow-600/90"} flex w-full items-center text-sm font-medium text-muted-foreground`}
+										>
+											{c.id === peer?.id ? "Connected" : "Connecting"}
+										</span>
 									</div>
 								))}
 						</div>
@@ -83,7 +78,7 @@ export function SessionView({ session }: Props) {
 			<div className="flex flex-col rounded-xl border border-secondary p-4">
 				{peer && peer.files.length > 0 ? (
 					<>
-						<h2 className="mb-2 font-bold">Files</h2>
+						<h2 className="mb-2 text-lg font-bold">Files</h2>
 						<FileList files={peer.files} />
 						{download.status && (
 							<span
@@ -125,7 +120,7 @@ export function SessionView({ session }: Props) {
 					</>
 				) : uploads.length > 0 ? (
 					<div className="flex flex-col">
-						<h2 className="mb-3 font-bold">Uploads</h2>
+						<h2 className="mb-3 text-lg font-bold">Uploads</h2>
 						<FileList
 							files={uploads.map((u) => ({
 								id: u.id,
@@ -144,7 +139,7 @@ export function SessionView({ session }: Props) {
 					</div>
 				) : (
 					<>
-						<h2 className="mb-3 font-bold">Share files</h2>
+						<h2 className="mb-3 text-lg font-bold">Share files</h2>
 						<FileInput
 							className="rounded-xl bg-card/40"
 							multiple={true}
@@ -174,6 +169,7 @@ function SessionInfo({
 			setCopied(false);
 		}, 1000);
 	}
+	const identity = useStore($identity);
 
 	return (
 		<div className="flex w-full flex-col gap-4 rounded-xl border border-secondary p-4">
@@ -215,6 +211,14 @@ function SessionInfo({
 						)}
 					</button>
 				</div>
+				{identity && (
+					<p className="text-sm font-medium">
+						<span className="mr-1 font-semibold text-muted-foreground">
+							Username:
+						</span>
+						{identity.display_name}
+					</p>
+				)}
 			</div>
 		</div>
 	);

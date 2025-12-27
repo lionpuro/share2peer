@@ -94,6 +94,13 @@ function Component() {
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;
 	}
+	if (connectionState === "error") {
+		return (
+			<Main>
+				<p className="text-center">Failed to connect</p>
+			</Main>
+		);
+	}
 	if (sessionID && !session) {
 		return <Loader />;
 	}

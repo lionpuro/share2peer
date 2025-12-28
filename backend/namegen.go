@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -46,7 +46,7 @@ func toTitle(s string) string {
 }
 
 func generateName() string {
-	color := toTitle(colors[rand.Intn(len(colors))])
-	animal := toTitle(animals[rand.Intn(len(animals))])
+	color := toTitle(colors[rand.IntN(len(colors))])
+	animal := toTitle(animals[rand.IntN(len(animals))])
 	return fmt.Sprintf("%s %s", color, animal)
 }

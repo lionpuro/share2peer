@@ -5,6 +5,7 @@ import {
 	useState,
 } from "react";
 import { IconUpload } from "#/components/icons";
+import { cn } from "#/lib/helper";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
 	labelText?: string;
@@ -65,7 +66,11 @@ export function FileInput({
 		<>
 			<label
 				htmlFor="file-upload"
-				className={`flex flex-col items-center justify-center border-2 border-dashed p-12 hover:border-primary/80 ${dragging ? "border-primary/80" : "border-neutral-400/80"} cursor-pointer ${className || ""} overflow-hidden`}
+				className={cn(
+					"flex cursor-pointer flex-col items-center justify-center overflow-hidden border-2 border-dashed p-12 hover:border-primary/80",
+					dragging ? "border-primary/80" : "border-neutral-400/80",
+					className,
+				)}
 				onDrop={onDrop}
 				onDragOver={onDragOver}
 				onDragEnter={onDragEnter}

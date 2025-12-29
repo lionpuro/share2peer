@@ -8,7 +8,6 @@ import { $identity } from "#/lib/socket";
 import { $peer } from "#/lib/webrtc";
 import type { FileMetadata } from "#/lib/file";
 import { calcProgress, formatFileSize } from "#/lib/helper";
-import { FileInput } from "#/components/file-input";
 import {
 	DeviceIcon,
 	FileIcon,
@@ -19,6 +18,10 @@ import {
 } from "#/components/icons";
 import { useTransfer } from "#/hooks/use-transfer";
 import type { TransferState } from "#/lib/webrtc/transfer";
+import { FileInput } from "#/components/ui/file-input";
+import { Box } from "#/components/ui/box";
+import { Button } from "#/components/ui/button";
+import { H2 } from "#/components/ui/heading";
 
 type Props = {
 	session: Session;
@@ -31,10 +34,10 @@ export function SessionView({ session }: Props) {
 	return (
 		<div className="mx-auto flex w-full max-w-md flex-col gap-4">
 			<SessionInfo session={session} />
-			<div className="flex flex-col rounded-xl border border-secondary p-4">
+			<Box>
 				{session.clients && session.clients.length > 1 ? (
 					<>
-						<h2 className="mb-3 text-lg font-bold">Peers</h2>
+						<H2 className="mb-3">Peers</H2>
 						<div className="flex flex-col gap-4">
 							{session.clients
 								.filter((c) => c.id !== identity?.id)
@@ -64,7 +67,7 @@ export function SessionView({ session }: Props) {
 				) : (
 					"Waiting for a peer to join"
 				)}
-			</div>
+			</Box>
 			<FileArea />
 		</div>
 	);
@@ -91,7 +94,7 @@ function SessionInfo({ session }: { session: Session }) {
 	}
 
 	return (
-		<div className="flex w-full flex-col gap-4 rounded-xl border border-secondary p-4">
+		<Box>
 			<div className="flex flex-wrap items-center gap-3">
 				<div className="flex w-full items-center gap-1">
 					<span className="text-sm font-semibold text-muted-foreground">
@@ -139,7 +142,7 @@ function SessionInfo({ session }: { session: Session }) {
 					</p>
 				)}
 			</div>
-		</div>
+		</Box>
 	);
 }
 
@@ -154,24 +157,26 @@ function FileArea() {
 
 	const tr = Object.values(transfers);
 	return (
-		<div className="flex flex-col rounded-xl border border-secondary p-4">
+		<Box>
 			{peer && peer.files.length > 0 ? (
 				<>
-					<h2 className="mb-2 text-lg font-bold">Files</h2>
+					<H2 className="mb-2">Files</H2>
 					<FileList files={peer.files} transfers={transfers} />
 					{tr.length === 0 && (
-						<button
-							className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
+						<Button
+							variant="primary"
+							size="sm"
+							className="mt-6 gap-1.5"
 							onClick={startDownload}
 						>
 							<IconDownload size={18} />
 							Start download
-						</button>
+						</Button>
 					)}
 				</>
 			) : uploads.length > 0 ? (
 				<>
-					<h2 className="mb-2 text-lg font-bold">Uploads</h2>
+					<H2 className="mb-2">Uploads</H2>
 					<FileList
 						files={uploads.map((u) => ({
 							id: u.id,
@@ -181,17 +186,19 @@ function FileArea() {
 						}))}
 						transfers={transfers}
 					/>
-					<button
-						className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+					<Button
+						variant="secondary"
+						size="sm"
+						className="mt-6 gap-1.5"
 						onClick={cancelUploads}
 					>
 						<IconX size={18} />
 						Cancel upload
-					</button>
+					</Button>
 				</>
 			) : (
 				<>
-					<h2 className="mb-3 text-lg font-bold">Share files</h2>
+					<H2 className="mb-3">Share files</H2>
 					<FileInput
 						className="rounded-xl bg-card/40"
 						multiple={true}
@@ -202,18 +209,20 @@ function FileArea() {
 			)}
 			{peer && peer.files.length > 0 && tr.length > 0 ? (
 				tr.some((t) => t.status !== "complete") ? (
-					<button
-						className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+					<Button
+						variant="secondary"
+						size="sm"
+						className="mt-6 gap-1.5"
 						onClick={stopTransfers}
 					>
 						<IconX size={18} />
 						Cancel transfer
-					</button>
+					</Button>
 				) : (
 					<p>Transfer complete!</p>
 				)
 			) : null}
-		</div>
+		</Box>
 	);
 }
 

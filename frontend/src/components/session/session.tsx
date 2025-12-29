@@ -19,6 +19,7 @@ import {
 } from "#/components/icons";
 import { useTransfer } from "#/hooks/use-transfer";
 import type { TransferState } from "#/lib/webrtc/transfer";
+import { Box } from "#/components/ui/box";
 import { Button } from "#/components/ui/button";
 
 type Props = {
@@ -32,7 +33,7 @@ export function SessionView({ session }: Props) {
 	return (
 		<div className="mx-auto flex w-full max-w-md flex-col gap-4">
 			<SessionInfo session={session} />
-			<div className="flex flex-col rounded-xl border border-secondary p-4">
+			<Box>
 				{session.clients && session.clients.length > 1 ? (
 					<>
 						<h2 className="mb-3 text-lg font-bold">Peers</h2>
@@ -65,7 +66,7 @@ export function SessionView({ session }: Props) {
 				) : (
 					"Waiting for a peer to join"
 				)}
-			</div>
+			</Box>
 			<FileArea />
 		</div>
 	);
@@ -92,7 +93,7 @@ function SessionInfo({ session }: { session: Session }) {
 	}
 
 	return (
-		<div className="flex w-full flex-col gap-4 rounded-xl border border-secondary p-4">
+		<Box>
 			<div className="flex flex-wrap items-center gap-3">
 				<div className="flex w-full items-center gap-1">
 					<span className="text-sm font-semibold text-muted-foreground">
@@ -140,7 +141,7 @@ function SessionInfo({ session }: { session: Session }) {
 					</p>
 				)}
 			</div>
-		</div>
+		</Box>
 	);
 }
 
@@ -155,7 +156,7 @@ function FileArea() {
 
 	const tr = Object.values(transfers);
 	return (
-		<div className="flex flex-col rounded-xl border border-secondary p-4">
+		<Box>
 			{peer && peer.files.length > 0 ? (
 				<>
 					<h2 className="mb-2 text-lg font-bold">Files</h2>
@@ -220,7 +221,7 @@ function FileArea() {
 					<p>Transfer complete!</p>
 				)
 			) : null}
-		</div>
+		</Box>
 	);
 }
 

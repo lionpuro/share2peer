@@ -7,3 +7,8 @@ export function formatFileSize(bytes: number): string {
 	const formattedSize = parseFloat((bytes / Math.pow(1024, i)).toFixed(2));
 	return `${formattedSize} ${units[i]}`;
 }
+
+export function calcProgress(current: number, total: number): number {
+	const progress = (current / total) * 100;
+	return Math.round(progress);
+}

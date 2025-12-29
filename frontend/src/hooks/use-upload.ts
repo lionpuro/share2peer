@@ -1,18 +1,20 @@
 import { useStore } from "@nanostores/react";
-import { $uploads, sendCancelShare, shareFiles } from "#/lib/file";
-import { stopTransfer } from "#/lib/webrtc";
+import { $uploads, setUploads, deleteUploads } from "#/lib/file";
+import { sendCancelShare, shareUploads } from "#/lib/webrtc";
+import { deleteFileChannels, resetTransfers } from "#/lib/webrtc/transfer";
 
 export function useUpload() {
 	const uploads = useStore($uploads);
-	const cancelShare = () => {
-		stopTransfer();
+	const cancelUploads = () => {
+		deleteFileChannels();
+		resetTransfers();
 		sendCancelShare();
-		$uploads.set([]);
+		deleteUploads();
 	};
-	const uploadFiles = (files: File[]) => shareFiles(files);
 	return {
 		uploads,
-		uploadFiles,
-		cancelShare,
+		setUploads,
+		shareUploads,
+		cancelUploads,
 	};
 }

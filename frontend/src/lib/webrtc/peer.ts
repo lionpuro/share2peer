@@ -6,7 +6,7 @@ export const $peer = atom<Peer | null>(null);
 export type Peer = {
 	id: string;
 	connection: RTCPeerConnection;
-	dataChannel?: RTCDataChannel;
+	signalChannel?: RTCDataChannel;
 	files: FileMetadata[];
 };
 

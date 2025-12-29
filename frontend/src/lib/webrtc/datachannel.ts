@@ -2,61 +2,63 @@ import * as z from "zod/mini";
 import { FileMetadataSchema } from "#/lib/file";
 import { PACKET_SIZE } from "./protocol";
 
-export const DataChannelEvents = {
+export type DataChannelType = "signal" | `file-${string}`;
+
+export const SignalChannelEvents = {
 	ShareFiles: "share-files",
 	RequestFile: "request-file",
 	CancelShare: "cancel-share",
-	CancelDownload: "cancel-download",
+	StopTransfer: "stop-transfer",
 	ReadyToReceive: "ready-to-receive",
 } as const;
 
-export type DataChannelMessageType =
-	(typeof DataChannelEvents)[keyof typeof DataChannelEvents];
+export type SignalChannelMessageType =
+	(typeof SignalChannelEvents)[keyof typeof SignalChannelEvents];
 
 export const ShareFilesSchema = z.object({
-	type: z.literal(DataChannelEvents.ShareFiles),
+	type: z.literal(SignalChannelEvents.ShareFiles),
 	payload: z.object({ files: z.array(FileMetadataSchema) }),
 });
 
 export type ShareFilesMessage = z.infer<typeof ShareFilesSchema>;
 
 export const RequestFileSchema = z.object({
-	type: z.literal(DataChannelEvents.RequestFile),
+	type: z.literal(SignalChannelEvents.RequestFile),
 	payload: z.object({ file_id: z.string() }),
 });
 
 export type RequestFileMessage = z.infer<typeof RequestFileSchema>;
 
 export const CancelShareSchema = z.object({
-	type: z.literal(DataChannelEvents.CancelShare),
+	type: z.literal(SignalChannelEvents.CancelShare),
 });
 
 export type CancelShareMessage = z.infer<typeof CancelShareSchema>;
 
-export const CancelDownloadSchema = z.object({
-	type: z.literal(DataChannelEvents.CancelDownload),
-	payload: z.object({ file_id: z.string() }),
+export const StopTransferMessageSchema = z.object({
+	type: z.literal(SignalChannelEvents.StopTransfer),
+	payload: z.object({ id: z.string() }),
 });
 
-export type CancelDownloadMessage = z.infer<typeof CancelDownloadSchema>;
+export type StopTransferMessage = z.infer<typeof StopTransferMessageSchema>;
 
 export const ReadyToReceiveSchema = z.object({
-	type: z.literal(DataChannelEvents.ReadyToReceive),
+	type: z.literal(SignalChannelEvents.ReadyToReceive),
 	payload: z.object({ client_id: z.string() }),
 });
 
 export type ReadyToReceiveMessage = z.infer<typeof ReadyToReceiveSchema>;
 
-export type DataChannelMessage =
+export type SignalChannelMessage =
 	| ShareFilesMessage
 	| RequestFileMessage
 	| CancelShareMessage
-	| CancelDownloadMessage
+	| StopTransferMessage
 	| ReadyToReceiveMessage;
 
-export function sendToChannel(
+export function sendSignal(
 	chan: RTCDataChannel | undefined,
-	msg: DataChannelMessage,
+	msg: SignalChannelMessage,
 ) {
 	if (!chan) {
 		console.warn("data channel doesn't exist");

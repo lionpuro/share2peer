@@ -1,3 +1,4 @@
+import type { IconBaseProps } from "react-icons";
 import {
 	IconFileAudio,
 	IconFileDefault,
@@ -5,16 +6,18 @@ import {
 	IconFileVideo,
 } from "./icons";
 
-export function FileIcon({ mime }: { mime: string }) {
+type Props = { mime: string } & IconBaseProps;
+
+export function FileIcon({ mime, ...props }: Props) {
 	const parts = mime.split("/");
 	switch (parts[0]) {
 		case "image":
-			return <IconFileImage />;
+			return <IconFileImage {...props} />;
 		case "video":
-			return <IconFileVideo />;
+			return <IconFileVideo {...props} />;
 		case "audio":
-			return <IconFileAudio />;
+			return <IconFileAudio {...props} />;
 		default:
-			return <IconFileDefault />;
+			return <IconFileDefault {...props} />;
 	}
 }

@@ -1,9 +1,10 @@
 import { CHUNK_DATA_SIZE } from "../webrtc";
 
-type OnReaderRead = (chunk: Uint8Array) => Promise<void>;
+type OnReaderRead = (chunk: Uint8Array, index: number) => Promise<void>;
 
 export class ChunkReader {
 	#reading: boolean = false;
+	#chunkIndex: number = 0;
 
 	async read(file: File, onRead?: OnReaderRead): Promise<void> {
 		this.#reading = true;
@@ -20,11 +21,13 @@ export class ChunkReader {
 				if (!this.#reading) return;
 				const chunk = buf.slice(0, CHUNK_DATA_SIZE);
 				buf = buf.slice(CHUNK_DATA_SIZE);
-				await onRead?.(chunk);
+				await onRead?.(chunk, this.#chunkIndex);
+				this.#chunkIndex++;
 			}
 			await read();
 		};
 		await read();
+		this.#chunkIndex = 0;
 	}
 
 	stop() {

@@ -95,9 +95,8 @@ export async function transferFile(
 		status: "sending",
 		transferredBytes: 0,
 	});
-	let index = 0;
 	const reader = new ChunkReader();
-	await reader.read(file, async (chunk) => {
+	await reader.read(file, async (chunk, index) => {
 		if (chan.readyState !== "open") {
 			reader.stop();
 			return;
@@ -108,7 +107,6 @@ export async function transferFile(
 			data: chunk,
 		});
 		await sendPacket(chan, packet);
-		index++;
 		const transfer = getTransfer(meta.id);
 		if (!transfer) return;
 		const bytes = transfer.transferredBytes + chunk.byteLength;

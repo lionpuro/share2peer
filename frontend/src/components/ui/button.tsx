@@ -1,3 +1,4 @@
+import { cn } from "#/lib/helper";
 import type { HTMLAttributes } from "react";
 
 const baseStyles =
@@ -35,11 +36,9 @@ export function Button({
 		variant === "none" ? "" : options.variants[variant],
 		variant === "none" ? "" : options.sizes[size],
 		className,
-	]
-		.filter((s) => !!s)
-		.join(" ");
+	].filter((s) => !!s);
 	return (
-		<button className={styles} {...props}>
+		<button className={cn(...styles)} {...props}>
 			{children}
 		</button>
 	);

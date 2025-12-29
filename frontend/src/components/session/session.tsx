@@ -8,7 +8,6 @@ import { $identity } from "#/lib/socket";
 import { $peer } from "#/lib/webrtc";
 import type { FileMetadata } from "#/lib/file";
 import { calcProgress, formatFileSize } from "#/lib/helper";
-import { FileInput } from "#/components/file-input";
 import {
 	DeviceIcon,
 	FileIcon,
@@ -19,6 +18,7 @@ import {
 } from "#/components/icons";
 import { useTransfer } from "#/hooks/use-transfer";
 import type { TransferState } from "#/lib/webrtc/transfer";
+import { FileInput } from "#/components/ui/file-input";
 import { Box } from "#/components/ui/box";
 import { Button } from "#/components/ui/button";
 

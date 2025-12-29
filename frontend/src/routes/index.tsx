@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Main } from "#/components/main";
+import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
-import { Loader } from "#/components/loader";
+import { Loader } from "#/components/ui/loader";
 import type {
 	MessageEventListener,
 	MessageEventMap,

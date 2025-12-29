@@ -21,6 +21,7 @@ import type { TransferState } from "#/lib/webrtc/transfer";
 import { FileInput } from "#/components/ui/file-input";
 import { Box } from "#/components/ui/box";
 import { Button } from "#/components/ui/button";
+import { H2 } from "#/components/ui/heading";
 
 type Props = {
 	session: Session;
@@ -36,7 +37,7 @@ export function SessionView({ session }: Props) {
 			<Box>
 				{session.clients && session.clients.length > 1 ? (
 					<>
-						<h2 className="mb-3 text-lg font-bold">Peers</h2>
+						<H2 className="mb-3">Peers</H2>
 						<div className="flex flex-col gap-4">
 							{session.clients
 								.filter((c) => c.id !== identity?.id)
@@ -159,7 +160,7 @@ function FileArea() {
 		<Box>
 			{peer && peer.files.length > 0 ? (
 				<>
-					<h2 className="mb-2 text-lg font-bold">Files</h2>
+					<H2 className="mb-2">Files</H2>
 					<FileList files={peer.files} transfers={transfers} />
 					{tr.length === 0 && (
 						<Button
@@ -175,7 +176,7 @@ function FileArea() {
 				</>
 			) : uploads.length > 0 ? (
 				<>
-					<h2 className="mb-2 text-lg font-bold">Uploads</h2>
+					<H2 className="mb-2">Uploads</H2>
 					<FileList
 						files={uploads.map((u) => ({
 							id: u.id,
@@ -197,7 +198,7 @@ function FileArea() {
 				</>
 			) : (
 				<>
-					<h2 className="mb-3 text-lg font-bold">Share files</h2>
+					<H2 className="mb-3">Share files</H2>
 					<FileInput
 						className="rounded-xl bg-card/40"
 						multiple={true}

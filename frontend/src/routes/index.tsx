@@ -12,6 +12,7 @@ import type {
 import { SessionView } from "#/components/session";
 import { toast } from "react-toastify";
 import { IconX } from "#/components/icons";
+import { Button } from "#/components/ui/button";
 
 type SearchParams = {
 	s?: string;
@@ -149,12 +150,9 @@ function Component() {
 					<h3 className="mb-6 text-lg leading-none font-bold">
 						Create session
 					</h3>
-					<button
-						className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
-						onClick={handleCreate}
-					>
+					<Button variant="primary" size="sm" onClick={handleCreate}>
 						Create
-					</button>
+					</Button>
 				</div>
 			)}
 		</Main>

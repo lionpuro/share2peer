@@ -19,6 +19,7 @@ import {
 } from "#/components/icons";
 import { useTransfer } from "#/hooks/use-transfer";
 import type { TransferState } from "#/lib/webrtc/transfer";
+import { Button } from "#/components/ui/button";
 
 type Props = {
 	session: Session;
@@ -160,13 +161,15 @@ function FileArea() {
 					<h2 className="mb-2 text-lg font-bold">Files</h2>
 					<FileList files={peer.files} transfers={transfers} />
 					{tr.length === 0 && (
-						<button
-							className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2 text-sm font-medium text-white hover:bg-primary-darker disabled:bg-muted disabled:text-muted-foreground"
+						<Button
+							variant="primary"
+							size="sm"
+							className="mt-6 gap-1.5"
 							onClick={startDownload}
 						>
 							<IconDownload size={18} />
 							Start download
-						</button>
+						</Button>
 					)}
 				</>
 			) : uploads.length > 0 ? (
@@ -181,13 +184,15 @@ function FileArea() {
 						}))}
 						transfers={transfers}
 					/>
-					<button
-						className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+					<Button
+						variant="secondary"
+						size="sm"
+						className="mt-6 gap-1.5"
 						onClick={cancelUploads}
 					>
 						<IconX size={18} />
 						Cancel upload
-					</button>
+					</Button>
 				</>
 			) : (
 				<>
@@ -202,13 +207,15 @@ function FileArea() {
 			)}
 			{peer && peer.files.length > 0 && tr.length > 0 ? (
 				tr.some((t) => t.status !== "complete") ? (
-					<button
-						className="mt-6 flex items-center justify-center gap-1.5 rounded-lg bg-secondary py-2 text-sm font-medium hover:bg-secondary-darker/80"
+					<Button
+						variant="secondary"
+						size="sm"
+						className="mt-6 gap-1.5"
 						onClick={stopTransfers}
 					>
 						<IconX size={18} />
 						Cancel transfer
-					</button>
+					</Button>
 				) : (
 					<p>Transfer complete!</p>
 				)

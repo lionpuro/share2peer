@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type HTMLAttributes } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import type { Session } from "#/lib/session";
@@ -7,7 +7,7 @@ import { useUpload } from "#/hooks/use-upload";
 import { $identity } from "#/lib/socket";
 import { $peer } from "#/lib/webrtc";
 import type { FileMetadata } from "#/lib/file";
-import { calcProgress, formatFileSize } from "#/lib/helper";
+import { calcProgress, cn, formatFileSize } from "#/lib/helper";
 import {
 	DeviceIcon,
 	FileIcon,
@@ -22,6 +22,7 @@ import { FileInput } from "#/components/ui/file-input";
 import { Box } from "#/components/ui/box";
 import { Button } from "#/components/ui/button";
 import { H2 } from "#/components/ui/heading";
+import type { Client } from "#/lib/client";
 
 type Props = {
 	session: Session;
@@ -35,40 +36,52 @@ export function SessionView({ session }: Props) {
 		<div className="mx-auto flex w-full max-w-md flex-col gap-4">
 			<SessionInfo session={session} />
 			<Box>
-				{session.clients && session.clients.length > 1 ? (
-					<>
-						<H2 className="mb-3">Peers</H2>
-						<div className="flex flex-col gap-4">
-							{session.clients
-								.filter((c) => c.id !== identity?.id)
-								.map((c) => (
-									<div
-										key={"client" + c.id}
-										className="flex flex-wrap items-center gap-1 rounded-md bg-secondary/50 px-2 py-1"
-									>
-										<span className="font-medium">{c.display_name}</span>
-										<span className="ml-3 flex items-center gap-1 text-sm font-medium text-muted-foreground">
-											<DeviceIcon
-												deviceType={c.device_type}
-												className="text-muted-foreground/80"
-												size={12}
-											/>
-											{c.device_name}
-										</span>
-										<span
-											className={`before:mr-1 before:content-['●'] ${c.id === peer?.id ? "before:text-green-600/90" : "before:text-yellow-600/90"} flex w-full items-center text-sm font-medium text-muted-foreground`}
-										>
-											{c.id === peer?.id ? "Connected" : "Connecting"}
-										</span>
-									</div>
-								))}
-						</div>
-					</>
+				{peer ? (
+					<ClientInfo client={peer} connected={true} />
+				) : session.clients?.length === 2 ? (
+					session.clients.map(
+						(c) =>
+							c.id !== identity?.id && (
+								<ClientInfo
+									key={"client" + c.id}
+									client={c}
+									connected={false}
+								/>
+							),
+					)
 				) : (
 					"Waiting for a peer to join"
 				)}
 			</Box>
 			<FileArea />
+		</div>
+	);
+}
+
+function ClientInfo({
+	client,
+	connected,
+	...props
+}: { client: Client; connected: boolean } & HTMLAttributes<HTMLDivElement>) {
+	return (
+		<div {...props} className="flex flex-wrap items-center gap-1 rounded-md">
+			<span className="font-medium">{client.display_name}</span>
+			<span className="ml-3 flex items-center gap-1 text-sm font-medium text-muted-foreground">
+				<DeviceIcon
+					deviceType={client.device_type}
+					className="text-muted-foreground/80"
+					size={12}
+				/>
+				{client.device_name}
+			</span>
+			<span
+				className={cn(
+					"flex w-full items-center text-sm font-medium text-muted-foreground before:mr-1 before:content-['●']",
+					connected ? "before:text-green-600/90" : "before:text-yellow-600/90",
+				)}
+			>
+				{connected ? "Connected" : "Connecting"}
+			</span>
 		</div>
 	);
 }

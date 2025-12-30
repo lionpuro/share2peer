@@ -31,10 +31,11 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 	if (!session || !identity) {
 		return;
 	}
-	if ($peer.get()?.id === target) {
+	const client = session.clients?.find((c) => c.id === target);
+	if (!client || $peer.get()?.id === client.id) {
 		return;
 	}
-	const peer = createPeer(target);
+	const peer = createPeer(client);
 	peer.signalChannel = peer.connection.createDataChannel(
 		"signal" satisfies DataChannelType,
 	);
@@ -60,7 +61,13 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 }
 
 export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
-	const peer = createPeer(msg.payload.from);
+	const session = $session.get();
+	const identity = $identity.get();
+	if (!session || !identity) return;
+	const client = session.clients?.find((c) => c.id === msg.payload.from);
+	if (!client) return;
+
+	const peer = createPeer(client);
 	$peer.set(peer);
 	registerPeerConnectionListeners(peer, socket);
 
@@ -69,10 +76,6 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 		.catch(console.error);
 	const answer = await peer.connection.createAnswer();
 	await peer.connection.setLocalDescription(answer);
-
-	const session = $session.get();
-	const identity = $identity.get();
-	if (!session || !identity) return;
 
 	const message: AnswerMessage = {
 		type: MessageType.Answer,

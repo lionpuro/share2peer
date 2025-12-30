@@ -1,6 +1,6 @@
 export {
-	BiCloudUpload as IconUpload,
-	BiCloudDownload as IconDownload,
+	BiUpload as IconUpload,
+	BiDownload as IconDownload,
 	BiCopy as IconCopy,
 	BiLink as IconLink,
 	BiCheck as IconCheck,

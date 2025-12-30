@@ -66,12 +66,8 @@ function ClientInfo({
 	return (
 		<div {...props} className="flex flex-wrap items-center gap-1 rounded-md">
 			<span className="font-medium">{client.display_name}</span>
-			<span className="ml-3 flex items-center gap-1 text-sm font-medium text-muted-foreground">
-				<DeviceIcon
-					deviceType={client.device_type}
-					className="text-muted-foreground/80"
-					size={12}
-				/>
+			<span className="ml-auto flex items-center gap-1.5 rounded-lg bg-neutral-400/90 px-2.5 py-0.75 text-sm font-medium text-muted-foreground text-white">
+				<DeviceIcon deviceType={client.device_type} size={12} />
 				{client.device_name}
 			</span>
 			<span

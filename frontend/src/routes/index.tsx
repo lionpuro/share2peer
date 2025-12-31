@@ -34,7 +34,8 @@ export const Route = createFileRoute("/")({
 function Component() {
 	const { s: sessionID } = Route.useSearch();
 	const navigate = useNavigate();
-	const { session, requestSession, joinSession, leaveSession } = useSession();
+
+	const { session, requestSession } = useSession(sessionID);
 	const [joinCode, setJoinCode] = useState("");
 	const { socket, connectionState } = useSocket();
 
@@ -71,26 +72,6 @@ function Component() {
 			socket.removeEventListener("error", handleError);
 		};
 	}, [socket, navigate, handleCreated]);
-
-	useEffect(() => {
-		if (connectionState !== "open") {
-			return;
-		}
-		if (sessionID && session?.id) {
-			return;
-		}
-		if (sessionID && session?.id !== sessionID) {
-			joinSession(sessionID);
-		}
-		if (session && !sessionID) {
-			leaveSession(session.id);
-		}
-		return () => {
-			if (session?.id) {
-				leaveSession(session.id);
-			}
-		};
-	}, [connectionState, sessionID, session, joinSession, leaveSession]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;

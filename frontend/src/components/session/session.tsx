@@ -1,8 +1,7 @@
 import { useState, type HTMLAttributes } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import type { Session } from "#/lib/session";
-import { useSession } from "#/hooks/use-session";
 import { useUpload } from "#/hooks/use-upload";
 import { $identity } from "#/lib/socket";
 import { $peer } from "#/lib/webrtc";
@@ -83,9 +82,6 @@ function ClientInfo({
 }
 
 function SessionInfo({ session }: { session: Session }) {
-	const navigate = useNavigate();
-	const { leaveSession } = useSession();
-
 	const sessionURL = `${window.location.protocol}//${window.location.host}?s=${session.id}`;
 	const [copied, setCopied] = useState(false);
 	function handleCopy() {
@@ -97,11 +93,6 @@ function SessionInfo({ session }: { session: Session }) {
 	}
 	const identity = useStore($identity);
 
-	function handleLeave() {
-		leaveSession(session.id);
-		navigate({ to: "/" });
-	}
-
 	return (
 		<Box>
 			<div className="flex flex-wrap items-center gap-3">
@@ -112,12 +103,12 @@ function SessionInfo({ session }: { session: Session }) {
 					<span className="rounded-md bg-secondary/70 px-1.5 py-0.5 font-bold">
 						{session.id}
 					</span>
-					<button
-						onClick={handleLeave}
+					<Link
+						to="/"
 						className="ml-auto flex w-fit items-center justify-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-white hover:bg-destructive-darker"
 					>
 						Leave
-					</button>
+					</Link>
 				</div>
 				<div className="flex w-full gap-2">
 					<input

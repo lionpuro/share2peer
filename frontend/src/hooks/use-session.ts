@@ -6,14 +6,36 @@ import {
 	leaveSession,
 	requestSession,
 } from "#/lib/session";
+import { useEffect } from "react";
+import { useSocket } from "./use-socket";
 
-export function useSession() {
+const request = () => requestSession(socket);
+const join = (id: string) => joinSession(socket, id);
+const leave = (id: string) => leaveSession(socket, id);
+
+export function useSession(id?: string) {
+	const { connectionState } = useSocket();
 	const session = useStore($session);
+
+	useEffect(() => {
+		if (connectionState !== "open") {
+			return;
+		}
+		if (id === session?.id) {
+			return;
+		}
+		if (id && session?.id !== id) {
+			join(id);
+		}
+		if (session && !id) {
+			leave(session.id);
+		}
+	}, [id, connectionState, session]);
 
 	return {
 		session,
-		requestSession: () => requestSession(socket),
-		joinSession: (id: string) => joinSession(socket, id),
-		leaveSession: (id: string) => leaveSession(socket, id),
+		requestSession: request,
+		joinSession: join,
+		leaveSession: leave,
 	};
 }

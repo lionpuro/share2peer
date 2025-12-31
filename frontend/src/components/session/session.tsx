@@ -96,6 +96,14 @@ function SessionInfo({ session }: { session: Session }) {
 	return (
 		<Box>
 			<div className="flex flex-wrap items-center gap-3">
+				{identity && (
+					<p className="text-sm font-medium">
+						<span className="mr-1 font-semibold text-muted-foreground">
+							Username:
+						</span>
+						{identity.display_name}
+					</p>
+				)}
 				<div className="flex w-full items-center gap-1">
 					<span className="text-sm font-semibold text-muted-foreground">
 						Session:
@@ -133,14 +141,6 @@ function SessionInfo({ session }: { session: Session }) {
 						)}
 					</button>
 				</div>
-				{identity && (
-					<p className="text-sm font-medium">
-						<span className="mr-1 font-semibold text-muted-foreground">
-							Username:
-						</span>
-						{identity.display_name}
-					</p>
-				)}
 			</div>
 		</Box>
 	);

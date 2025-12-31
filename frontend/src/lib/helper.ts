@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+export function toTitleCase(s: string): string {
+	return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function formatFileSize(bytes: number): string {
 	if (bytes === 0) {
 		return "0 B";

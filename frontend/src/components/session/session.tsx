@@ -6,7 +6,7 @@ import { useUpload } from "#/hooks/use-upload";
 import { $identity } from "#/lib/socket";
 import { $peer } from "#/lib/webrtc";
 import type { FileMetadata } from "#/lib/file";
-import { calcProgress, cn, formatFileSize } from "#/lib/helper";
+import { calcProgress, cn, formatFileSize, toTitleCase } from "#/lib/helper";
 import {
 	DeviceIcon,
 	FileIcon,
@@ -261,7 +261,7 @@ function FileList({ files, transfers }: FileListProps) {
 										</>
 									) : (
 										<p className="ml-auto text-muted-foreground">
-											{t.status.charAt(0).toUpperCase() + t.status.slice(1)}
+											{toTitleCase(t.status)}
 										</p>
 									)}
 								</div>

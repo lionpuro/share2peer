@@ -1,7 +1,6 @@
 import { atom } from "nanostores";
 import * as z from "zod/mini";
-import { socket } from "./socket";
-import { MessageType } from "./message";
+import type { WebSocketManager } from "./socket";
 import { ClientSchema } from "./client";
 
 export const SessionSchema = z.object({
@@ -13,20 +12,20 @@ export type Session = z.infer<typeof SessionSchema>;
 
 export const $session = atom<Session | null>(null);
 
-export function joinSession(id: string) {
+export function joinSession(socket: WebSocketManager, id: string) {
 	socket.send({
-		type: MessageType.JoinSession,
+		type: "join-session",
 		payload: { session_id: id },
 	});
 }
 
-export function leaveSession(id: string) {
+export function leaveSession(socket: WebSocketManager, id: string) {
 	socket.send({
-		type: MessageType.LeaveSession,
+		type: "leave-session",
 		payload: { session_id: id },
 	});
 }
 
-export function requestSession() {
-	socket.send({ type: MessageType.RequestSession });
+export function requestSession(socket: WebSocketManager) {
+	socket.send({ type: "request-session" });
 }

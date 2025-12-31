@@ -200,9 +200,8 @@ function FileArea() {
 				<>
 					<H2 className="mb-3">Share files</H2>
 					<FileInput
-						className="rounded-xl bg-card/40"
+						className="rounded-xl"
 						multiple={true}
-						labelText="Upload files"
 						onFileInput={(files) => handleDrop(files)}
 					/>
 				</>

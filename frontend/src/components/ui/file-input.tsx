@@ -14,7 +14,7 @@ type Props = InputHTMLAttributes<HTMLInputElement> & {
 
 export function FileInput({
 	onFileInput,
-	labelText = "Choose file",
+	labelText = "Drag and drop files here, or click to browse files",
 	className,
 	...props
 }: Props) {
@@ -67,8 +67,10 @@ export function FileInput({
 			<label
 				htmlFor="file-upload"
 				className={cn(
-					"flex cursor-pointer flex-col items-center justify-center overflow-hidden border-2 border-dashed p-12 hover:border-primary/80",
-					dragging ? "border-primary/80" : "border-neutral-400/80",
+					"flex cursor-pointer flex-col items-center justify-center overflow-hidden border-2 border-dashed p-10",
+					dragging
+						? "border-primary/80 bg-primary/10"
+						: "border-neutral-400/60 hover:border-primary/60 hover:bg-primary/5",
 					className,
 				)}
 				onDrop={onDrop}
@@ -77,10 +79,10 @@ export function FileInput({
 				onDragLeave={onDragLeave}
 			>
 				<IconUpload
-					size={48}
+					size={36}
 					className={`pointer-events-none ${dragging ? "fill-primary" : "fill-neutral-400"}`}
 				/>
-				<span className="pointer-events-none mt-2 text-center font-medium">
+				<span className="pointer-events-none mt-2 text-center text-sm font-medium text-muted-foreground">
 					{labelText}
 				</span>
 			</label>
@@ -89,8 +91,8 @@ export function FileInput({
 				name="file-upload"
 				type="file"
 				className="hidden"
-				{...props}
 				onChange={onChange}
+				{...props}
 			/>
 		</>
 	);

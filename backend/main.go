@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -24,7 +25,9 @@ func main() {
 			return
 		}
 		if err := wh.handleWebSocket(conn, r.Header); err != nil {
-			log.Printf("websocket handler: %s", err.Error())
+			if !errors.Is(err, ErrUnknownMessageType) {
+				log.Printf("websocket handler: %s", err.Error())
+			}
 			return
 		}
 	})

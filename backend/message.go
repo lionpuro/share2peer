@@ -1,11 +1,5 @@
 package main
 
-import "errors"
-
-var (
-	ErrUnknownMessageType = errors.New("unknown message type")
-)
-
 const (
 	MessageError          = "error"
 	MessageIdentity       = "identity"
@@ -30,4 +24,9 @@ type Message struct {
 
 type SessionIDPayload struct {
 	SessionID string `json:"session_id"`
+}
+
+type ErrorPayload struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }

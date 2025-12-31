@@ -141,12 +141,15 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 
 	sess, err := wh.sessions.Get(payload.SessionID)
 	if err != nil {
-		if !errors.Is(err, ErrSessionNotExists) {
+		if !errors.Is(err, ErrSessionNotFound) {
 			return err
 		}
 		return c.conn.WriteJSON(Message{
-			Type:    MessageError,
-			Payload: ErrSessionNotExists.Error(),
+			Type: MessageError,
+			Payload: ErrorPayload{
+				Code:    ErrCodeSessionNotFound,
+				Message: ErrSessionNotFound.Error(),
+			},
 		})
 	}
 
@@ -178,8 +181,11 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 			}
 		}
 		return c.conn.WriteJSON(Message{
-			Type:    MessageError,
-			Payload: ErrSessionFull.Error(),
+			Type: MessageError,
+			Payload: ErrorPayload{
+				Code:    ErrCodeSessionFull,
+				Message: ErrSessionFull.Error(),
+			},
 		})
 	}
 
@@ -216,12 +222,15 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 
 	sess, err := wh.sessions.Get(payload.SessionID)
 	if err != nil {
-		if !errors.Is(err, ErrSessionNotExists) {
+		if !errors.Is(err, ErrSessionNotFound) {
 			return err
 		}
 		return c.conn.WriteJSON(Message{
-			Type:    MessageError,
-			Payload: ErrSessionNotExists.Error(),
+			Type: MessageError,
+			Payload: ErrorPayload{
+				Code:    ErrCodeSessionNotFound,
+				Message: ErrSessionNotFound.Error(),
+			},
 		})
 	}
 

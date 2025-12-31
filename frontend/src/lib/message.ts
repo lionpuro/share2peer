@@ -1,5 +1,6 @@
 import * as z from "zod/mini";
 import type { CustomEventTarget } from "./events";
+import { ErrorPayloadSchema } from "./errors";
 import { SessionSchema } from "./session";
 import { ClientSchema } from "./client";
 
@@ -57,7 +58,7 @@ export type MessageEventListener<T extends keyof MessageEventMap> = (
 
 export const ErrorSchema = z.object({
 	type: z.literal(MessageType.Error),
-	payload: z.string(),
+	payload: ErrorPayloadSchema,
 });
 
 export type ErrorMessage = z.infer<typeof ErrorSchema>;

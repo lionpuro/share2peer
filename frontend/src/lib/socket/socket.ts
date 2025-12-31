@@ -76,7 +76,7 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 				}
 				switch (message.type) {
 					case MessageType.Error:
-						console.error(ErrorSchema.parse(message).payload);
+						console.error(ErrorSchema.parse(message).payload.code);
 						break;
 					case MessageType.Identity:
 						$identity.set(IdentitySchema.parse(message).payload);

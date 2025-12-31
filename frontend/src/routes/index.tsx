@@ -4,15 +4,12 @@ import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
 import { Loader } from "#/components/ui/loader";
-import type {
-	MessageEventListener,
-	MessageEventMap,
-	MessageType,
-} from "#/lib/message";
+import type { MessageEventListener, MessageType } from "#/lib/message";
 import { SessionView } from "#/components/session";
-import { toast } from "react-toastify";
 import { IconX } from "#/components/icons";
 import { Button } from "#/components/ui/button";
+import { toTitleCase } from "#/lib/helper";
+import { ErrorComponent } from "#/components/error";
 
 type SearchParams = {
 	s?: string;
@@ -34,8 +31,11 @@ export const Route = createFileRoute("/")({
 function Component() {
 	const { s: sessionID } = Route.useSearch();
 	const navigate = useNavigate();
-
-	const { session, requestSession } = useSession(sessionID);
+	const {
+		session,
+		error: sessionError,
+		requestSession,
+	} = useSession(sessionID);
 	const [joinCode, setJoinCode] = useState("");
 	const { socket, connectionState } = useSocket();
 
@@ -57,21 +57,11 @@ function Component() {
 		);
 
 	useEffect(() => {
-		const handleError = (e: MessageEventMap["error"]) => {
-			const err = e.detail.payload;
-			if (err.includes("session does not exist")) {
-				toast.error(err);
-				navigate({ from: Route.fullPath, search: {} });
-			}
-		};
 		socket.addEventListener("session-created", handleCreated);
-		socket.addEventListener("error", handleError);
-
 		return () => {
 			socket.removeEventListener("session-created", handleCreated);
-			socket.removeEventListener("error", handleError);
 		};
-	}, [socket, navigate, handleCreated]);
+	}, [socket, handleCreated]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;
@@ -81,6 +71,18 @@ function Component() {
 			<Main>
 				<p className="text-center">Failed to connect</p>
 			</Main>
+		);
+	}
+	if (sessionError) {
+		return (
+			<ErrorComponent error={toTitleCase(sessionError.message)}>
+				<Link
+					to="/"
+					className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-darker"
+				>
+					Back
+				</Link>
+			</ErrorComponent>
 		);
 	}
 	if (sessionID && !session) {

@@ -2,15 +2,9 @@ package main
 
 import (
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
-)
-
-var (
-	ErrSessionFull      = errors.New("session is full")
-	ErrSessionNotExists = errors.New("session does not exist")
 )
 
 type Session struct {
@@ -71,7 +65,7 @@ func (s *SessionStore) Get(id string) (*Session, error) {
 
 	sess, exists := s.sessions[id]
 	if !exists {
-		return nil, ErrSessionNotExists
+		return nil, ErrSessionNotFound
 	}
 	return sess, nil
 }

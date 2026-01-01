@@ -5,6 +5,7 @@ import { ClientSchema } from "./client";
 
 export const SessionSchema = z.object({
 	id: z.string(),
+	host: z.optional(z.string()),
 	clients: z.optional(z.array(ClientSchema)),
 });
 

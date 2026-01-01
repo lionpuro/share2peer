@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Session struct {
 	ID      string       `json:"id"`
 	mu      sync.RWMutex `json:"-"`
+	Host    uuid.UUID    `json:"host"`
 	Clients []*Client    `json:"clients"`
 }
 
@@ -70,7 +73,7 @@ func (s *SessionStore) Get(id string) (*Session, error) {
 	return sess, nil
 }
 
-func (s *SessionStore) Create() (*Session, error) {
+func (s *SessionStore) Create(host uuid.UUID) (*Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -79,7 +82,8 @@ func (s *SessionStore) Create() (*Session, error) {
 		return nil, fmt.Errorf("generate share code: %s", err.Error())
 	}
 	session := &Session{
-		ID: code,
+		ID:   code,
+		Host: host,
 	}
 	s.sessions[code] = session
 	return session, nil

@@ -42,9 +42,6 @@ export function useSession(id?: string) {
 				setError(undefined);
 			};
 		}
-		if (session && !id) {
-			leave(session.id);
-		}
 	}, [id, connectionState, session]);
 
 	return {

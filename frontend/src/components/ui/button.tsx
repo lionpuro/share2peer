@@ -1,5 +1,5 @@
 import { cn } from "#/lib/helper";
-import type { HTMLAttributes } from "react";
+import type { ButtonHTMLAttributes } from "react";
 
 const baseStyles =
 	"rounded-lg flex items-center justify-center disabled:bg-muted disabled:text-muted-foreground";
@@ -19,7 +19,7 @@ type ButtonSize = keyof (typeof options)["sizes"];
 
 type ButtonVariant = keyof (typeof options)["variants"] | "none";
 
-type ButtonProps = HTMLAttributes<HTMLButtonElement> & {
+type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 	variant?: ButtonVariant;
 	size?: ButtonSize;
 };

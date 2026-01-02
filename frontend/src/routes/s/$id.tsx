@@ -52,11 +52,9 @@ function Component() {
 	return (
 		<Main>
 			<Box className="mx-auto w-full max-w-md gap-4">
-				<div className="flex items-center gap-1">
-					<span className="font-bold">In session:</span>
-					<span className="rounded-md bg-secondary/70 px-2.5 py-1.5 font-bold">
-						{session.id}
-					</span>
+				<div className="flex w-full items-center gap-2">
+					<span className="font-semibold text-muted-foreground">Session:</span>
+					<span className="font-bold">{session.id}</span>
 				</div>
 				{peer.files.length > 0 ? (
 					<>

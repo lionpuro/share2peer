@@ -65,49 +65,51 @@ function Component() {
 	return (
 		<Main>
 			{session ? (
-				<>
-					<Box className="mx-auto w-full max-w-md gap-4">
-						<SessionInfo session={session} />
-						<span className="flex items-center gap-1 text-sm">
-							<IconAlert className="text-yellow-500" />
-							Keep this page open during transfer!
-						</span>
-						<H2>Files</H2>
-						{uploads.length > 0 ? (
-							<>
-								<FileList>
-									{uploads.map((f) => (
-										<FileListItem key={f.id} file={f} />
-									))}
-								</FileList>
-								<Button
-									variant="secondary"
-									onClick={cancelUploads}
-									className="mt-2 gap-1"
-								>
-									<IconX />
-									Cancel
-								</Button>
-							</>
-						) : (
-							<>
-								<FileInput
-									className="rounded-xl"
-									multiple={true}
-									labelText="Click to browse or drop files here"
-									onFileInput={(files) => handleDrop(files)}
-								/>
-								<Button
-									variant="primary"
-									onClick={() => leaveSession(session.id)}
-									className="mt-2 gap-1 bg-red-600/90 hover:bg-red-700/90"
-								>
-									Close session
-								</Button>
-							</>
-						)}
-					</Box>
-				</>
+				<Box className="mx-auto w-full max-w-md gap-4">
+					<SessionInfo session={session} />
+					<p className="text-sm font-medium text-muted-foreground">
+						Share the link or enter the session code on another device
+					</p>
+					<span className="mb-2 flex items-center gap-1 text-sm">
+						<IconAlert className="text-yellow-500" />
+						<span className="font-bold">Note:</span>
+						Keep this page open during transfer!
+					</span>
+					<H2>Files</H2>
+					{uploads.length > 0 ? (
+						<>
+							<FileList>
+								{uploads.map((f) => (
+									<FileListItem key={f.id} file={f} />
+								))}
+							</FileList>
+							<Button
+								variant="secondary"
+								onClick={cancelUploads}
+								className="mt-2 gap-1"
+							>
+								<IconX />
+								Cancel
+							</Button>
+						</>
+					) : (
+						<>
+							<FileInput
+								className="rounded-xl"
+								multiple={true}
+								labelText="Click to browse or drop files here"
+								onFileInput={(files) => handleDrop(files)}
+							/>
+							<Button
+								variant="primary"
+								onClick={() => leaveSession(session.id)}
+								className="mt-2 gap-1 bg-red-600/90 hover:bg-red-700/90"
+							>
+								Close session
+							</Button>
+						</>
+					)}
+				</Box>
 			) : (
 				<div className="mx-auto flex w-full max-w-xs flex-col">
 					<H2 className="mb-4">Share files</H2>
@@ -125,12 +127,12 @@ function Component() {
 									<FileListItem key={f.id} file={f} />
 								))}
 							</FileList>
-							<div className="flex gap-2">
+							<div className="mt-4 flex gap-2">
 								<Button
 									variant="secondary"
 									size="sm"
 									onClick={() => setUploads([])}
-									className="mt-4 basis-1/2"
+									className="basis-1/2"
 									disabled={uploads.length === 0}
 								>
 									Remove
@@ -139,7 +141,7 @@ function Component() {
 									variant="primary"
 									size="sm"
 									onClick={handleShare}
-									className="mt-4 basis-1/2"
+									className="basis-1/2"
 									disabled={uploads.length === 0}
 								>
 									Share
@@ -199,11 +201,9 @@ function SessionInfo({ session }: { session: Session }) {
 
 	return (
 		<div className="flex flex-wrap items-center gap-3">
-			<div className="flex items-center gap-1">
-				<span className="font-bold">Share code:</span>
-				<span className="rounded-md bg-secondary/70 px-2.5 py-1.5 font-bold">
-					{session.id}
-				</span>
+			<div className="flex w-full items-center gap-2">
+				<span className="font-semibold text-muted-foreground">Session:</span>
+				<span className="font-bold">{session.id}</span>
 			</div>
 			<div className="flex flex-1 gap-2">
 				<input

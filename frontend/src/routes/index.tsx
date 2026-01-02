@@ -5,7 +5,7 @@ import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
 import { Loader } from "#/components/ui/loader";
 import type { MessageEventListener, MessageType } from "#/lib/message";
-import { IconCheck, IconCopy, IconX } from "#/components/icons";
+import { IconAlert, IconCheck, IconCopy, IconX } from "#/components/icons";
 import { Button } from "#/components/ui/button";
 import { H2 } from "#/components/ui/heading";
 import { FileInput } from "#/components/ui/file-input";
@@ -68,6 +68,10 @@ function Component() {
 				<>
 					<Box className="mx-auto w-full max-w-md gap-4">
 						<SessionInfo session={session} />
+						<span className="flex items-center gap-1 text-sm">
+							<IconAlert size={16} className="text-yellow-500" />
+							Keep this page open during transfer!
+						</span>
 						<H2>Files</H2>
 						{uploads.length > 0 ? (
 							<>

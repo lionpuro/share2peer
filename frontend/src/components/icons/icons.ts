@@ -7,6 +7,7 @@ export {
 	MdExitToApp as IconExit,
 	MdClose as IconX,
 } from "react-icons/md";
+export { RiAlertFill as IconAlert } from "react-icons/ri";
 export { HiMiniSignal as IconSignal } from "react-icons/hi2";
 export {
 	FaFileImage as IconFileImage,

@@ -2,6 +2,26 @@ import { atom } from "nanostores";
 import { nanoid } from "nanoid";
 import * as z from "zod/mini";
 
+type FileUpload = FileMetadata & { file: File };
+
+export const $uploads = atom<FileUpload[]>([]);
+
+export function getUpload(id: string): FileUpload | undefined {
+	return $uploads.get().find((u) => u.id === id);
+}
+
+export function setUploads(files: File[]) {
+	const uploads: FileUpload[] = files.map((file) => {
+		const meta = createFileMetadata(file);
+		return { ...meta, file: file };
+	});
+	$uploads.set(uploads);
+}
+
+export function deleteUploads() {
+	$uploads.set([]);
+}
+
 export type Chunk = {
 	fileID: string;
 	index: number;
@@ -24,26 +44,6 @@ function createFileMetadata(file: File): FileMetadata {
 		mime: file.type,
 		size: file.size,
 	};
-}
-
-type FileUpload = FileMetadata & { file: File };
-
-export const $uploads = atom<FileUpload[]>([]);
-
-export function getUpload(id: string): FileUpload | undefined {
-	return $uploads.get().find((u) => u.id === id);
-}
-
-export function setUploads(files: File[]) {
-	const uploads: FileUpload[] = files.map((file) => {
-		const meta = createFileMetadata(file);
-		return { ...meta, file: file };
-	});
-	$uploads.set(uploads);
-}
-
-export function deleteUploads() {
-	$uploads.set([]);
 }
 
 export function downloadBlob(blob: Blob, name: string) {

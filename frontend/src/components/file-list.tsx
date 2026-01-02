@@ -19,11 +19,19 @@ export function FileListItem({
 	return (
 		<li {...props} className="flex items-center gap-2">
 			<FileIcon mime={file.mime} />
-			<div className="flex flex-1 flex-wrap gap-2 font-medium">
-				<p className="text-sm font-medium">{file.name}</p>
-				<span className="ml-auto text-sm text-neutral-500">
-					{formatFileSize(file.size)}
-				</span>
+			<div className="flex min-w-0 flex-1 flex-wrap gap-2 font-medium">
+				<div className="flex w-full gap-2">
+					<p
+						title={file.name}
+						className="overflow-x-scroll text-sm font-medium text-ellipsis whitespace-nowrap"
+						style={{ scrollbarWidth: "none" }}
+					>
+						{file.name}
+					</p>
+					<span className="ml-auto text-sm whitespace-nowrap text-neutral-500">
+						{formatFileSize(file.size)}
+					</span>
+				</div>
 				{transfer ? (
 					<div className="flex w-full items-center gap-2 text-sm">
 						{transfer.status === "sending" ||

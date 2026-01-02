@@ -246,12 +246,26 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 	}
 
 	sess.RemoveClient(c)
-
 	if err := c.conn.WriteJSON(Message{
 		Type:    MessageSessionLeft,
 		Payload: sess,
 	}); err != nil {
 		return err
+	}
+
+	if sess.Host == c.ID {
+		sess.ForEachClient(func(client *Client) {
+			client.sessionID = ""
+			err := client.conn.WriteJSON(Message{
+				Type:    MessageSessionLeft,
+				Payload: sess,
+			})
+			if err != nil {
+				log.Printf("write json: %v", err)
+			}
+		})
+		wh.sessions.Delete(sess.ID)
+		return nil
 	}
 
 	if err := wh.broadcast(c.conn, Message{

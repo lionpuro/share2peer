@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const [joinCode, setJoinCode] = useState("");
-	const { session, requestSession, joinSession } = useSession();
+	const { session, requestSession, joinSession, leaveSession } = useSession();
 	const { socket, connectionState } = useSocket();
 	const { uploads, setUploads, cancelUploads, shareUploads } = useUpload();
 
@@ -65,34 +65,45 @@ function Component() {
 	return (
 		<Main>
 			{session ? (
-				<Box className="mx-auto w-full max-w-md gap-4">
-					<SessionInfo session={session} />
-					<H2>Files</H2>
-					{uploads.length > 0 ? (
-						<>
-							<FileList>
-								{uploads.map((f) => (
-									<FileListItem key={f.id} file={f} />
-								))}
-							</FileList>
-							<Button
-								variant="secondary"
-								onClick={cancelUploads}
-								className="mt-2 gap-1"
-							>
-								<IconX />
-								Cancel
-							</Button>
-						</>
-					) : (
-						<FileInput
-							className="rounded-xl"
-							multiple={true}
-							labelText="Click to browse or drop files here"
-							onFileInput={(files) => handleDrop(files)}
-						/>
-					)}
-				</Box>
+				<>
+					<Box className="mx-auto w-full max-w-md gap-4">
+						<SessionInfo session={session} />
+						<H2>Files</H2>
+						{uploads.length > 0 ? (
+							<>
+								<FileList>
+									{uploads.map((f) => (
+										<FileListItem key={f.id} file={f} />
+									))}
+								</FileList>
+								<Button
+									variant="secondary"
+									onClick={cancelUploads}
+									className="mt-2 gap-1"
+								>
+									<IconX />
+									Cancel
+								</Button>
+							</>
+						) : (
+							<>
+								<FileInput
+									className="rounded-xl"
+									multiple={true}
+									labelText="Click to browse or drop files here"
+									onFileInput={(files) => handleDrop(files)}
+								/>
+								<Button
+									variant="primary"
+									onClick={() => leaveSession(session.id)}
+									className="mt-2 gap-1 bg-red-600/90 hover:bg-red-700/90"
+								>
+									Close session
+								</Button>
+							</>
+						)}
+					</Box>
+				</>
 			) : (
 				<div className="mx-auto flex w-full max-w-xs flex-col">
 					<H2 className="mb-4">Share files</H2>

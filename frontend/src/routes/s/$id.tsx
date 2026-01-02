@@ -73,7 +73,7 @@ function Component() {
 								className="mt-2 gap-1.5"
 								onClick={startDownload}
 							>
-								<IconDownload size={18} />
+								<IconDownload />
 								Download
 							</Button>
 						)}
@@ -89,7 +89,7 @@ function Component() {
 							className="mt-2 gap-1.5"
 							onClick={stopTransfers}
 						>
-							<IconX size={18} />
+							<IconX />
 							Cancel transfer
 						</Button>
 					) : (

@@ -69,7 +69,7 @@ function Component() {
 					<Box className="mx-auto w-full max-w-md gap-4">
 						<SessionInfo session={session} />
 						<span className="flex items-center gap-1 text-sm">
-							<IconAlert size={16} className="text-yellow-500" />
+							<IconAlert className="text-yellow-500" />
 							Keep this page open during transfer!
 						</span>
 						<H2>Files</H2>
@@ -168,10 +168,7 @@ function Component() {
 								onClick={() => setJoinCode("")}
 								className="absolute right-0 p-2"
 							>
-								<IconX
-									size={20}
-									className="text-muted-foreground hover:text-foreground"
-								/>
+								<IconX className="text-muted-foreground hover:text-foreground" />
 							</button>
 						)}
 					</div>
@@ -220,7 +217,7 @@ function SessionInfo({ session }: { session: Session }) {
 					title="Copy link"
 					className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-medium text-white hover:bg-primary-darker"
 				>
-					{copied ? <IconCheck size={20} /> : <IconCopy size={16} />}
+					{copied ? <IconCheck /> : <IconCopy />}
 				</button>
 			</div>
 		</div>

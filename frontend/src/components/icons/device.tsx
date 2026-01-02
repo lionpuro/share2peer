@@ -1,11 +1,10 @@
 import type { DeviceType } from "#/lib/client";
-import type { IconBaseProps } from "react-icons";
-import { IconDesktop, IconMobile, IconTablet } from "./icons";
+import { IconDesktop, IconMobile, IconTablet, type IconProps } from "./icons";
 
 export function DeviceIcon({
 	deviceType,
 	...props
-}: { deviceType: DeviceType } & IconBaseProps) {
+}: { deviceType: DeviceType } & IconProps) {
 	switch (deviceType) {
 		case "desktop":
 			return <IconDesktop {...props} />;

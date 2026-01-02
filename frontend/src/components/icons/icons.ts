@@ -1,20 +1,20 @@
-export {
-	MdUpload as IconUpload,
-	MdDownload as IconDownload,
-	MdFileCopy as IconCopy,
-	MdLink as IconLink,
-	MdCheck as IconCheck,
-	MdExitToApp as IconExit,
-	MdClose as IconX,
-} from "react-icons/md";
-export { RiAlertFill as IconAlert } from "react-icons/ri";
-export { HiMiniSignal as IconSignal } from "react-icons/hi2";
-export {
-	FaFileImage as IconFileImage,
-	FaFileVideo as IconFileVideo,
-	FaFileAudio as IconFileAudio,
-	FaFileAlt as IconFileDefault,
-	FaDesktop as IconDesktop,
-	FaTabletAlt as IconTablet,
-	FaMobileAlt as IconMobile,
-} from "react-icons/fa";
+import type { SVGProps } from "react";
+
+export type IconProps = SVGProps<SVGSVGElement>;
+
+export { default as IconUpload } from "~icons/mdi/upload";
+export { default as IconDownload } from "~icons/mdi/download";
+export { default as IconCopy } from "~icons/mdi/content-copy";
+export { default as IconCheck } from "~icons/mdi/check";
+export { default as IconExit } from "~icons/mdi/exit-to-app";
+export { default as IconX } from "~icons/mdi/close";
+export { default as IconAlert } from "~icons/mdi/alert";
+export { default as IconSignal } from "~icons/mdi/access-point";
+export { default as IconDesktop } from "~icons/mdi/desktop-windows";
+export { default as IconTablet } from "~icons/mdi/tablet";
+export { default as IconMobile } from "~icons/mdi/mobile-phone";
+
+export { default as IconFileDefault } from "~icons/fa-solid/file-alt";
+export { default as IconFileImage } from "~icons/fa-solid/file-image";
+export { default as IconFileVideo } from "~icons/fa-solid/file-video";
+export { default as IconFileAudio } from "~icons/fa-solid/file-audio";

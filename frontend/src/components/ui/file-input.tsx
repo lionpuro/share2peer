@@ -79,8 +79,9 @@ export function FileInput({
 				onDragLeave={onDragLeave}
 			>
 				<IconUpload
-					size={36}
-					className={`pointer-events-none ${dragging ? "fill-primary" : "fill-neutral-400"}`}
+					width={36}
+					height={36}
+					className={`pointer-events-none ${dragging ? "text-primary" : "text-neutral-400"}`}
 				/>
 				<span className="pointer-events-none mt-2 text-center text-sm font-medium text-muted-foreground">
 					{labelText}

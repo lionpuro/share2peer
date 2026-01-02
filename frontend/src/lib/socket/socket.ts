@@ -85,9 +85,7 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 						$session.set(SessionInfoSchema.parse(message).payload || null);
 						break;
 					case MessageType.SessionCreated:
-						$session.set({
-							id: SessionCreatedSchema.parse(message).payload.session_id,
-						});
+						$session.set(SessionCreatedSchema.parse(message).payload);
 						break;
 					case MessageType.SessionJoined:
 						$session.set(SessionJoinedSchema.parse(message).payload);

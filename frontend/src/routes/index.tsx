@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
 import { Loader } from "#/components/ui/loader";
-import type { MessageEventListener, MessageType } from "#/lib/message";
 import { IconAlert, IconCheck, IconCopy, IconX } from "#/components/icons";
 import { Button } from "#/components/ui/button";
 import { H2 } from "#/components/ui/heading";
@@ -20,8 +19,8 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const [joinCode, setJoinCode] = useState("");
-	const { session, requestSession, joinSession, leaveSession } = useSession();
-	const { socket, connectionState } = useSocket();
+	const { session, requestSession, leaveSession } = useSession();
+	const { connectionState } = useSocket();
 	const { uploads, setUploads, cancelUploads, shareUploads } = useUpload();
 
 	const handleDrop = (files: File[]) => {
@@ -34,22 +33,6 @@ function Component() {
 	const handleShare = () => {
 		requestSession();
 	};
-
-	const handleCreated: MessageEventListener<typeof MessageType.SessionCreated> =
-		useCallback(
-			(e) => {
-				const id = e.detail.payload.session_id;
-				joinSession(id);
-			},
-			[joinSession],
-		);
-
-	useEffect(() => {
-		socket.addEventListener("session-created", handleCreated);
-		return () => {
-			socket.removeEventListener("session-created", handleCreated);
-		};
-	}, [socket, handleCreated]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;

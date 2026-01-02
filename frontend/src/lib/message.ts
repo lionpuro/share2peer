@@ -79,7 +79,7 @@ export type SessionInfoMessage = z.infer<typeof SessionInfoSchema>;
 
 export const SessionCreatedSchema = z.object({
 	type: z.literal(MessageType.SessionCreated),
-	payload: z.object({ session_id: z.string() }),
+	payload: SessionSchema,
 });
 
 export type SessionCreatedMessage = z.infer<typeof SessionCreatedSchema>;

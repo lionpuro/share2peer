@@ -116,7 +116,7 @@ func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, 
 func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
 	switch msg.Type {
 	case MessageRequestSession:
-		return wh.handleRequestSession(c, msg)
+		return wh.handleRequestSession(c)
 	case MessageJoinSession:
 		return wh.handleJoinSession(c, msg)
 	case MessageLeaveSession:
@@ -128,15 +128,19 @@ func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
 	}
 }
 
-func (wh *WebSocketHandler) handleRequestSession(c *Client, msg Message) error {
+func (wh *WebSocketHandler) handleRequestSession(c *Client) error {
 	sess, err := wh.sessions.Create(c.ID)
 	if err != nil {
 		return err
 	}
 
+	if err := sess.AddClient(c); err != nil {
+		return err
+	}
+
 	return c.conn.WriteJSON(Message{
 		Type:    MessageSessionCreated,
-		Payload: SessionIDPayload{SessionID: sess.ID},
+		Payload: sess,
 	})
 }
 

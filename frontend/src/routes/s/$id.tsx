@@ -9,7 +9,7 @@ import { $peer } from "#/lib/webrtc";
 import { useTransfer } from "#/hooks/use-transfer";
 import { Box } from "#/components/ui/box";
 import { FileList, FileListItem } from "#/components/file-list";
-import { H2 } from "#/components/ui/heading";
+import { Heading } from "#/components/ui/heading";
 import { Button } from "#/components/ui/button";
 import { IconDownload, IconX } from "#/components/icons";
 import { Loader } from "#/components/ui/loader";
@@ -58,7 +58,7 @@ function Component() {
 				</div>
 				{peer.files.length > 0 ? (
 					<>
-						<H2>Files</H2>
+						<Heading order={2}>Files</Heading>
 						<FileList>
 							{peer.files.map((f) => (
 								<FileListItem key={f.id} file={f} transfer={transfers[f.id]} />

@@ -6,7 +6,7 @@ import { useSession } from "#/hooks/use-session";
 import { Loader } from "#/components/ui/loader";
 import { IconAlert, IconCheck, IconCopy, IconX } from "#/components/icons";
 import { Button } from "#/components/ui/button";
-import { H2 } from "#/components/ui/heading";
+import { Heading } from "#/components/ui/heading";
 import { FileInput } from "#/components/ui/file-input";
 import { useUpload } from "#/hooks/use-upload";
 import { Box } from "#/components/ui/box";
@@ -58,7 +58,7 @@ function Component() {
 						<span className="font-bold">Note:</span>
 						Keep this page open during transfer!
 					</span>
-					<H2>Files</H2>
+					<Heading order={2}>Files</Heading>
 					{uploads.length > 0 ? (
 						<>
 							<FileList>
@@ -95,7 +95,9 @@ function Component() {
 				</Box>
 			) : (
 				<div className="mx-auto flex w-full max-w-xs flex-col">
-					<H2 className="mb-4">Share files</H2>
+					<Heading order={2} className="mb-4">
+						Share files
+					</Heading>
 					{uploads.length === 0 ? (
 						<FileInput
 							className="rounded-xl"
@@ -137,7 +139,9 @@ function Component() {
 						<span className="text-sm font-medium text-neutral-500">OR</span>
 						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
 					</div>
-					<h3 className="mb-4 text-lg leading-none font-bold">Join session</h3>
+					<Heading order={2} className="mb-4">
+						Join session
+					</Heading>
 					<div className="relative flex">
 						<input
 							id="input-code"

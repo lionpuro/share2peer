@@ -1,12 +1,24 @@
 import { Link } from "@tanstack/react-router";
+import { IconGithub } from "#/components/icons";
 
 export function Header() {
 	return (
-		<header className="flex justify-center p-4">
+		<header className="mx-auto flex w-full max-w-screen-lg items-center px-8 py-4">
 			<Link to="/" className="flex items-center gap-1 text-xl font-bold">
 				<Logo className="text-primary" size={32} />
 				share2peer
 			</Link>
+			<div className="ml-auto flex">
+				<a
+					href="https://github.com/lionpuro/share2peer"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex items-center gap-1 font-medium text-secondary-foreground/90"
+				>
+					<IconGithub />
+					Source
+				</a>
+			</div>
 		</header>
 	);
 }

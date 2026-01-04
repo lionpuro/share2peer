@@ -13,6 +13,11 @@ export { default as IconSignal } from "~icons/mdi/access-point";
 export { default as IconDesktop } from "~icons/mdi/desktop-windows";
 export { default as IconTablet } from "~icons/mdi/tablet";
 export { default as IconMobile } from "~icons/mdi/mobile-phone";
+export { default as IconConnect } from "~icons/mdi/lan-connect";
+export { default as IconInfinity } from "~icons/mdi/infinity";
+export { default as IconGithub } from "~icons/mdi/github";
+
+export { default as IconDevices } from "~icons/material-symbols/devices";
 
 export { default as IconFileDefault } from "~icons/fa-solid/file-alt";
 export { default as IconFileImage } from "~icons/fa-solid/file-image";

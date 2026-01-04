@@ -4,7 +4,15 @@ import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
 import { Loader } from "#/components/ui/loader";
-import { IconAlert, IconCheck, IconCopy, IconX } from "#/components/icons";
+import {
+	IconAlert,
+	IconCheck,
+	IconConnect,
+	IconCopy,
+	IconDevices,
+	IconInfinity,
+	IconX,
+} from "#/components/icons";
 import { Button } from "#/components/ui/button";
 import { Heading } from "#/components/ui/heading";
 import { FileInput } from "#/components/ui/file-input";
@@ -47,6 +55,26 @@ function Component() {
 
 	return (
 		<Main>
+			<div className="mx-auto my-12 flex max-w-lg flex-wrap gap-x-4 gap-y-3">
+				<Heading order={1} className="mb-1 w-full">
+					Share files quickly and privately
+				</Heading>
+				<p className="w-full text-secondary-foreground/80">
+					Transfer files between devices without uploading them to a server.
+				</p>
+				<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+					<IconConnect />
+					Peer-to-peer
+				</span>
+				<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+					<IconInfinity />
+					No size limits
+				</span>
+				<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+					<IconDevices />
+					Cross-platform
+				</span>
+			</div>
 			{session ? (
 				<Box className="mx-auto w-full max-w-md gap-4">
 					<SessionInfo session={session} />
@@ -94,82 +122,79 @@ function Component() {
 					)}
 				</Box>
 			) : (
-				<div className="mx-auto flex w-full max-w-xs flex-col">
-					<Heading order={2} className="mb-4">
-						Share files
-					</Heading>
-					{uploads.length === 0 ? (
-						<FileInput
-							className="rounded-xl"
-							multiple={true}
-							labelText="Click to browse or drop files here"
-							onFileInput={(files) => handleDrop(files)}
-						/>
-					) : (
-						<>
-							<FileList>
-								{uploads.map((f) => (
-									<FileListItem key={f.id} file={f} />
-								))}
-							</FileList>
-							<div className="mt-4 flex gap-2">
-								<Button
-									variant="secondary"
-									size="sm"
-									onClick={() => setUploads([])}
-									className="basis-1/2"
-									disabled={uploads.length === 0}
-								>
-									Remove
-								</Button>
-								<Button
-									variant="primary"
-									size="sm"
-									onClick={handleShare}
-									className="basis-1/2"
-									disabled={uploads.length === 0}
-								>
-									Share
-								</Button>
-							</div>
-						</>
-					)}
-					<div className="my-6 flex items-center gap-2">
-						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
-						<span className="text-sm font-medium text-neutral-500">OR</span>
-						<hr className="h-0.5 flex-1 rounded-xs border-none bg-secondary" />
-					</div>
-					<Heading order={2} className="mb-4">
-						Join session
-					</Heading>
-					<div className="relative flex">
-						<input
-							id="input-code"
-							placeholder="ABC123"
-							minLength={6}
-							maxLength={6}
-							value={joinCode}
-							onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-							className="mb-4 flex-1 rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-neutral-400"
-						/>
-						{joinCode.length > 0 && (
-							<button
-								onClick={() => setJoinCode("")}
-								className="absolute right-0 p-2"
-							>
-								<IconX className="text-muted-foreground hover:text-foreground" />
-							</button>
+				<>
+					<div className="mx-auto flex w-full max-w-md flex-col p-4">
+						<Heading order={2} className="mb-6">
+							Select files
+						</Heading>
+						{uploads.length === 0 ? (
+							<FileInput
+								className="rounded-xl"
+								multiple={true}
+								labelText="Click to browse or drop files here"
+								onFileInput={(files) => handleDrop(files)}
+							/>
+						) : (
+							<>
+								<FileList>
+									{uploads.map((f) => (
+										<FileListItem key={f.id} file={f} />
+									))}
+								</FileList>
+								<div className="mt-8 flex gap-2 sm:ml-auto sm:w-48">
+									<Button
+										variant="secondary"
+										size="sm"
+										onClick={() => setUploads([])}
+										className="basis-1/2"
+										disabled={uploads.length === 0}
+									>
+										Remove
+									</Button>
+									<Button
+										variant="primary"
+										size="sm"
+										onClick={handleShare}
+										className="basis-1/2"
+										disabled={uploads.length === 0}
+									>
+										Share
+									</Button>
+								</div>
+							</>
 						)}
 					</div>
-					<Link
-						to="/s/$id"
-						params={{ id: joinCode }}
-						className={`rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
-						disabled={joinCode.length !== 6}
-					>
-						Join
-					</Link>
-				</div>
+					<div className="mx-auto mt-6 flex items-center gap-2">
+						<p className="text-secondary-foreground/80">Have a code?</p>
+						<div className="relative flex">
+							<input
+								id="input-code"
+								placeholder="ABC123"
+								minLength={6}
+								maxLength={6}
+								value={joinCode}
+								onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+								className="w-28 rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-neutral-400"
+							/>
+							{joinCode.length > 0 && (
+								<button
+									onClick={() => setJoinCode("")}
+									className="absolute right-0 p-2"
+								>
+									<IconX className="text-muted-foreground hover:text-foreground" />
+								</button>
+							)}
+						</div>
+						<Link
+							to="/s/$id"
+							params={{ id: joinCode }}
+							className={`rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
+							disabled={joinCode.length !== 6}
+						>
+							Join
+						</Link>
+					</div>
+				</>
 			)}
 		</Main>
 	);

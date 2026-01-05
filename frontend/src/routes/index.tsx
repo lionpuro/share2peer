@@ -20,6 +20,7 @@ import { useUpload } from "#/hooks/use-upload";
 import { Box } from "#/components/ui/box";
 import { FileList, FileListItem } from "#/components/file-list";
 import type { Session } from "#/lib/session";
+import { createFileMetadata } from "#/lib/file";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -32,7 +33,11 @@ function Component() {
 	const { uploads, setUploads, cancelUploads, shareUploads } = useUpload();
 
 	const handleDrop = (files: File[]) => {
-		setUploads(files);
+		const uploads = files.map((file) => {
+			const meta = createFileMetadata(file);
+			return { ...meta, file: file };
+		});
+		setUploads(uploads);
 		if (session) {
 			shareUploads();
 		}

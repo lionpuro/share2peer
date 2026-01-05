@@ -10,11 +10,7 @@ export function getUpload(id: string): FileUpload | undefined {
 	return $uploads.get().find((u) => u.id === id);
 }
 
-export function setUploads(files: File[]) {
-	const uploads: FileUpload[] = files.map((file) => {
-		const meta = createFileMetadata(file);
-		return { ...meta, file: file };
-	});
+export function setUploads(uploads: FileUpload[]) {
 	$uploads.set(uploads);
 }
 
@@ -37,7 +33,7 @@ export const FileMetadataSchema = z.object({
 
 export type FileMetadata = z.infer<typeof FileMetadataSchema>;
 
-function createFileMetadata(file: File): FileMetadata {
+export function createFileMetadata(file: File): FileMetadata {
 	return {
 		id: nanoid(),
 		name: file.name,

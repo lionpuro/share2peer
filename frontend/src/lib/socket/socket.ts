@@ -14,12 +14,16 @@ import {
 	SocketMessageEvent,
 	type Message,
 	type SocketMessageEventTarget,
+	ClientLeftSchema,
+	type ClientJoinedMessage,
 } from "#/lib/message";
 import { $session } from "#/lib/session";
 import type { Client } from "#/lib/client";
 import {
 	closePeerConnection,
+	closePeerConnections,
 	createOffer,
+	findPeer,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
@@ -58,7 +62,7 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 		});
 		this.#ws.addEventListener("close", () => {
 			$connectionState.set("closed");
-			closePeerConnection();
+			closePeerConnections();
 			setTimeout(() => {
 				this.connect();
 			}, 1000);
@@ -92,16 +96,13 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 						break;
 					case MessageType.SessionLeft:
 						$session.set(null);
-						closePeerConnection();
+						closePeerConnections();
 						break;
 					case MessageType.ClientJoined:
-						await createOffer(
-							this,
-							ClientJoinedSchema.parse(message).payload.id,
-						);
+						await handleClientJoined(this, ClientJoinedSchema.parse(message));
 						break;
 					case MessageType.ClientLeft:
-						closePeerConnection();
+						closePeerConnection(ClientLeftSchema.parse(message).payload.id);
 						break;
 					case MessageType.Offer:
 						await handleOffer(this, OfferSchema.parse(message));
@@ -164,6 +165,19 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 		}
 		this.#ws.send(JSON.stringify(msg));
 	}
+}
+
+async function handleClientJoined(
+	sock: WebSocketManager,
+	msg: ClientJoinedMessage,
+) {
+	const host = $identity.get()?.id === $session.get()?.host;
+	if (!host) return;
+
+	if (findPeer(msg.payload.id)) {
+		return;
+	}
+	await createOffer(sock, msg.payload.id);
 }
 
 function resolveSocketURL() {

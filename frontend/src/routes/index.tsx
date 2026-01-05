@@ -21,6 +21,7 @@ import { Box } from "#/components/ui/box";
 import { FileList, FileListItem } from "#/components/file-list";
 import type { Session } from "#/lib/session";
 import { createFileMetadata } from "#/lib/file";
+import { shareFiles } from "#/lib/webrtc";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -30,7 +31,7 @@ function Component() {
 	const [joinCode, setJoinCode] = useState("");
 	const { session, requestSession, leaveSession } = useSession();
 	const { connectionState } = useSocket();
-	const { uploads, setUploads, cancelUploads, shareUploads } = useUpload();
+	const { uploads, setUploads, cancelUploads } = useUpload();
 
 	const handleDrop = (files: File[]) => {
 		const uploads = files.map((file) => {
@@ -39,7 +40,14 @@ function Component() {
 		});
 		setUploads(uploads);
 		if (session) {
-			shareUploads();
+			shareFiles(
+				uploads.map((u) => ({
+					id: u.id,
+					name: u.name,
+					mime: u.mime,
+					size: u.size,
+				})),
+			);
 		}
 	};
 

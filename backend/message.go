@@ -30,3 +30,9 @@ type ErrorPayload struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
+
+type RTCMessageInfo struct {
+	SessionID string `json:"session_id"`
+	From      string `json:"from"`
+	To        string `json:"to"`
+}

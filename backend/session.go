@@ -20,9 +20,6 @@ func (s *Session) AddClient(c *Client) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if len(s.Clients) >= 2 {
-		return ErrSessionFull
-	}
 	c.sessionID = s.ID
 	s.Clients = append(s.Clients, c)
 	return nil

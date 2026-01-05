@@ -7,7 +7,16 @@ import {
 	type OfferMessage,
 } from "#/lib/message";
 import { $uploads, getUpload, type FileMetadata } from "#/lib/file";
-import { $peer, createPeer, type Peer } from "./peer";
+import {
+	$peers,
+	addPeer,
+	createPeer,
+	findPeer,
+	removePeer,
+	removePeers,
+	updatePeer,
+	type Peer,
+} from "./peer";
 import {
 	SignalChannelEvents,
 	RequestFileSchema,
@@ -16,6 +25,7 @@ import {
 	type DataChannelType,
 	type RequestFileMessage,
 	type ShareFilesMessage,
+	type SignalChannelMessage,
 } from "./datachannel";
 import {
 	addFileChannel,
@@ -32,7 +42,7 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 		return;
 	}
 	const client = session.clients?.find((c) => c.id === target);
-	if (!client || $peer.get()?.id === client.id) {
+	if (!client || findPeer(client.id) !== undefined) {
 		return;
 	}
 	const peer = createPeer(client);
@@ -40,7 +50,7 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 		"signal" satisfies DataChannelType,
 	);
 	peer.signalChannel.binaryType = "arraybuffer";
-	$peer.set(peer);
+	addPeer(peer);
 	registerPeerConnectionListeners(peer, socket);
 	setupSignalChannel(peer);
 
@@ -68,7 +78,7 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 	if (!client) return;
 
 	const peer = createPeer(client);
-	$peer.set(peer);
+	addPeer(peer);
 	registerPeerConnectionListeners(peer, socket);
 
 	await peer.connection
@@ -91,7 +101,7 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 }
 
 export async function handleAnswer(msg: AnswerMessage) {
-	const peer = $peer.get();
+	const peer = findPeer(msg.payload.from);
 	if (!peer) {
 		console.error("handle answer: connection not found");
 		return;
@@ -102,7 +112,7 @@ export async function handleAnswer(msg: AnswerMessage) {
 }
 
 export async function handleICECandidate(msg: ICECandidateMessage) {
-	const peer = $peer.get();
+	const peer = findPeer(msg.payload.from);
 	if (!peer) {
 		console.error("handle ice candidate: connection not found");
 		return;
@@ -147,8 +157,8 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 		}
 		const id = e.channel.label.slice(5);
 		try {
-			const chan = setupReceiveChannel(e.channel, id);
-			addFileChannel(id, { channel: chan, peer: peer.id });
+			const chan = setupReceiveChannel(e.channel, peer.id, id);
+			addFileChannel(peer.id, id, { channel: chan, peer: peer.id });
 		} catch (err) {
 			console.error("set up receive channel:", err);
 		}
@@ -158,7 +168,11 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 function setupSignalChannel(peer: Peer) {
 	if (!peer.signalChannel) return;
 	peer.signalChannel.addEventListener("open", () => {
-		if ($uploads.get().length > 0) {
+		const identity = $identity.get();
+		const session = $session.get();
+		if (!identity || !session) return;
+		const sender = identity.id === session.host || $uploads.get().length > 0;
+		if (sender) {
 			return;
 		}
 		const msg = {
@@ -184,16 +198,16 @@ function setupSignalChannel(peer: Peer) {
 			}
 			switch (data.type) {
 				case SignalChannelEvents.ReadyToReceive:
-					handleReadyToReceive(peer);
+					handleReadyToReceive(peer.id);
 					break;
 				case SignalChannelEvents.ShareFiles:
-					handleShareFiles(ShareFilesSchema.parse(data));
+					handleShareFiles(peer.id, ShareFilesSchema.parse(data));
 					break;
 				case SignalChannelEvents.RequestFile:
-					await handleRequestFile(peer, RequestFileSchema.parse(data));
+					await handleRequestFile(peer.id, RequestFileSchema.parse(data));
 					break;
 				case SignalChannelEvents.CancelShare:
-					handleCancelShare();
+					handleCancelShare(peer.id);
 					break;
 				default:
 					console.warn(
@@ -208,8 +222,9 @@ function setupSignalChannel(peer: Peer) {
 	});
 }
 
-function handleReadyToReceive(peer: Peer) {
-	if (!peer.signalChannel) return;
+function handleReadyToReceive(peerID: string) {
+	const peer = findPeer(peerID);
+	if (!peer || !peer.signalChannel) return;
 	const uploads = $uploads.get();
 	if ($uploads.get().length < 1) {
 		return;
@@ -220,17 +235,19 @@ function handleReadyToReceive(peer: Peer) {
 		mime: u.mime,
 		size: u.size,
 	}));
-	sendShareFiles(peer.signalChannel, files);
+	sendSignal(peer.signalChannel, { type: "share-files", payload: { files } });
 }
 
-function handleShareFiles(data: ShareFilesMessage) {
+function handleShareFiles(sender: string, data: ShareFilesMessage) {
 	resetTransfers();
-	const peer = $peer.get();
+	const peer = findPeer(sender);
 	if (!peer) return;
-	$peer.set({ ...peer, files: data.payload.files });
+	updatePeer(peer.id, { ...peer, files: data.payload.files });
 }
 
-async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
+async function handleRequestFile(sender: string, data: RequestFileMessage) {
+	const peer = findPeer(sender);
+	if (!peer) return;
 	const upload = getUpload(data.payload.file_id);
 	if (!upload) {
 		console.error("requested file does not exist");
@@ -238,52 +255,60 @@ async function handleRequestFile(peer: Peer, data: RequestFileMessage) {
 	}
 	const { file, ...meta } = upload;
 	try {
-		const chan = await createSendChannel(peer.connection, meta.id);
-		addFileChannel(meta.id, { channel: chan, peer: peer.id });
-		transferFile(chan, file, meta);
+		const chan = await createSendChannel(peer.connection, peer.id, meta.id);
+		addFileChannel(peer.id, meta.id, { channel: chan, peer: peer.id });
+		transferFile(chan, peer.id, file, meta);
 	} catch (err) {
 		console.error("failed to send file:", err);
 	}
 }
 
-function handleCancelShare() {
+function handleCancelShare(sender: string) {
 	resetTransfers();
-	const peer = $peer.get();
+	const peer = findPeer(sender);
 	if (!peer) return;
-	$peer.set({ ...peer, files: [] });
+	updatePeer(peer.id, { files: [] });
 }
 
-export function closePeerConnection() {
+export function closePeerConnection(peerID: string) {
 	resetTransfers();
-	const peer = $peer.get();
+	const peer = findPeer(peerID);
+	console.log({ peer });
 	if (!peer) return;
 	peer.signalChannel?.close();
 	peer.connection.close();
-	$peer.set(null);
+	removePeer(peer.id);
 }
 
-export function shareUploads() {
-	const peer = $peer.get();
-	if (!peer || !peer.signalChannel) return;
-	const uploads = $uploads.get();
-	const files = uploads.map((u) => ({
-		id: u.id,
-		name: u.name,
-		mime: u.mime,
-		size: u.size,
-	}));
-	sendShareFiles(peer.signalChannel, files);
-}
-
-function sendShareFiles(sigchan: RTCDataChannel, files: FileMetadata[]) {
-	sendSignal(sigchan, {
-		type: "share-files",
-		payload: { files },
+export function closePeerConnections() {
+	resetTransfers();
+	$peers.get().forEach((p) => {
+		p.signalChannel?.close();
+		p.connection.close();
 	});
+	removePeers();
+}
+
+export function shareFiles(files: FileMetadata[]) {
+	sendToPeers({ type: "share-files", payload: { files } });
 }
 
 export function sendCancelShare() {
-	const peer = $peer.get();
-	if (!peer) return;
-	sendSignal(peer.signalChannel, { type: "cancel-share" });
+	$peers.get().forEach((p) => {
+		if (!p.signalChannel) {
+			return;
+		}
+		sendSignal(p.signalChannel, { type: "cancel-share" });
+	});
+}
+
+export function sendToPeers(msg: SignalChannelMessage) {
+	const session = $session.get();
+	if (!session) return;
+	session.clients?.forEach((c) => {
+		const peer = findPeer(c.id);
+		if (peer && peer.signalChannel) {
+			sendSignal(peer.signalChannel, msg);
+		}
+	});
 }

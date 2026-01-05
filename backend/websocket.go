@@ -130,7 +130,7 @@ func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
 	case MessageLeaveSession:
 		return wh.handleLeaveSession(c, msg)
 	case MessageAnswer, MessageOffer, MessageICECandidate:
-		return wh.handleWebRTCMessage(c, msg)
+		return wh.handleWebRTCMessage(msg)
 	default:
 		return ErrUnknownMessageType
 	}
@@ -192,24 +192,7 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 	}
 
 	if err := sess.AddClient(c); err != nil {
-		if !errors.Is(err, ErrSessionFull) {
-			return err
-		}
-		for _, cl := range sess.Clients {
-			if cl.conn == c.conn {
-				return c.conn.WriteJSON(Message{
-					Type:    MessageSessionJoined,
-					Payload: sess,
-				})
-			}
-		}
-		return c.conn.WriteJSON(Message{
-			Type: MessageError,
-			Payload: ErrorPayload{
-				Code:    ErrCodeSessionFull,
-				Message: ErrSessionFull.Error(),
-			},
-		})
+		return err
 	}
 
 	err = c.send(Message{
@@ -293,15 +276,31 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 	}, sess.ID)
 }
 
-func (wh *WebSocketHandler) handleWebRTCMessage(c *Client, msg Message) error {
-	var payload SessionIDPayload
+func (wh *WebSocketHandler) handleWebRTCMessage(msg Message) error {
+	var info RTCMessageInfo
 	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(bytes, &payload); err != nil {
+	if err := json.Unmarshal(bytes, &info); err != nil {
 		return err
 	}
 
-	return wh.broadcast(c.conn, msg, c.sessionID)
+	sess, err := wh.sessions.Get(info.SessionID)
+	if err != nil {
+		return err
+	}
+
+	var recipient *Client
+	for _, c := range sess.Clients {
+		if c.ID.String() == info.To {
+			recipient = c
+		}
+	}
+	if recipient == nil {
+		log.Printf("webrtc: message recipient not found")
+		return nil
+	}
+
+	return recipient.send(msg)
 }

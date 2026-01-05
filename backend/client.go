@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/mileusna/useragent"
@@ -11,8 +13,9 @@ type Client struct {
 	DisplayName string          `json:"display_name"`
 	DeviceType  string          `json:"device_type"`
 	DeviceName  string          `json:"device_name"`
-	conn        *websocket.Conn `json:"-"`
 	sessionID   string          `json:"-"`
+	conn        *websocket.Conn `json:"-"`
+	mu          sync.Mutex      `json:"-"`
 }
 
 func createClient(conn *websocket.Conn, deviceType string, deviceName string) *Client {
@@ -23,6 +26,12 @@ func createClient(conn *websocket.Conn, deviceType string, deviceName string) *C
 		DeviceName:  deviceName,
 		conn:        conn,
 	}
+}
+
+func (c *Client) send(v any) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.conn.WriteJSON(v)
 }
 
 const (

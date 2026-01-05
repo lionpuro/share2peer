@@ -47,7 +47,7 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.He
 		if sess.Host == c.ID {
 			sess.ForEachClient(func(client *Client) {
 				client.sessionID = ""
-				err := client.conn.WriteJSON(Message{
+				err := client.send(Message{
 					Type:    MessageSessionLeft,
 					Payload: sess,
 				})
@@ -67,7 +67,7 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.He
 		}
 	}()
 
-	if err := conn.WriteJSON(Message{
+	if err := c.send(Message{
 		Type:    MessageIdentity,
 		Payload: c,
 	}); err != nil {
@@ -105,7 +105,7 @@ func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, 
 		if client.conn == sender {
 			return
 		}
-		if err := client.conn.WriteJSON(json); err != nil {
+		if err := client.send(json); err != nil {
 			log.Printf("write json: %s", err.Error())
 		}
 	})
@@ -138,7 +138,7 @@ func (wh *WebSocketHandler) handleRequestSession(c *Client) error {
 		return err
 	}
 
-	return c.conn.WriteJSON(Message{
+	return c.send(Message{
 		Type:    MessageSessionCreated,
 		Payload: sess,
 	})
@@ -159,7 +159,7 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		if !errors.Is(err, ErrSessionNotFound) {
 			return err
 		}
-		return c.conn.WriteJSON(Message{
+		return c.send(Message{
 			Type: MessageError,
 			Payload: ErrorPayload{
 				Code:    ErrCodeSessionNotFound,
@@ -204,7 +204,7 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		})
 	}
 
-	err = c.conn.WriteJSON(Message{
+	err = c.send(Message{
 		Type:    MessageSessionJoined,
 		Payload: sess,
 	})
@@ -240,7 +240,7 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 		if !errors.Is(err, ErrSessionNotFound) {
 			return err
 		}
-		return c.conn.WriteJSON(Message{
+		return c.send(Message{
 			Type: MessageError,
 			Payload: ErrorPayload{
 				Code:    ErrCodeSessionNotFound,
@@ -250,7 +250,7 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 	}
 
 	sess.RemoveClient(c)
-	if err := c.conn.WriteJSON(Message{
+	if err := c.send(Message{
 		Type:    MessageSessionLeft,
 		Payload: sess,
 	}); err != nil {
@@ -260,7 +260,7 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 	if sess.Host == c.ID {
 		sess.ForEachClient(func(client *Client) {
 			client.sessionID = ""
-			err := client.conn.WriteJSON(Message{
+			err := client.send(Message{
 				Type:    MessageSessionLeft,
 				Payload: sess,
 			})

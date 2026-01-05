@@ -3,7 +3,7 @@ import { IconGithub } from "#/components/icons";
 
 export function Header() {
 	return (
-		<header className="mx-auto flex w-full max-w-screen-lg items-center px-8 py-4">
+		<header className="mx-auto flex w-full max-w-screen-lg items-center px-6 py-4 sm:px-8">
 			<Link to="/" className="flex items-center gap-1 text-xl font-bold">
 				<Logo className="text-primary" size={32} />
 				share2peer

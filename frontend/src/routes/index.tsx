@@ -123,7 +123,7 @@ function Component() {
 				</Box>
 			) : (
 				<>
-					<div className="mx-auto flex w-full max-w-md flex-col p-4">
+					<div className="mx-auto flex w-full max-w-md flex-col">
 						<Heading order={2} className="mb-6">
 							Select files
 						</Heading>
@@ -164,7 +164,7 @@ function Component() {
 							</>
 						)}
 					</div>
-					<div className="mx-auto mt-6 flex items-center gap-2">
+					<div className="mx-auto mt-auto flex items-center gap-2">
 						<p className="text-secondary-foreground/80">Have a code?</p>
 						<div className="relative flex">
 							<input

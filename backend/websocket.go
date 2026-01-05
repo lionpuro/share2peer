@@ -58,10 +58,18 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.He
 			wh.sessions.Delete(sess.ID)
 			return
 		}
+
+		if err := wh.broadcast(c.conn, Message{
+			Type:    MessageClientLeft,
+			Payload: c,
+		}, sess.ID); err != nil {
+			log.Printf("broadcast message: %v", err)
+		}
+
 		err = wh.broadcast(conn, Message{
 			Type:    MessageSessionInfo,
 			Payload: sess,
-		}, c.sessionID)
+		}, sess.ID)
 		if err != nil {
 			log.Printf("broadcast message: %v", err)
 		}

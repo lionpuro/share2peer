@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useStore } from "@nanostores/react";
 import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
@@ -21,6 +22,8 @@ import { Box } from "#/components/ui/box";
 import { FileList, FileListItem } from "#/components/file-list";
 import type { Session } from "#/lib/session";
 import { createFileMetadata } from "#/lib/file";
+import { shareFiles } from "#/lib/webrtc";
+import { $identity } from "#/lib/socket";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -30,7 +33,8 @@ function Component() {
 	const [joinCode, setJoinCode] = useState("");
 	const { session, requestSession, leaveSession } = useSession();
 	const { connectionState } = useSocket();
-	const { uploads, setUploads, cancelUploads, shareUploads } = useUpload();
+	const { uploads, setUploads, cancelUploads } = useUpload();
+	const identity = useStore($identity);
 
 	const handleDrop = (files: File[]) => {
 		const uploads = files.map((file) => {
@@ -39,13 +43,27 @@ function Component() {
 		});
 		setUploads(uploads);
 		if (session) {
-			shareUploads();
+			shareFiles(
+				uploads.map((u) => ({
+					id: u.id,
+					name: u.name,
+					mime: u.mime,
+					size: u.size,
+				})),
+			);
 		}
 	};
 
 	const handleShare = () => {
 		requestSession();
 	};
+
+	useEffect(() => {
+		if (!session || !identity) return;
+		if (session.host !== identity.id) {
+			leaveSession(session.id);
+		}
+	}, [session, identity, leaveSession]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;
@@ -80,7 +98,7 @@ function Component() {
 					Cross-platform
 				</span>
 			</div>
-			{session ? (
+			{session && session.host === identity?.id ? (
 				<Box className="mx-auto w-full max-w-md gap-4">
 					<SessionInfo session={session} />
 					<p className="text-sm font-medium text-muted-foreground">

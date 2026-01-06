@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
-import { useEffect } from "react";
 import { ErrorComponent } from "#/components/error";
 import { Main } from "#/components/ui/main";
 import { useSession } from "#/hooks/use-session";
 import { toTitleCase } from "#/lib/helper";
-import { $peer } from "#/lib/webrtc";
+import { $peers } from "#/lib/webrtc";
 import { useTransfer } from "#/hooks/use-transfer";
 import { Box } from "#/components/ui/box";
 import { FileList, FileListItem } from "#/components/file-list";
@@ -20,19 +19,11 @@ export const Route = createFileRoute("/s/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
-	const { session, error, leaveSession } = useSession(id);
-	const peer = useStore($peer);
+	const { session, error } = useSession(id);
 	const { transfers, stopTransfers, startDownload } = useTransfer();
+	const peers = useStore($peers);
 
-	const tr = Object.values(transfers);
-
-	useEffect(() => {
-		return () => {
-			if (session) {
-				leaveSession(session.id);
-			}
-		};
-	}, [session, leaveSession]);
+	const tr = !session?.host ? [] : Object.values(transfers[session.host] || {});
 
 	if (error) {
 		return (
@@ -46,9 +37,10 @@ function Component() {
 			</ErrorComponent>
 		);
 	}
-	if (!session || !peer) {
+	if (!session || peers.length === 0) {
 		return <Loader />;
 	}
+	const sharingPeers = peers.filter((p) => p.files.length > 0);
 	return (
 		<Main>
 			<Box className="mx-auto w-full max-w-md gap-4">
@@ -56,44 +48,48 @@ function Component() {
 					<span className="font-semibold text-muted-foreground">Session:</span>
 					<span className="font-bold">{session.id}</span>
 				</div>
-				{peer.files.length > 0 ? (
+				{sharingPeers.length === 0 ? (
+					"Waiting for a peer to share files"
+				) : (
 					<>
 						<Heading order={2}>Files</Heading>
 						<FileList>
-							{peer.files.map((f) => (
-								<FileListItem key={f.id} file={f} transfer={transfers[f.id]} />
-							))}
+							{sharingPeers.map((peer) =>
+								peer.files.map((f) => (
+									<FileListItem
+										key={"file" + f.id}
+										file={f}
+										transfer={transfers[peer.id]?.[f.id]}
+									/>
+								)),
+							)}
 						</FileList>
-						{tr.length === 0 && (
+
+						{tr.length === 0 ? (
 							<Button
 								variant="primary"
 								size="sm"
 								className="mt-2 gap-1.5"
-								onClick={startDownload}
+								onClick={() => startDownload(sharingPeers)}
 							>
 								<IconDownload />
 								Download
 							</Button>
+						) : tr.some((t) => t?.status !== "complete") ? (
+							<Button
+								variant="secondary"
+								size="sm"
+								className="mt-2 gap-1.5"
+								onClick={stopTransfers}
+							>
+								<IconX />
+								Cancel transfer
+							</Button>
+						) : (
+							<p>Transfer complete!</p>
 						)}
 					</>
-				) : (
-					"Waiting for a peer to share files"
 				)}
-				{peer.files.length > 0 && tr.length > 0 ? (
-					tr.some((t) => t.status !== "complete") ? (
-						<Button
-							variant="secondary"
-							size="sm"
-							className="mt-2 gap-1.5"
-							onClick={stopTransfers}
-						>
-							<IconX />
-							Cancel transfer
-						</Button>
-					) : (
-						<p>Transfer complete!</p>
-					)
-				) : null}
 			</Box>
 		</Main>
 	);

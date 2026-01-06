@@ -22,7 +22,7 @@ export function useSession(id?: string) {
 
 	const handleError = (e: MessageEventMap["error"]) => {
 		const err = e.detail.payload;
-		if (err.code === "SESSION_NOT_FOUND" || err.code === "SESSION_FULL") {
+		if (err.code === "SESSION_NOT_FOUND") {
 			setError(err);
 		}
 	};

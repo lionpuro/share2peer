@@ -273,7 +273,6 @@ function handleCancelShare(sender: string) {
 export function closePeerConnection(peerID: string) {
 	resetTransfers();
 	const peer = findPeer(peerID);
-	console.log({ peer });
 	if (!peer) return;
 	peer.signalChannel?.close();
 	peer.connection.close();

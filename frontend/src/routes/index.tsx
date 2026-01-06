@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useStore } from "@nanostores/react";
 import { Main } from "#/components/ui/main";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
@@ -22,6 +23,7 @@ import { FileList, FileListItem } from "#/components/file-list";
 import type { Session } from "#/lib/session";
 import { createFileMetadata } from "#/lib/file";
 import { shareFiles } from "#/lib/webrtc";
+import { $identity } from "#/lib/socket";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -32,6 +34,7 @@ function Component() {
 	const { session, requestSession, leaveSession } = useSession();
 	const { connectionState } = useSocket();
 	const { uploads, setUploads, cancelUploads } = useUpload();
+	const identity = useStore($identity);
 
 	const handleDrop = (files: File[]) => {
 		const uploads = files.map((file) => {
@@ -54,6 +57,13 @@ function Component() {
 	const handleShare = () => {
 		requestSession();
 	};
+
+	useEffect(() => {
+		if (!session || !identity) return;
+		if (session.host !== identity.id) {
+			leaveSession(session.id);
+		}
+	}, [session, identity, leaveSession]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;
@@ -88,7 +98,7 @@ function Component() {
 					Cross-platform
 				</span>
 			</div>
-			{session ? (
+			{session && session.host === identity?.id ? (
 				<Box className="mx-auto w-full max-w-md gap-4">
 					<SessionInfo session={session} />
 					<p className="text-sm font-medium text-muted-foreground">

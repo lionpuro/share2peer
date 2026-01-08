@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { socket } from "#/lib/socket";
+import { type MessageEventMap, type ErrorPayload, socket } from "#/lib/socket";
 import {
 	$session,
 	joinSession,
@@ -8,8 +8,6 @@ import {
 	requestSession,
 } from "#/lib/session";
 import { useSocket } from "./use-socket";
-import type { MessageEventMap } from "#/lib/message";
-import type { ErrorPayload } from "#/lib/errors";
 
 const request = () => requestSession(socket);
 const join = (id: string) => joinSession(socket, id);

@@ -16,7 +16,7 @@ import {
 	type SocketMessageEventTarget,
 	ClientLeftSchema,
 	type ClientJoinedMessage,
-} from "#/lib/message";
+} from "./messages";
 import { $availableSession, $session } from "#/lib/session";
 import type { Client } from "#/lib/client";
 import {

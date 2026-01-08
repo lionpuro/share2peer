@@ -1,8 +1,8 @@
 import * as z from "zod/mini";
-import type { CustomEventTarget } from "./events";
 import { ErrorPayloadSchema } from "./errors";
-import { SessionSchema } from "./session";
-import { ClientSchema } from "./client";
+import type { CustomEventTarget } from "#/lib/events";
+import { SessionSchema } from "#/lib/session";
+import { ClientSchema } from "#/lib/client";
 
 export const MessageType = {
 	Error: "error",

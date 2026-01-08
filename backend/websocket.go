@@ -142,10 +142,6 @@ func (wh *WebSocketHandler) handleRequestSession(c *Client) error {
 		return err
 	}
 
-	if err := sess.AddClient(c); err != nil {
-		return err
-	}
-
 	return c.send(Message{
 		Type:    MessageSessionCreated,
 		Payload: sess,

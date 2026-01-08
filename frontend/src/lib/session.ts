@@ -13,6 +13,8 @@ export type Session = z.infer<typeof SessionSchema>;
 
 export const $session = atom<Session | null>(null);
 
+export const $availableSession = atom<string | null>(null);
+
 export function joinSession(socket: WebSocketManager, id: string) {
 	socket.send({
 		type: "join-session",

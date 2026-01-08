@@ -171,8 +171,8 @@ function setupSignalChannel(peer: Peer) {
 		const identity = $identity.get();
 		const session = $session.get();
 		if (!identity || !session) return;
-		const sender = identity.id === session.host || $uploads.get().length > 0;
-		if (sender) {
+		const uploads = $uploads.get().length > 0;
+		if (uploads) {
 			return;
 		}
 		const msg = {

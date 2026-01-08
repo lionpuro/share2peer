@@ -4,18 +4,18 @@ import {
 	type DragEvent,
 	useState,
 } from "react";
-import { IconUpload } from "#/components/icons";
 import { cn } from "#/lib/helper";
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
-	labelText?: string;
+	activeClassName?: string;
 	onFileInput: (files: File[]) => void;
 };
 
 export function FileInput({
 	onFileInput,
-	labelText = "Drag and drop files here, or click to browse files",
+	children = "Select files",
 	className,
+	activeClassName = "",
 	...props
 }: Props) {
 	const [dragging, setDragging] = useState(false);
@@ -67,25 +67,16 @@ export function FileInput({
 			<label
 				htmlFor="file-upload"
 				className={cn(
-					"flex cursor-pointer flex-col items-center justify-center overflow-hidden border-2 border-dashed p-10",
-					dragging
-						? "border-primary/80 bg-primary/10"
-						: "border-neutral-400/60 hover:border-primary/60 hover:bg-primary/5",
+					"cursor-pointer overflow-hidden",
 					className,
+					dragging ? activeClassName : "",
 				)}
 				onDrop={onDrop}
 				onDragOver={onDragOver}
 				onDragEnter={onDragEnter}
 				onDragLeave={onDragLeave}
 			>
-				<IconUpload
-					width={36}
-					height={36}
-					className={`pointer-events-none ${dragging ? "text-primary" : "text-neutral-400"}`}
-				/>
-				<span className="pointer-events-none mt-2 text-center text-sm font-medium text-muted-foreground">
-					{labelText}
-				</span>
+				{children}
 			</label>
 			<input
 				id="file-upload"

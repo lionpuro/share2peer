@@ -2,22 +2,41 @@ import type { LiHTMLAttributes, ReactNode } from "react";
 import type { FileMetadata } from "#/lib/file";
 import type { Transfer } from "#/lib/webrtc/transfer";
 import { FileIcon } from "#/components/icons";
-import { calcProgress, formatFileSize, toTitleCase } from "#/lib/helper";
+import { calcProgress, cn, formatFileSize, toTitleCase } from "#/lib/helper";
 
-export function FileList({ children }: { children?: ReactNode }) {
-	return <ul className="flex flex-col gap-4">{children}</ul>;
+export function FileList({
+	className,
+	children,
+}: {
+	className?: string;
+	children?: ReactNode;
+}) {
+	return (
+		<ul
+			className={cn(
+				"flex flex-col gap-[2px] overflow-hidden rounded-xl",
+				className,
+			)}
+		>
+			{children}
+		</ul>
+	);
 }
 
 export function FileListItem({
 	file,
 	transfer,
+	className,
 	...props
 }: {
 	file: FileMetadata;
 	transfer?: Transfer;
 } & LiHTMLAttributes<HTMLLIElement>) {
 	return (
-		<li {...props} className="flex items-center gap-2">
+		<li
+			{...props}
+			className={cn("flex items-center gap-2 bg-card p-4", className)}
+		>
 			<FileIcon mime={file.mime} />
 			<div className="flex min-w-0 flex-1 flex-wrap gap-2 font-medium">
 				<div className="flex w-full gap-2">

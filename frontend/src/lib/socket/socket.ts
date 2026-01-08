@@ -17,7 +17,7 @@ import {
 	ClientLeftSchema,
 	type ClientJoinedMessage,
 } from "#/lib/message";
-import { $session } from "#/lib/session";
+import { $availableSession, $session } from "#/lib/session";
 import type { Client } from "#/lib/client";
 import {
 	closePeerConnection,
@@ -89,9 +89,12 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 						$session.set(SessionInfoSchema.parse(message).payload || null);
 						break;
 					case MessageType.SessionCreated:
-						$session.set(SessionCreatedSchema.parse(message).payload);
+						$availableSession.set(
+							SessionCreatedSchema.parse(message).payload.id,
+						);
 						break;
 					case MessageType.SessionJoined:
+						$availableSession.set(null);
 						$session.set(SessionJoinedSchema.parse(message).payload);
 						break;
 					case MessageType.SessionLeft:
@@ -171,9 +174,6 @@ async function handleClientJoined(
 	sock: WebSocketManager,
 	msg: ClientJoinedMessage,
 ) {
-	const host = $identity.get()?.id === $session.get()?.host;
-	if (!host) return;
-
 	if (findPeer(msg.payload.id)) {
 		return;
 	}

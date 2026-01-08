@@ -19,6 +19,8 @@ export function createPeer(client: Client): Peer {
 	return peer;
 }
 
+export const $peers = atom<Peer[]>([]);
+
 export function findPeer(id: string): Peer | undefined {
 	return $peers.get().find((p) => p.id === id);
 }

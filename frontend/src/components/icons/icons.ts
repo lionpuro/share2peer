@@ -9,7 +9,7 @@ export { default as IconCheck } from "~icons/mdi/check";
 export { default as IconExit } from "~icons/mdi/exit-to-app";
 export { default as IconX } from "~icons/mdi/close";
 export { default as IconAlert } from "~icons/mdi/alert";
-export { default as IconSignal } from "~icons/mdi/access-point";
+export { default as IconAccessPoint } from "~icons/mdi/access-point";
 export { default as IconDesktop } from "~icons/mdi/desktop-windows";
 export { default as IconTablet } from "~icons/mdi/tablet";
 export { default as IconMobile } from "~icons/mdi/mobile-phone";

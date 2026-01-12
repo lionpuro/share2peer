@@ -28,11 +28,13 @@ import {
 	type SignalChannelMessage,
 } from "./datachannel";
 import {
-	addFileChannel,
-	createSendChannel,
-	resetTransfers,
-	setupReceiveChannel,
-	transferFile,
+	$incoming,
+	$outgoing,
+	findTransfersByPeer,
+	handleIncomingTransfer,
+	handleStartTransfer,
+	listTransfers,
+	stopTransfers,
 } from "./transfer";
 
 export async function createOffer(socket: WebSocketManager, target: string) {
@@ -155,10 +157,9 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 			console.error("unknown datachannel type:", e.channel.label);
 			return;
 		}
-		const id = e.channel.label.slice(5);
+		const fileID = e.channel.label.slice(5);
 		try {
-			const chan = setupReceiveChannel(e.channel, peer.id, id);
-			addFileChannel(peer.id, id, { channel: chan, peer: peer.id });
+			handleIncomingTransfer(fileID, e.channel);
 		} catch (err) {
 			console.error("set up receive channel:", err);
 		}
@@ -239,7 +240,10 @@ function handleReadyToReceive(peerID: string) {
 }
 
 function handleShareFiles(sender: string, data: ShareFilesMessage) {
-	resetTransfers();
+	stopTransfers(
+		$incoming,
+		findTransfersByPeer($incoming, sender).map((t) => t.id),
+	);
 	const peer = findPeer(sender);
 	if (!peer) return;
 	updatePeer(peer.id, { ...peer, files: data.payload.files });
@@ -255,23 +259,31 @@ async function handleRequestFile(sender: string, data: RequestFileMessage) {
 	}
 	const { file, ...meta } = upload;
 	try {
-		const chan = await createSendChannel(peer.connection, peer.id, meta.id);
-		addFileChannel(peer.id, meta.id, { channel: chan, peer: peer.id });
-		transferFile(chan, peer.id, file, meta);
+		handleStartTransfer(peer.id, meta.id, file);
 	} catch (err) {
 		console.error("failed to send file:", err);
 	}
 }
 
 function handleCancelShare(sender: string) {
-	resetTransfers();
+	stopTransfers(
+		$incoming,
+		findTransfersByPeer($incoming, sender).map((t) => t.id),
+	);
 	const peer = findPeer(sender);
 	if (!peer) return;
 	updatePeer(peer.id, { files: [] });
 }
 
 export function closePeerConnection(peerID: string) {
-	resetTransfers();
+	stopTransfers(
+		$incoming,
+		findTransfersByPeer($incoming, peerID).map((t) => t.id),
+	);
+	stopTransfers(
+		$outgoing,
+		findTransfersByPeer($outgoing, peerID).map((t) => t.id),
+	);
 	const peer = findPeer(peerID);
 	if (!peer) return;
 	peer.signalChannel?.close();
@@ -280,7 +292,14 @@ export function closePeerConnection(peerID: string) {
 }
 
 export function closePeerConnections() {
-	resetTransfers();
+	stopTransfers(
+		$incoming,
+		listTransfers($incoming).map((t) => t.id),
+	);
+	stopTransfers(
+		$outgoing,
+		listTransfers($outgoing).map((t) => t.id),
+	);
 	$peers.get().forEach((p) => {
 		p.signalChannel?.close();
 		p.connection.close();

@@ -4,7 +4,7 @@ import { ErrorComponent } from "#/components/error";
 import { Main } from "#/components/ui/main";
 import { useSession } from "#/hooks/use-session";
 import { cn, toTitleCase } from "#/lib/helper";
-import { $peers, shareFiles } from "#/lib/webrtc";
+import { $peers, sendCancelShare, shareFiles } from "#/lib/webrtc";
 import { useTransfer } from "#/hooks/use-transfer";
 import { FileList, FileListItem } from "#/components/file-list";
 import { Heading } from "#/components/ui/heading";
@@ -32,8 +32,15 @@ export const Route = createFileRoute("/s/$id")({
 function Component() {
 	const { id } = Route.useParams();
 	const { session, error } = useSession(id);
-	const { transfers, stopTransfers, startDownload } = useTransfer();
-	const { uploads, setUploads, cancelUploads } = useUpload();
+	const {
+		incoming,
+		stopIncoming,
+		stopOutgoing,
+		findIncoming,
+		outgoingState,
+		startDownload,
+	} = useTransfer();
+	const { uploads, setUploads } = useUpload();
 	const peers = useStore($peers);
 	const identity = useStore($identity);
 	const [selectedFiles, setSelectedFiles] = useState<typeof uploads>([]);
@@ -46,7 +53,7 @@ function Component() {
 		setSelectedFiles(uploads);
 	};
 
-	const handleShare = () => {
+	const handleStartShare = () => {
 		setUploads(selectedFiles);
 		if (session && selectedFiles.length > 0) {
 			shareFiles(
@@ -58,6 +65,12 @@ function Component() {
 				})),
 			);
 		}
+	};
+
+	const handleStopShare = () => {
+		stopOutgoing();
+		sendCancelShare();
+		setUploads([]);
 	};
 
 	const [copied, setCopied] = useState(false);
@@ -90,15 +103,7 @@ function Component() {
 
 	const sharingPeers = peers.filter((p) => p.files.length > 0);
 	const users = [identity, ...peers];
-	const downloads = !session?.host
-		? []
-		: Object.values(transfers[session.host] || {});
-	const transf = Object.entries(transfers)
-		.flatMap(([peer, values]) => {
-			if (!values) return;
-			return Object.values(values).map((t) => ({ peer: peer, ...t }));
-		})
-		.filter((t) => !!t);
+	const peerFiles = peers.flatMap((p) => p.files);
 
 	return (
 		<>
@@ -172,12 +177,12 @@ function Component() {
 										<span
 											className={cn(
 												"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
-												transf.length > 0
+												outgoingState.status === "transferring"
 													? "text-green-600/90"
 													: "text-muted-foreground before:text-neutral-400",
 											)}
 										>
-											{transf.length > 0
+											{outgoingState.status === "transferring"
 												? "Transfer in progress"
 												: "Waiting for a peer to start download"}
 										</span>
@@ -185,7 +190,7 @@ function Component() {
 											variant="secondary"
 											size="sm"
 											className="max-sm:mt-4 sm:ml-auto"
-											onClick={cancelUploads}
+											onClick={handleStopShare}
 										>
 											Stop sharing
 										</Button>
@@ -213,7 +218,7 @@ function Component() {
 										<Button
 											variant="primary"
 											size="sm"
-											onClick={handleShare}
+											onClick={handleStartShare}
 											className="basis-1/2"
 										>
 											Share
@@ -244,7 +249,7 @@ function Component() {
 						</div>
 					) : (
 						<div className="flex flex-col gap-4">
-							{sharingPeers.flatMap((p) => p.files).length === 0 ? (
+							{peerFiles.length === 0 ? (
 								<span className="mt-4 text-center text-muted-foreground">
 									Waiting for a peer to share files
 								</span>
@@ -254,17 +259,15 @@ function Component() {
 										Files
 									</Heading>
 									<FileList>
-										{sharingPeers.map((peer) =>
-											peer.files.map((f) => (
-												<FileListItem
-													key={"file" + f.id}
-													file={f}
-													transfer={transfers[peer.id]?.[f.id]}
-												/>
-											)),
-										)}
+										{peerFiles.map((f) => (
+											<FileListItem
+												key={"file" + f.id}
+												file={f}
+												transfer={findIncoming(f.id)}
+											/>
+										))}
 									</FileList>
-									{downloads.length === 0 ? (
+									{incoming.length === 0 ? (
 										<Button
 											variant="primary"
 											size="sm"
@@ -272,14 +275,14 @@ function Component() {
 											onClick={() => startDownload(sharingPeers)}
 										>
 											<IconDownload />
-											Download ({sharingPeers.flatMap((p) => p.files).length})
+											Download ({peerFiles.length})
 										</Button>
-									) : downloads.some((t) => t?.status !== "complete") ? (
+									) : incoming.some((t) => t?.status === "transferring") ? (
 										<Button
 											variant="secondary"
 											size="sm"
 											className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
-											onClick={stopTransfers}
+											onClick={stopIncoming}
 										>
 											<IconX />
 											Cancel download

@@ -53,20 +53,20 @@ export function FileListItem({
 				</div>
 				{transfer ? (
 					<div className="flex w-full items-center gap-2 text-sm">
-						{transfer.status === "sending" ||
-						transfer.status === "receiving" ||
+						{transfer.status === "transferring" ||
 						transfer.status === "waiting" ? (
 							<>
 								<progress
 									value={calcProgress(
 										transfer.transferredBytes,
-										transfer.file.size,
+										transfer.totalBytes,
 									)}
 									max={100}
 									className="progress h-2 flex-1"
 								></progress>
 								<span className="font-medium text-muted-foreground">
-									{calcProgress(transfer.transferredBytes, transfer.file.size)}%
+									{calcProgress(transfer.transferredBytes, transfer.totalBytes)}
+									%
 								</span>
 							</>
 						) : (

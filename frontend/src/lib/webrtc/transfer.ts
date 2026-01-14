@@ -1,202 +1,312 @@
-import { map } from "nanostores";
-import {
-	ChunkReader,
-	downloadBlob,
-	filestore,
-	type FileMetadata,
-} from "#/lib/file";
-import { sendSignal, type DataChannelType } from "./datachannel";
-import { decodeChunk, encodeChunk, PACKET_SIZE } from "./protocol";
-
-type FileChannel = {
-	channel: RTCDataChannel;
-	peer: string;
-};
-
-export const filechannels: Partial<Record<string, Map<string, FileChannel>>> =
-	{};
-
-export function getFileChannel(
-	peer: string,
-	id: string,
-): FileChannel | undefined {
-	return filechannels[peer]?.get(id);
-}
-
-export function addFileChannel(peer: string, id: string, fc: FileChannel) {
-	if (!filechannels[peer]) {
-		filechannels[peer] = new Map();
-	}
-	filechannels[peer].set(id, fc);
-}
-
-export function deleteFileChannel(peer: string, id: string) {
-	const chan = filechannels[peer]?.get(id);
-	if (
-		chan?.channel.readyState !== "closed" &&
-		chan?.channel.readyState !== "closing"
-	) {
-		chan?.channel.close();
-	}
-	filechannels[peer]?.delete(id);
-	if (filechannels[peer]?.size === 0) {
-		delete filechannels[peer];
-	}
-}
-
-export function deleteFileChannels() {
-	Object.entries(filechannels).forEach(([peer, value]) => {
-		value?.forEach((ch) => ch.channel.close());
-		delete filechannels[peer];
-	});
-}
+import { type MapStore, map } from "nanostores";
+import { nanoid } from "nanoid";
+import { ChunkReader, downloadBlob, filestore } from "#/lib/file";
+import { createDataChannel, sendPacket, sendSignal } from "./datachannel";
+import { decodeChunk, encodeChunk } from "./protocol";
+import { type Peer, findPeer } from "./peer";
 
 type TransferStatus =
 	| "waiting"
-	| "sending"
-	| "receiving"
+	| "transferring"
 	| "complete"
+	| "stopped"
 	| "failed";
 
 export type Transfer = {
 	id: string;
-	file: FileMetadata;
+	peerID: string;
+	fileID: string;
 	status: TransferStatus;
 	transferredBytes: number;
+	totalBytes: number;
+	channel: RTCDataChannel | null;
 };
 
-export type TransferState = Partial<{
-	[peerID: string]: Partial<{ [fileID: string]: Transfer }>;
-}>;
+type TransferStoreValue = {
+	transfers: Partial<{ [transferID: string]: Transfer }>;
+	byPeer: { [peerID: string]: Set<string> };
+	byFile: { [fileID: string]: Set<string> };
+};
 
-export const $transfers = map<TransferState>({});
+type TransferState = {
+	status: TransferStatus | null;
+	progress: number;
+	byTransfer: {
+		[id: string]: { status: TransferStatus | null; progress: number };
+	};
+};
 
-export function getTransfer(peer: string, id: string): Transfer | undefined {
-	return $transfers.get()[peer]?.[id];
-}
-
-export function addTransfer(peer: string, t: Transfer) {
-	const transfers = { ...$transfers.get()[peer] };
-	transfers[t.id] = t;
-	$transfers.setKey(peer, transfers);
-}
-
-export function updateTransfer(
-	peer: string,
-	id: string,
-	value: Partial<Transfer>,
+function updateTransferState(
+	store: MapStore<TransferState>,
+	value: Partial<TransferState>,
 ) {
-	const transfers = { ...$transfers.get()[peer] };
-	if (!transfers) return;
-	const prev = transfers[id];
-	if (!prev) return;
-	transfers[id] = { ...prev, ...value };
-	$transfers.setKey(peer, transfers);
+	store.set({ ...store.get(), ...value });
 }
 
-export function deleteTransfer(id: string) {
-	Object.entries($transfers.get()).forEach(([peer, tr]) => {
-		if (!tr) return;
-		const transfers = { ...tr };
-		if (id in transfers) {
-			delete transfers[id];
-			$transfers.setKey(peer, { ...transfers });
-		}
-	});
-}
+type TransferStoreOptions = {
+	onUpdate?(val: TransferStoreValue): void;
+};
 
-export function resetTransfers() {
-	$transfers.set({});
-}
+class TransferStore {
+	#state: TransferStoreValue = { transfers: {}, byPeer: {}, byFile: {} };
+	#options: TransferStoreOptions;
 
-export async function transferFile(
-	chan: RTCDataChannel,
-	receiver: string,
-	file: File,
-	meta: FileMetadata,
-) {
-	addTransfer(receiver, {
-		id: meta.id,
-		file: meta,
-		status: "sending",
-		transferredBytes: 0,
-	});
-	const reader = new ChunkReader();
-	await reader.read(file, async (chunk, index) => {
-		if (chan.readyState !== "open") {
-			reader.stop();
-			return;
-		}
-		const packet = encodeChunk({
-			fileID: meta.id,
-			index: index,
-			data: chunk,
+	constructor(opts: TransferStoreOptions = {}) {
+		this.#options = opts;
+	}
+
+	find(id: string): Transfer | undefined {
+		return this.#state.transfers[id];
+	}
+
+	findByPeer(peerID: string): Transfer[] {
+		const ids = this.#state.byPeer[peerID] || new Set();
+		return Array.from(ids)
+			.map((id) => this.#state.transfers[id])
+			.filter((v) => !!v);
+	}
+
+	findByFile(fileID: string): Transfer[] {
+		const ids = this.#state.byFile[fileID] || new Set();
+		return Array.from(ids)
+			.map((id) => this.#state.transfers[id])
+			.filter((v) => !!v);
+	}
+
+	list(): Transfer[] {
+		return Object.values(this.#state.transfers).filter((t): t is Transfer => {
+			return t !== undefined;
 		});
-		await sendPacket(chan, packet);
-		const transfer = getTransfer(receiver, meta.id);
+	}
+
+	add(t: Transfer) {
+		const state = this.#state;
+		const updated = {
+			transfers: { ...state.transfers, [t.id]: t },
+			byPeer: {
+				...state.byPeer,
+				[t.peerID]: new Set([...(state.byPeer[t.peerID] || new Set()), t.id]),
+			},
+			byFile: {
+				...state.byFile,
+				[t.fileID]: new Set([...(state.byFile[t.fileID] || new Set()), t.id]),
+			},
+		};
+		this.#state = updated;
+		this.#options.onUpdate?.(this.#state);
+	}
+
+	update(id: string, update: Partial<Transfer>) {
+		const transfer = this.#state.transfers[id];
 		if (!transfer) return;
-		const bytes = transfer.transferredBytes + chunk.byteLength;
-		updateTransfer(receiver, meta.id, {
-			status: bytes === meta.size ? "complete" : "sending",
-			transferredBytes: bytes,
-		});
+		this.#state.transfers = {
+			...this.#state.transfers,
+			[id]: { ...transfer, ...update },
+		};
+		this.#options.onUpdate?.(this.#state);
+	}
+
+	remove(...ids: string[]) {
+		ids.forEach((id) => this.#remove(id));
+		this.#options.onUpdate?.(this.#state);
+	}
+
+	#remove(id: string) {
+		const state = this.#state;
+		const transfer = state.transfers[id];
+		if (!transfer) return;
+
+		const transfers = { ...state.transfers };
+		delete transfers[id];
+
+		const peerSet = state.byPeer[transfer.peerID] || new Set();
+		peerSet.delete(id);
+		const byPeer = { ...state.byPeer, [transfer.peerID]: peerSet };
+		if (peerSet.size === 0) {
+			delete byPeer[transfer.peerID];
+		}
+
+		const fileSet = state.byFile[transfer.fileID] || new Set();
+		fileSet.delete(id);
+		const byFile = { ...state.byFile, [transfer.fileID]: fileSet };
+		if (fileSet.size === 0) {
+			delete byPeer[transfer.fileID];
+		}
+
+		this.#state = { transfers, byPeer, byFile };
+	}
+}
+
+export const $incoming = map<TransferState>({
+	status: null,
+	progress: 0,
+	byTransfer: {},
+});
+
+export const $outgoing = map<TransferState>({
+	status: null,
+	progress: 0,
+	byTransfer: {},
+});
+
+export const incoming = new TransferStore({
+	onUpdate: (val) => {
+		updateTransferState($incoming, computeTransferState(val));
+	},
+});
+export const outgoing = new TransferStore({
+	onUpdate: (val) => {
+		updateTransferState($outgoing, computeTransferState(val));
+	},
+});
+
+export function stopTransfers(store: TransferStore, transferIDs: string[]) {
+	transferIDs.forEach((id) => {
+		const chan = store.find(id)?.channel;
+		if (chan?.readyState === "open") {
+			chan.close();
+		}
+		store.remove(id);
 	});
 }
 
-export function requestFile(
-	sender: string,
-	sigchan: RTCDataChannel,
-	file: FileMetadata,
+function computeTransferState(value: TransferStoreValue): TransferState {
+	const transfers = Object.values(value.transfers).filter(
+		(t): t is Transfer =>
+			!!t && t?.status !== "stopped" && t?.status !== "failed",
+	);
+
+	let total = 0;
+	let current = 0;
+	const byTransfer: TransferState["byTransfer"] = {};
+
+	transfers.forEach((t) => {
+		total += t.totalBytes;
+		current += t.transferredBytes;
+		byTransfer[t.id] = {
+			status: t.status,
+			progress: Math.round((t.transferredBytes / t.totalBytes) * 100),
+		};
+	});
+
+	const progress = total === 0 ? 0 : (current / total) * 100;
+	const status =
+		progress === 100
+			? "complete"
+			: transfers.length > 0
+				? "transferring"
+				: null;
+
+	return {
+		status,
+		progress: Math.round(progress),
+		byTransfer,
+	};
+}
+
+export type TransferContext = {
+	transferID: string;
+	peerID: string;
+	fileID: string;
+	fileSize: number;
+};
+
+export async function handleStartTransfer(
+	peerID: string,
+	fileID: string,
+	file: File,
 ) {
-	addTransfer(sender, {
-		id: file.id,
-		file: file,
+	const ctx: TransferContext = {
+		transferID: nanoid(),
+		peerID: peerID,
+		fileID: fileID,
+		fileSize: file.size,
+	};
+	try {
+		const chan = await createSendChannel(ctx);
+		outgoing.add({
+			id: ctx.transferID,
+			peerID: ctx.peerID,
+			fileID: ctx.fileID,
+			status: "waiting",
+			transferredBytes: 0,
+			totalBytes: ctx.fileSize,
+			channel: chan,
+		});
+		sendFile(ctx, file);
+	} catch (err) {
+		console.error(err);
+		outgoing.remove(ctx.transferID);
+	}
+}
+
+async function createSendChannel(
+	ctx: TransferContext,
+): Promise<RTCDataChannel> {
+	const peer = findPeer(ctx.peerID);
+	if (!peer) {
+		throw new Error("peer not found");
+	}
+
+	const chan = await createDataChannel(peer.connection, `file-${ctx.fileID}`);
+	chan.addEventListener("close", () => {
+		const transfer = outgoing.find(ctx.transferID);
+		if (transfer && transfer.status !== "complete") {
+			outgoing.update(ctx.transferID, { status: "stopped", channel: null });
+		}
+	});
+	chan.addEventListener("error", () => {
+		const transfer = outgoing.find(ctx.transferID);
+		if (transfer) {
+			outgoing.update(ctx.transferID, { status: "failed", channel: null });
+		}
+	});
+
+	return chan;
+}
+
+export function requestFile(peer: Peer, fileID: string) {
+	const file = peer.files.find((f) => f.id === fileID);
+	if (!file) return;
+
+	const ctx: TransferContext = {
+		transferID: nanoid(),
+		peerID: peer.id,
+		fileID: fileID,
+		fileSize: file.size,
+	};
+	incoming.add({
+		id: ctx.transferID,
+		peerID: ctx.peerID,
+		fileID: ctx.fileID,
 		status: "waiting",
 		transferredBytes: 0,
+		totalBytes: ctx.fileSize,
+		channel: null,
 	});
 	filestore.addFile(file);
-	sendSignal(sigchan, {
+
+	sendSignal(peer.signalChannel, {
 		type: "request-file",
 		payload: { file_id: file.id },
 	});
 }
 
-// create a channel for sending
-export function createSendChannel(
-	conn: RTCPeerConnection,
-	receiver: string,
-	id: string,
-): Promise<RTCDataChannel> {
-	return new Promise((resolve, reject) => {
-		const chan = conn.createDataChannel(`file-${id}` satisfies DataChannelType);
-		chan.binaryType = "arraybuffer";
-		chan.bufferedAmountLowThreshold = PACKET_SIZE;
-		const timeout = setTimeout(() => {
-			reject("create channel timed out");
-		}, 5 * 1000);
-		chan.addEventListener("open", () => {
-			clearTimeout(timeout);
-			resolve(chan);
-		});
-		chan.addEventListener("close", () => {
-			deleteFileChannel(receiver, id);
-			deleteTransfer(id);
-		});
-	});
-}
-
-// set up a channel for receiving
-export function setupReceiveChannel(
+export function handleIncomingTransfer(
+	fileID: string,
 	chan: RTCDataChannel,
-	sender: string,
-	id: string,
 ): RTCDataChannel {
-	const tr = getTransfer(sender, id);
-	if (!tr || !filestore.getFile(id)) {
-		chan.close();
-		throw new Error("unrecognized file channel");
-	}
 	chan.binaryType = "arraybuffer";
+	const transfer = incoming.findByFile(fileID).at(0);
+	if (!transfer || !filestore.getFile(fileID)) {
+		chan.close();
+		incoming.remove(fileID);
+		throw new Error("incoming transfer not registered for file " + fileID);
+	}
+
+	const id = transfer.id;
+	incoming.update(id, { channel: chan });
+
 	chan.addEventListener("message", async (e) => {
 		if (!(e.data instanceof ArrayBuffer)) {
 			console.error("filechannel: unrecognized message type");
@@ -205,68 +315,70 @@ export function setupReceiveChannel(
 		try {
 			const chunk = decodeChunk(e.data as ArrayBuffer);
 			filestore.addChunk(chunk);
-			const transfer = getTransfer(sender, id);
-			if (transfer) {
-				const bytes = transfer.transferredBytes + chunk.data.byteLength;
-				updateTransfer(sender, id, {
-					status: "receiving",
-					transferredBytes: bytes,
-				});
-			}
-			const file = filestore.getFile(chunk.fileID);
-			if (!file) return;
-			if (file.currentSize === file.metadata.size) {
-				const stream = await filestore.getResult(chunk.fileID);
-				const blob = await new Response(stream).blob();
-				downloadBlob(blob, file.metadata.name);
-				updateTransfer(sender, id, { status: "complete" });
-				const complete = Object.values($transfers.get()).every((transfers) => {
-					if (!transfers) return true;
-					return Object.values(transfers).every(
-						(t) => t?.status === "complete",
-					);
-				});
-				if (complete) {
-					deleteFileChannels();
-				}
+			const current = incoming.find(id);
+			if (!current) return;
+			const bytes = current.transferredBytes + chunk.data.byteLength;
+			incoming.update(id, {
+				status: "transferring",
+				transferredBytes: bytes,
+			});
+			if (bytes === current.totalBytes) {
+				await handleTransferComplete(chan, id, fileID);
 			}
 		} catch (err) {
 			console.error("filechannel:", err);
 		}
 	});
 	chan.addEventListener("close", () => {
-		deleteFileChannel(sender, id);
-		deleteTransfer(id);
+		incoming.update(id, { channel: null });
 		filestore.removeFile(id);
 	});
+
 	return chan;
 }
 
-export async function sendPacket(chan: RTCDataChannel, packet: ArrayBuffer) {
-	if (chan.readyState !== "open") {
-		throw new Error("channel is not open");
-	}
-	await waitForFreeBuffer(chan);
-	chan.send(packet);
+async function handleTransferComplete(
+	chan: RTCDataChannel,
+	transferID: string,
+	fileID: string,
+) {
+	const file = filestore.getFile(fileID);
+	if (!file) return;
+	const stream = await filestore.getResult(fileID);
+	const blob = await new Response(stream).blob();
+	downloadBlob(blob, file.metadata.name);
+	incoming.update(transferID, { status: "complete" });
+	chan.close();
 }
 
-function waitForFreeBuffer(chan: RTCDataChannel): Promise<void> {
-	return new Promise((resolve) => {
-		const bufferedAmountMax = PACKET_SIZE * 8;
-		if (chan.bufferedAmount < bufferedAmountMax) {
-			resolve();
+async function sendFile(ctx: TransferContext, file: File) {
+	const chan = outgoing.find(ctx.transferID)?.channel;
+	if (!chan) {
+		outgoing.update(ctx.transferID, { status: "failed" });
+		return;
+	}
+
+	outgoing.update(ctx.transferID, { status: "transferring" });
+
+	const reader = new ChunkReader();
+	await reader.read(file, async (chunk, index) => {
+		if (!chan || chan.readyState !== "open") {
+			reader.stop();
 			return;
 		}
-
-		const timeout = setTimeout(resolve, 2000);
-
-		const handler = () => {
-			if (chan.bufferedAmount < bufferedAmountMax) {
-				chan.removeEventListener("bufferedamountlow", handler);
-				clearTimeout(timeout);
-				resolve();
-			}
-		};
-		chan.addEventListener("bufferedamountlow", handler);
+		const packet = encodeChunk({
+			fileID: ctx.fileID,
+			index: index,
+			data: chunk,
+		});
+		await sendPacket(chan, packet);
+		const current = outgoing.find(ctx.transferID);
+		if (!current) return;
+		const bytes = current.transferredBytes + chunk.byteLength;
+		const complete = bytes === ctx.fileSize;
+		outgoing.update(ctx.transferID, {
+			status: complete ? "complete" : current.status,
+			transferredBytes: bytes,
+		});
 	});
 }

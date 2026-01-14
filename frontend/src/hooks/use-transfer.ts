@@ -1,31 +1,48 @@
 import { useStore } from "@nanostores/react";
 import {
-	$transfers,
-	deleteFileChannels,
+	incoming,
+	outgoing,
+	$incoming,
+	$outgoing,
 	requestFile,
-	resetTransfers,
+	stopTransfers,
 } from "#/lib/webrtc/transfer";
 import { filestore } from "#/lib/file";
 import type { Peer } from "#/lib/webrtc";
 
 export function useTransfer() {
-	const transfers = useStore($transfers);
-	const stopTransfers = () => {
-		deleteFileChannels();
-		resetTransfers();
+	const incomingState = useStore($incoming);
+	const outgoingState = useStore($outgoing);
+
+	const stopIncoming = () => {
+		stopTransfers(
+			incoming,
+			incoming.list().map((t) => t.id),
+		);
 		filestore.reset();
 	};
+
+	const stopOutgoing = () => {
+		stopTransfers(
+			outgoing,
+			outgoing.list().map((t) => t.id),
+		);
+	};
+
 	const startDownload = (peers: Peer[]) => {
-		peers.forEach((peer) =>
-			peer.files.forEach((f) => {
-				if (!peer.signalChannel) return;
-				requestFile(peer.id, peer.signalChannel, f);
+		peers.forEach((p) =>
+			p.files.forEach((f) => {
+				requestFile(p, f.id);
 			}),
 		);
 	};
+
 	return {
-		transfers,
-		stopTransfers,
+		incoming: incomingState,
+		outgoing: outgoingState,
+		stopIncoming,
+		stopOutgoing,
+		findIncoming: (fileID: string) => incoming.findByFile(fileID).at(0),
 		startDownload,
 	};
 }

@@ -4,6 +4,25 @@ import { PACKET_SIZE } from "./protocol";
 
 export type DataChannelType = "signal" | `file-${string}`;
 
+export function createDataChannel(
+	conn: RTCPeerConnection,
+	label: DataChannelType,
+	opt?: RTCDataChannelInit,
+): Promise<RTCDataChannel> {
+	return new Promise((resolve, reject) => {
+		const chan = conn.createDataChannel(label, opt);
+		chan.binaryType = "arraybuffer";
+		chan.bufferedAmountLowThreshold = PACKET_SIZE;
+		const timeout = setTimeout(() => {
+			reject("create channel timed out");
+		}, 5 * 1000);
+		chan.addEventListener("open", () => {
+			clearTimeout(timeout);
+			resolve(chan);
+		});
+	});
+}
+
 export const SignalChannelEvents = {
 	ShareFiles: "share-files",
 	RequestFile: "request-file",
@@ -71,25 +90,27 @@ export async function sendPacket(
 	chan: RTCDataChannel,
 	packet: ArrayBuffer,
 ): Promise<void> {
-	await waitToFreeBuffer(chan);
+	await waitForBufferDrain(chan);
 	chan.send(packet);
 }
 
-function waitToFreeBuffer(chan: RTCDataChannel): Promise<void> {
-	chan.bufferedAmountLowThreshold = PACKET_SIZE;
+export function waitForBufferDrain(chan: RTCDataChannel): Promise<void> {
 	return new Promise((resolve) => {
-		const threshold = PACKET_SIZE * 8;
-		if (chan.bufferedAmount < threshold) {
-			return resolve();
+		const bufferedAmountMax = PACKET_SIZE * 8;
+		if (chan.bufferedAmount < bufferedAmountMax) {
+			resolve();
+			return;
 		}
+
+		const timeout = setTimeout(resolve, 2000);
+
 		const handler = () => {
-			if (chan.bufferedAmount < threshold) {
+			if (chan.bufferedAmount < bufferedAmountMax) {
 				chan.removeEventListener("bufferedamountlow", handler);
+				clearTimeout(timeout);
 				resolve();
 			}
 		};
 		chan.addEventListener("bufferedamountlow", handler);
-		// fallback resolve after a timeout
-		setTimeout(resolve, 2000);
 	});
 }

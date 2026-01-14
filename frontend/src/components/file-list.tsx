@@ -35,10 +35,13 @@ export function FileListItem({
 	return (
 		<li
 			{...props}
-			className={cn("flex items-center gap-2 bg-card p-4", className)}
+			className={cn(
+				"flex min-h-17 items-center gap-2 bg-card px-4 py-3",
+				className,
+			)}
 		>
-			<FileIcon mime={file.mime} />
-			<div className="flex min-w-0 flex-1 flex-wrap gap-2 font-medium">
+			<FileIcon mime={file.mime} className="size-8" />
+			<div className="flex min-w-0 flex-1 flex-wrap gap-1 self-stretch font-medium">
 				<div className="flex w-full gap-2">
 					<p
 						title={file.name}

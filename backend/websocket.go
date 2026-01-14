@@ -52,7 +52,7 @@ func (wh *WebSocketHandler) serve(conn *websocket.Conn, header http.Header) erro
 			continue
 		}
 
-		if err := wh.handleResponse(c, message); err != nil {
+		if err := wh.handleMessage(c, message); err != nil {
 			return err
 		}
 	}
@@ -131,7 +131,7 @@ func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, 
 	return nil
 }
 
-func (wh *WebSocketHandler) handleResponse(c *Client, msg Message) error {
+func (wh *WebSocketHandler) handleMessage(c *Client, msg Message) error {
 	switch msg.Type {
 	case MessageRequestSession:
 		return wh.handleRequestSession(c)

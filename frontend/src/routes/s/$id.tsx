@@ -34,12 +34,15 @@ function Component() {
 	const { session, error } = useSession(id);
 	const {
 		incoming,
+		outgoing,
 		stopIncoming,
 		stopOutgoing,
 		findIncoming,
-		outgoingState,
 		startDownload,
 	} = useTransfer();
+	const incomingFiles = Object.entries(incoming.byTransfer).map(
+		([id, progress]) => ({ id, ...progress }),
+	);
 	const { uploads, setUploads } = useUpload();
 	const peers = useStore($peers);
 	const identity = useStore($identity);
@@ -177,12 +180,12 @@ function Component() {
 										<span
 											className={cn(
 												"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
-												outgoingState.status === "transferring"
+												outgoing.status === "transferring"
 													? "text-green-600/90"
 													: "text-muted-foreground before:text-neutral-400",
 											)}
 										>
-											{outgoingState.status === "transferring"
+											{outgoing.status === "transferring"
 												? "Transfer in progress"
 												: "Waiting for a peer to start download"}
 										</span>
@@ -267,7 +270,7 @@ function Component() {
 											/>
 										))}
 									</FileList>
-									{incoming.length === 0 ? (
+									{incomingFiles.length === 0 ? (
 										<Button
 											variant="primary"
 											size="sm"
@@ -277,7 +280,9 @@ function Component() {
 											<IconDownload />
 											Download ({peerFiles.length})
 										</Button>
-									) : incoming.some((t) => t?.status === "transferring") ? (
+									) : incomingFiles.some(
+											(t) => t?.status === "transferring",
+									  ) ? (
 										<Button
 											variant="secondary"
 											size="sm"

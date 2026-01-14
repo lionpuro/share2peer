@@ -1,10 +1,9 @@
 import { useStore } from "@nanostores/react";
 import {
+	incoming,
+	outgoing,
 	$incoming,
 	$outgoing,
-	$outgoingState,
-	findTransfersByFile,
-	listTransfers,
 	requestFile,
 	stopTransfers,
 } from "#/lib/webrtc/transfer";
@@ -12,22 +11,21 @@ import { filestore } from "#/lib/file";
 import type { Peer } from "#/lib/webrtc";
 
 export function useTransfer() {
-	const incoming = useStore($incoming);
-	const outgoing = useStore($outgoing);
-	const outgoingState = useStore($outgoingState);
+	const incomingState = useStore($incoming);
+	const outgoingState = useStore($outgoing);
 
 	const stopIncoming = () => {
 		stopTransfers(
-			$incoming,
-			listTransfers($incoming).map((t) => t.id),
+			incoming,
+			incoming.list().map((t) => t.id),
 		);
 		filestore.reset();
 	};
 
 	const stopOutgoing = () => {
 		stopTransfers(
-			$outgoing,
-			listTransfers($incoming).map((t) => t.id),
+			outgoing,
+			outgoing.list().map((t) => t.id),
 		);
 	};
 
@@ -39,17 +37,12 @@ export function useTransfer() {
 		);
 	};
 
-	const findIncoming = (fileID: string) => {
-		return findTransfersByFile($incoming, fileID)[0];
-	};
-
 	return {
-		incoming: Object.values(incoming.transfers),
-		outgoing: Object.values(outgoing.transfers),
+		incoming: incomingState,
+		outgoing: outgoingState,
 		stopIncoming,
 		stopOutgoing,
-		findIncoming,
-		outgoingState,
+		findIncoming: (fileID: string) => incoming.findByFile(fileID).at(0),
 		startDownload,
 	};
 }

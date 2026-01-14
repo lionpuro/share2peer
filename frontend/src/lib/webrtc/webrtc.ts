@@ -28,12 +28,10 @@ import {
 	type SignalChannelMessage,
 } from "./datachannel";
 import {
-	$incoming,
-	$outgoing,
-	findTransfersByPeer,
+	incoming,
+	outgoing,
 	handleIncomingTransfer,
 	handleStartTransfer,
-	listTransfers,
 	stopTransfers,
 } from "./transfer";
 
@@ -241,8 +239,8 @@ function handleReadyToReceive(peerID: string) {
 
 function handleShareFiles(sender: string, data: ShareFilesMessage) {
 	stopTransfers(
-		$incoming,
-		findTransfersByPeer($incoming, sender).map((t) => t.id),
+		incoming,
+		incoming.findByPeer(sender).map((t) => t.id),
 	);
 	const peer = findPeer(sender);
 	if (!peer) return;
@@ -267,8 +265,8 @@ async function handleRequestFile(sender: string, data: RequestFileMessage) {
 
 function handleCancelShare(sender: string) {
 	stopTransfers(
-		$incoming,
-		findTransfersByPeer($incoming, sender).map((t) => t.id),
+		incoming,
+		incoming.findByPeer(sender).map((t) => t.id),
 	);
 	const peer = findPeer(sender);
 	if (!peer) return;
@@ -277,12 +275,12 @@ function handleCancelShare(sender: string) {
 
 export function closePeerConnection(peerID: string) {
 	stopTransfers(
-		$incoming,
-		findTransfersByPeer($incoming, peerID).map((t) => t.id),
+		incoming,
+		incoming.findByPeer(peerID).map((t) => t.id),
 	);
 	stopTransfers(
-		$outgoing,
-		findTransfersByPeer($outgoing, peerID).map((t) => t.id),
+		outgoing,
+		outgoing.findByPeer(peerID).map((t) => t.id),
 	);
 	const peer = findPeer(peerID);
 	if (!peer) return;
@@ -293,12 +291,12 @@ export function closePeerConnection(peerID: string) {
 
 export function closePeerConnections() {
 	stopTransfers(
-		$incoming,
-		listTransfers($incoming).map((t) => t.id),
+		incoming,
+		incoming.list().map((t) => t.id),
 	);
 	stopTransfers(
-		$outgoing,
-		listTransfers($outgoing).map((t) => t.id),
+		outgoing,
+		outgoing.list().map((t) => t.id),
 	);
 	$peers.get().forEach((p) => {
 		p.signalChannel?.close();

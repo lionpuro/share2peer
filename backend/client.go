@@ -41,7 +41,14 @@ const (
 	DeviceTypeUnknown = "unknown"
 )
 
-func deviceInfo(ua useragent.UserAgent) (string, string) {
+type clientInfo struct {
+	deviceType string
+	deviceName string
+}
+
+func extractClientInfo(userag string) clientInfo {
+	ua := useragent.Parse(userag)
+
 	t := DeviceTypeUnknown
 	switch {
 	case ua.Desktop:
@@ -51,6 +58,7 @@ func deviceInfo(ua useragent.UserAgent) (string, string) {
 	case ua.Mobile:
 		t = DeviceTypeMobile
 	}
+
 	n := ua.OS
 	specif := ua.Name
 	if ua.Device != "" {
@@ -59,5 +67,6 @@ func deviceInfo(ua useragent.UserAgent) (string, string) {
 	if specif != "" {
 		n += " " + specif
 	}
-	return t, n
+
+	return clientInfo{deviceType: t, deviceName: n}
 }

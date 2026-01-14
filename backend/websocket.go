@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/mileusna/useragent"
 )
 
 var upgrader = websocket.Upgrader{
@@ -22,9 +21,8 @@ type WebSocketHandler struct {
 }
 
 func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.Header) error {
-	ua := useragent.Parse(header.Get("User-Agent"))
-	t, n := deviceInfo(ua)
-	c := createClient(conn, t, n)
+	ci := extractClientInfo(header.Get("User-Agent"))
+	c := createClient(conn, ci.deviceType, ci.deviceName)
 	log.Printf("connect client: %s", c.ID)
 	defer func() {
 		defer func() {

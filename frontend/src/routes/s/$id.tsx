@@ -176,7 +176,7 @@ function Component() {
 											<FileListItem key={"up" + f.id} file={f} />
 										))}
 									</FileList>
-									<div className="flex max-sm:flex-col">
+									<div className="flex gap-2 max-sm:flex-col">
 										<span
 											className={cn(
 												"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
@@ -186,7 +186,7 @@ function Component() {
 											)}
 										>
 											{outgoing.status === "transferring"
-												? "Transfer in progress"
+												? "Transferring"
 												: "Waiting for a peer to start download"}
 										</span>
 										<Button
@@ -198,6 +198,21 @@ function Component() {
 											Stop sharing
 										</Button>
 									</div>
+									{outgoing.status === "transferring" ? (
+										<div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+											<span className="w-full text-sm font-medium text-muted-foreground">
+												Transfer progress
+											</span>
+											<progress
+												value={outgoing.progress}
+												max={100}
+												className="progress h-2 flex-1"
+											></progress>
+											<span className="text-sm font-medium text-muted-foreground">
+												{outgoing.progress}%
+											</span>
+										</div>
+									) : null}
 								</>
 							) : selectedFiles.length > 0 ? (
 								<>

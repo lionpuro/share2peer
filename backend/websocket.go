@@ -20,56 +20,13 @@ type WebSocketHandler struct {
 	sessions *SessionStore
 }
 
-func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.Header) error {
+func (wh *WebSocketHandler) serve(conn *websocket.Conn, header http.Header) error {
 	ci := extractClientInfo(header.Get("User-Agent"))
 	c := createClient(conn, ci.deviceType, ci.deviceName)
 	log.Printf("connect client: %s", c.ID)
 	defer func() {
-		defer func() {
-			if err := conn.Close(); err != nil {
-				log.Printf("close connection: %v", err)
-			}
-			log.Printf("disconnect client: %s", c.ID)
-		}()
-
-		if c.sessionID == "" {
-			return
-		}
-
-		sess, err := wh.sessions.Get(c.sessionID)
-		if err != nil {
-			return
-		}
-		sess.RemoveClient(c)
-		// close the session if hosting
-		if sess.Host == c.ID {
-			sess.ForEachClient(func(client *Client) {
-				client.sessionID = ""
-				err := client.send(Message{
-					Type:    MessageSessionLeft,
-					Payload: sess,
-				})
-				if err != nil {
-					log.Printf("write json: %v", err)
-				}
-			})
-			wh.sessions.Delete(sess.ID)
-			return
-		}
-
-		if err := wh.broadcast(c.conn, Message{
-			Type:    MessageClientLeft,
-			Payload: c,
-		}, sess.ID); err != nil {
-			log.Printf("broadcast message: %v", err)
-		}
-
-		err = wh.broadcast(conn, Message{
-			Type:    MessageSessionInfo,
-			Payload: sess,
-		}, sess.ID)
-		if err != nil {
-			log.Printf("broadcast message: %v", err)
+		if err := wh.disconnect(c); err != nil {
+			log.Printf("disconnect: %v", err)
 		}
 	}()
 
@@ -99,6 +56,61 @@ func (wh *WebSocketHandler) handleWebSocket(conn *websocket.Conn, header http.He
 			return err
 		}
 	}
+}
+
+func (wh *WebSocketHandler) disconnect(c *Client) error {
+	defer func() {
+		if err := c.conn.Close(); err != nil {
+			log.Printf("close connection: %v", err)
+		}
+		log.Printf("disconnect client: %s", c.ID)
+	}()
+
+	if c.sessionID == "" {
+		return nil
+	}
+
+	sess, err := wh.sessions.Get(c.sessionID)
+	if err != nil {
+		return err
+	}
+	sess.RemoveClient(c)
+	// close the session if hosting
+	if sess.Host == c.ID {
+		sess.ForEachClient(func(client *Client) {
+			client.sessionID = ""
+			err := client.send(Message{
+				Type:    MessageSessionLeft,
+				Payload: sess,
+			})
+			if err != nil {
+				log.Printf("write json: %v", err)
+			}
+		})
+		wh.sessions.Delete(sess.ID)
+		return nil
+	}
+
+	if len(sess.Clients) == 0 {
+		return nil
+	}
+
+	if err := wh.broadcast(c.conn, Message{
+		Type:    MessageClientLeft,
+		Payload: c,
+	}, sess.ID); err != nil {
+		return fmt.Errorf("broadcast client-left: %v", err)
+	}
+
+	err = wh.broadcast(c.conn, Message{
+		Type:    MessageSessionInfo,
+		Payload: sess,
+	}, sess.ID)
+	if err != nil {
+		return fmt.Errorf("broadcast session-info: %v", err)
+	}
+
+	return nil
 }
 
 func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, sessionID string) error {

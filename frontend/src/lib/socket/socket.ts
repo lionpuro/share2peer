@@ -1,6 +1,5 @@
 import { atom } from "nanostores";
 import {
-	ClientJoinedSchema,
 	OfferSchema,
 	AnswerSchema,
 	ErrorSchema,
@@ -11,14 +10,15 @@ import {
 	SessionCreatedSchema,
 	SessionInfoSchema,
 	SessionJoinedSchema,
+	ClientJoinedSchema,
+	ClientLeftSchema,
 	SocketMessageEvent,
 	type Message,
 	type SocketMessageEventTarget,
-	ClientLeftSchema,
 	type ClientJoinedMessage,
-} from "./messages";
+	type Client,
+} from "#/lib/schemas";
 import { $availableSession, $session } from "#/lib/session";
-import type { Client } from "#/lib/client";
 import {
 	closePeerConnection,
 	closePeerConnections,

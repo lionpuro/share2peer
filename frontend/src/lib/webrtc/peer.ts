@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import type { FileMetadata } from "#/lib/file";
-import type { Client } from "#/lib/client";
+import type { Client } from "#/lib/schemas";
 
 export type Peer = Client & {
 	connection: RTCPeerConnection;

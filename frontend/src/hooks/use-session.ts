@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { type MessageEventMap, type ErrorPayload, socket } from "#/lib/socket";
+import type { MessageEventMap, ErrorPayload } from "#/lib/schemas";
+import { socket } from "#/lib/socket";
 import {
 	$session,
 	joinSession,

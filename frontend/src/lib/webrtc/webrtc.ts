@@ -5,7 +5,7 @@ import {
 	type AnswerMessage,
 	type ICECandidateMessage,
 	type OfferMessage,
-} from "#/lib/socket/messages";
+} from "#/lib/schemas";
 import { $uploads, getUpload, type FileMetadata } from "#/lib/file";
 import {
 	$peers,

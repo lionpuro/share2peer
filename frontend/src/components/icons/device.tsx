@@ -1,4 +1,4 @@
-import type { DeviceType } from "#/lib/client";
+import type { DeviceType } from "#/lib/schemas";
 import { IconDesktop, IconMobile, IconTablet, type IconProps } from "./icons";
 
 export function DeviceIcon({

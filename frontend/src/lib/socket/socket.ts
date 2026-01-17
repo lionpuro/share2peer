@@ -6,12 +6,12 @@ import {
 	ErrorSchema,
 	ICECandidateSchema,
 	IdentitySchema,
-	isMessageType,
 	MessageType,
 	SocketMessageEvent,
 	type Message,
 	type Client,
 	type MessageEventMap,
+	parseMessage,
 } from "#/lib/schemas";
 import {
 	closePeerConnections,
@@ -66,15 +66,8 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 		});
 		this.#ws.addEventListener("message", async (e) => {
 			try {
-				const message = JSON.parse(e.data);
-				if (
-					!message ||
-					typeof message !== "object" ||
-					!isMessageType(message.type)
-				) {
-					console.error("unrecognized message format");
-					return;
-				}
+				const data = JSON.parse(e.data) as unknown;
+				const message = parseMessage(data);
 				switch (message.type) {
 					case MessageType.Error:
 						console.error(ErrorSchema.parse(message).payload.code);
@@ -91,17 +84,6 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 					case MessageType.ICECandidate:
 						await handleICECandidate(ICECandidateSchema.parse(message));
 						break;
-					case MessageType.SessionNotFound:
-					case MessageType.SessionInfo:
-					case MessageType.SessionCreated:
-					case MessageType.SessionJoined:
-					case MessageType.SessionLeft:
-					case MessageType.ClientJoined:
-					case MessageType.ClientLeft:
-						break;
-					default:
-						console.error(`WebSocket: unknown message type '${message.type}'`);
-						break;
 				}
 			} catch (err) {
 				console.error(err);
@@ -113,21 +95,8 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 	private onMessage(e: MessageEvent) {
 		try {
 			const msg = JSON.parse(e.data) as unknown;
-			if (
-				!msg ||
-				typeof msg !== "object" ||
-				!("type" in msg) ||
-				!("payload" in msg)
-			) {
-				console.error("unrecognized message format");
-				return;
-			}
-			if (!isMessageType(msg.type)) {
-				console.error("unknown message type");
-				return;
-			}
-			const { type, payload } = msg;
-			this.dispatchEvent(new SocketMessageEvent(type, { type, payload }));
+			const event = parseMessage(msg);
+			this.dispatchEvent(new SocketMessageEvent(event.type, event));
 		} catch (err) {
 			console.error(err);
 		}

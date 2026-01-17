@@ -177,3 +177,45 @@ export function isMessageType(input: unknown): input is SocketMessageType {
 	}
 	return Object.values(MessageType).some((v) => v === input);
 }
+
+export function parseMessage(msg: unknown) {
+	if (
+		!msg ||
+		typeof msg !== "object" ||
+		!("type" in msg) ||
+		!("payload" in msg)
+	) {
+		throw new Error("invalid message");
+	}
+	if (!isMessageType(msg.type)) {
+		throw new Error("unknown message type: " + msg.type);
+	}
+	switch (msg.type) {
+		case MessageType.Error:
+			return ErrorSchema.parse(msg);
+		case MessageType.Identity:
+			return IdentitySchema.parse(msg);
+		case MessageType.Offer:
+			return OfferSchema.parse(msg);
+		case MessageType.Answer:
+			return AnswerSchema.parse(msg);
+		case MessageType.ICECandidate:
+			return ICECandidateSchema.parse(msg);
+		case MessageType.SessionNotFound:
+			return SessionNotFoundSchema.parse(msg);
+		case MessageType.SessionInfo:
+			return SessionInfoSchema.parse(msg);
+		case MessageType.SessionCreated:
+			return SessionCreatedSchema.parse(msg);
+		case MessageType.SessionJoined:
+			return SessionJoinedSchema.parse(msg);
+		case MessageType.SessionLeft:
+			return SessionLeftSchema.parse(msg);
+		case MessageType.ClientJoined:
+			return ClientJoinedSchema.parse(msg);
+		case MessageType.ClientLeft:
+			return ClientLeftSchema.parse(msg);
+		default:
+			throw new Error("invalid message type: " + msg.type);
+	}
+}

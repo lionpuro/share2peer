@@ -170,16 +170,15 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 
 	sess, err := wh.sessions.Get(payload.SessionID)
 	if err != nil {
-		if !errors.Is(err, ErrSessionNotFound) {
-			return err
+		if errors.Is(err, ErrSessionNotFound) {
+			return c.send(Message{
+				Type: MessageSessionNotFound,
+				Payload: SessionIDPayload{
+					SessionID: payload.SessionID,
+				},
+			})
 		}
-		return c.send(Message{
-			Type: MessageError,
-			Payload: ErrorPayload{
-				Code:    ErrCodeSessionNotFound,
-				Message: ErrSessionNotFound.Error(),
-			},
-		})
+		return err
 	}
 
 	// leave previous session in case the client hasn't done it already
@@ -234,16 +233,15 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 
 	sess, err := wh.sessions.Get(payload.SessionID)
 	if err != nil {
-		if !errors.Is(err, ErrSessionNotFound) {
-			return err
+		if errors.Is(err, ErrSessionNotFound) {
+			return c.send(Message{
+				Type: MessageSessionNotFound,
+				Payload: SessionIDPayload{
+					SessionID: payload.SessionID,
+				},
+			})
 		}
-		return c.send(Message{
-			Type: MessageError,
-			Payload: ErrorPayload{
-				Code:    ErrCodeSessionNotFound,
-				Message: ErrSessionNotFound.Error(),
-			},
-		})
+		return err
 	}
 
 	sess.RemoveClient(c)

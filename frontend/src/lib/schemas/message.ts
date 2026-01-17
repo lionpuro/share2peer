@@ -1,5 +1,4 @@
 import * as z from "zod/mini";
-import type { CustomEventTarget } from "#/lib/events";
 import { ErrorPayloadSchema } from "./error";
 import { SessionSchema } from "./session";
 import { ClientSchema } from "./client";
@@ -7,6 +6,7 @@ import { ClientSchema } from "./client";
 export const MessageType = {
 	Error: "error",
 	Identity: "identity",
+	SessionNotFound: "session-not-found",
 	SessionInfo: "session-info",
 	JoinSession: "join-session",
 	LeaveSession: "leave-session",
@@ -31,6 +31,7 @@ export type Message<T = unknown> = {
 export type MessageEventMap = {
 	[MessageType.Error]: CustomEvent<ErrorMessage>;
 	[MessageType.Identity]: CustomEvent<IdentityMessage>;
+	[MessageType.SessionNotFound]: CustomEvent<SessionNotFoundMessage>;
 	[MessageType.SessionInfo]: CustomEvent<SessionInfoMessage>;
 	[MessageType.SessionCreated]: CustomEvent<SessionCreatedMessage>;
 	[MessageType.SessionJoined]: CustomEvent<SessionJoinedMessage>;
@@ -50,8 +51,6 @@ export class SocketMessageEvent<
 	}
 }
 
-export type SocketMessageEventTarget = CustomEventTarget<MessageEventMap>;
-
 export type MessageEventListener<T extends keyof MessageEventMap> = (
 	e: MessageEventMap[T],
 ) => void;
@@ -69,6 +68,13 @@ export const IdentitySchema = z.object({
 });
 
 export type IdentityMessage = z.infer<typeof IdentitySchema>;
+
+export const SessionNotFoundSchema = z.object({
+	type: z.literal(MessageType.SessionNotFound),
+	payload: z.object({ session_id: z.string() }),
+});
+
+export type SessionNotFoundMessage = z.infer<typeof SessionNotFoundSchema>;
 
 export const SessionInfoSchema = z.object({
 	type: z.literal(MessageType.SessionInfo),

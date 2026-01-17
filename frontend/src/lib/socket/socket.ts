@@ -1,4 +1,5 @@
 import { atom } from "nanostores";
+import type { CustomEventTarget } from "#/lib/events";
 import {
 	OfferSchema,
 	AnswerSchema,
@@ -7,23 +8,13 @@ import {
 	IdentitySchema,
 	isMessageType,
 	MessageType,
-	SessionCreatedSchema,
-	SessionInfoSchema,
-	SessionJoinedSchema,
-	ClientJoinedSchema,
-	ClientLeftSchema,
 	SocketMessageEvent,
 	type Message,
-	type SocketMessageEventTarget,
-	type ClientJoinedMessage,
 	type Client,
+	type MessageEventMap,
 } from "#/lib/schemas";
-import { $availableSession, $session } from "#/lib/session";
 import {
-	closePeerConnection,
 	closePeerConnections,
-	createOffer,
-	findPeer,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
@@ -35,7 +26,13 @@ type ConnectionState = "closed" | "connecting" | "open" | "error";
 
 export const $connectionState = atom<ConnectionState>("closed");
 
-export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) {
+export type SocketEventTarget = CustomEventTarget<
+	MessageEventMap & {
+		close: CustomEvent;
+	}
+>;
+
+export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 	#url: string;
 	#ws: WebSocket | null = null;
 	constructor(url: string) {
@@ -85,28 +82,6 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 					case MessageType.Identity:
 						$identity.set(IdentitySchema.parse(message).payload);
 						break;
-					case MessageType.SessionInfo:
-						$session.set(SessionInfoSchema.parse(message).payload || null);
-						break;
-					case MessageType.SessionCreated:
-						$availableSession.set(
-							SessionCreatedSchema.parse(message).payload.id,
-						);
-						break;
-					case MessageType.SessionJoined:
-						$availableSession.set(null);
-						$session.set(SessionJoinedSchema.parse(message).payload);
-						break;
-					case MessageType.SessionLeft:
-						$session.set(null);
-						closePeerConnections();
-						break;
-					case MessageType.ClientJoined:
-						await handleClientJoined(this, ClientJoinedSchema.parse(message));
-						break;
-					case MessageType.ClientLeft:
-						closePeerConnection(ClientLeftSchema.parse(message).payload.id);
-						break;
 					case MessageType.Offer:
 						await handleOffer(this, OfferSchema.parse(message));
 						break;
@@ -115,6 +90,14 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 						break;
 					case MessageType.ICECandidate:
 						await handleICECandidate(ICECandidateSchema.parse(message));
+						break;
+					case MessageType.SessionNotFound:
+					case MessageType.SessionInfo:
+					case MessageType.SessionCreated:
+					case MessageType.SessionJoined:
+					case MessageType.SessionLeft:
+					case MessageType.ClientJoined:
+					case MessageType.ClientLeft:
 						break;
 					default:
 						console.error(`WebSocket: unknown message type '${message.type}'`);
@@ -155,8 +138,8 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 			this.#ws.close();
 			this.#ws = null;
 		}
-		$session.set(null);
 		$connectionState.set("closed");
+		this.dispatchEvent(new CustomEvent("close"));
 	}
 
 	send<T extends Message>(msg: T) {
@@ -168,16 +151,6 @@ export class WebSocketManager extends (EventTarget as SocketMessageEventTarget) 
 		}
 		this.#ws.send(JSON.stringify(msg));
 	}
-}
-
-async function handleClientJoined(
-	sock: WebSocketManager,
-	msg: ClientJoinedMessage,
-) {
-	if (findPeer(msg.payload.id)) {
-		return;
-	}
-	await createOffer(sock, msg.payload.id);
 }
 
 function resolveSocketURL() {

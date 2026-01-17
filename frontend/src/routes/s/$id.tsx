@@ -1,14 +1,18 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
-import { ErrorComponent } from "#/components/error";
-import { Main } from "#/components/ui/main";
-import { useSession } from "#/hooks/use-session";
 import { cn, toTitleCase } from "#/lib/helper";
+import { $identity } from "#/lib/socket";
+import { createFileMetadata } from "#/lib/file";
 import { $peers, sendCancelShare, shareFiles } from "#/lib/webrtc";
+import { useSession } from "#/hooks/use-session";
 import { useTransfer } from "#/hooks/use-transfer";
-import { FileList, FileListItem } from "#/components/file-list";
+import { useUpload } from "#/hooks/use-upload";
+import { Main } from "#/components/ui/main";
 import { Heading } from "#/components/ui/heading";
 import { Button } from "#/components/ui/button";
+import { ErrorComponent } from "#/components/error";
+import { FileList, FileListItem } from "#/components/file-list";
 import {
 	DeviceIcon,
 	IconArrowLeft,
@@ -19,11 +23,7 @@ import {
 	IconX,
 } from "#/components/icons";
 import { Loader } from "#/components/ui/loader";
-import { useState } from "react";
-import { $identity } from "#/lib/socket";
 import { FileInput } from "#/components/ui/file-input";
-import { createFileMetadata } from "#/lib/file";
-import { useUpload } from "#/hooks/use-upload";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -80,7 +80,7 @@ function Component() {
 
 	if (error) {
 		return (
-			<ErrorComponent error={toTitleCase(error.message)}>
+			<ErrorComponent error={toTitleCase(error)}>
 				<Link
 					to="/"
 					className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-darker"

@@ -20,6 +20,12 @@ import {
 	handleOffer,
 } from "#/lib/webrtc";
 
+declare global {
+	interface Window {
+		__WebSocketManager: WebSocketManager | undefined;
+	}
+}
+
 export const $identity = atom<Client | null>(null);
 
 type ConnectionState = "closed" | "connecting" | "open" | "error";
@@ -38,6 +44,8 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 	constructor(url: string) {
 		super();
 		this.#url = url;
+		window.__WebSocketManager?.close();
+		window.__WebSocketManager = this;
 		this.connect();
 	}
 

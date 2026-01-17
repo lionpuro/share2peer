@@ -123,15 +123,19 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 }
 
 function resolveSocketURL() {
-	const { VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
+	const { VITE_WS_PROTOCOL, VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
 	if (!import.meta.env.DEV || !VITE_WS_HOST.startsWith("localhost")) {
-		return new URL(VITE_WS_ENDPOINT, `ws://${VITE_WS_HOST}`).toString();
+		return new URL(
+			VITE_WS_ENDPOINT,
+			`${VITE_WS_PROTOCOL}://${VITE_WS_HOST}`,
+		).toString();
 	}
 
 	const url = new URL(
 		VITE_WS_ENDPOINT,
-		`ws://${new URL(import.meta.url).host}`,
+		`${VITE_WS_PROTOCOL}://${new URL(import.meta.url).host}`,
 	);
 	return url.toString();
 }
+
 export const socket = new WebSocketManager(resolveSocketURL());

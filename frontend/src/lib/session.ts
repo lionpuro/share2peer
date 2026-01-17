@@ -60,6 +60,7 @@ export class SessionManager {
 					this.#ws.removeEventListener("error", onError);
 					this.#ws.removeEventListener("session-not-found", onNotFound);
 					this.#ws.removeEventListener("session-joined", onJoin);
+					clearTimeout(timeout);
 					this.state = "failed";
 					reject(new Error("Session not found"));
 				}
@@ -70,6 +71,7 @@ export class SessionManager {
 				this.#ws.removeEventListener("error", onError);
 				this.#ws.removeEventListener("session-not-found", onNotFound);
 				this.#ws.removeEventListener("session-joined", onJoin);
+				clearTimeout(timeout);
 				this.state = "failed";
 				const err = e.detail.payload;
 				reject(new Error(err.message));
@@ -87,7 +89,6 @@ export class SessionManager {
 				$session.set(session);
 				resolve(session);
 			};
-
 			this.#ws.addEventListener("session-joined", onJoin);
 
 			this.state = "joining";
@@ -126,6 +127,7 @@ export class SessionManager {
 			const onError = (e: MessageEventMap["error"]) => {
 				this.#ws.removeEventListener("error", onError);
 				this.#ws.removeEventListener("session-created", onCreate);
+				clearTimeout(timeout);
 				this.state = "failed";
 				const err = e.detail.payload;
 				reject(new Error(err.message));
@@ -133,8 +135,8 @@ export class SessionManager {
 			this.#ws.addEventListener("error", onError);
 
 			const onCreate = (e: MessageEventMap["session-created"]) => {
-				clearTimeout(timeout);
 				this.#ws.removeEventListener("session-created", onCreate);
+				clearTimeout(timeout);
 				const session = e.detail.payload;
 				resolve(session.id);
 			};

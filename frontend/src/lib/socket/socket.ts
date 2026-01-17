@@ -91,6 +91,7 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 					case MessageType.ICECandidate:
 						await handleICECandidate(ICECandidateSchema.parse(message));
 						break;
+					case MessageType.SessionNotFound:
 					case MessageType.SessionInfo:
 					case MessageType.SessionCreated:
 					case MessageType.SessionJoined:

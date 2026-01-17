@@ -49,13 +49,26 @@ export class SessionManager {
 
 			const timeout = setTimeout(() => {
 				this.#ws.removeEventListener("error", onError);
+				this.#ws.removeEventListener("session-not-found", onNotFound);
 				this.#ws.removeEventListener("session-joined", onJoin);
 				this.state = "failed";
 				reject(new Error("request timed out"));
 			}, 10 * 1000);
 
+			const onNotFound = (e: MessageEventMap["session-not-found"]) => {
+				if (e.detail.payload.session_id === id) {
+					this.#ws.removeEventListener("error", onError);
+					this.#ws.removeEventListener("session-not-found", onNotFound);
+					this.#ws.removeEventListener("session-joined", onJoin);
+					this.state = "failed";
+					reject(new Error("Session not found"));
+				}
+			};
+			this.#ws.addEventListener("session-not-found", onNotFound);
+
 			const onError = (e: MessageEventMap["error"]) => {
 				this.#ws.removeEventListener("error", onError);
+				this.#ws.removeEventListener("session-not-found", onNotFound);
 				this.#ws.removeEventListener("session-joined", onJoin);
 				this.state = "failed";
 				const err = e.detail.payload;
@@ -64,9 +77,11 @@ export class SessionManager {
 			this.#ws.addEventListener("error", onError);
 
 			const onJoin = (e: MessageEventMap["session-joined"]) => {
-				this.#ws.removeEventListener("session-joined", onJoin);
 				const session = e.detail.payload;
 				if (session.id !== id) return;
+				this.#ws.removeEventListener("error", onError);
+				this.#ws.removeEventListener("session-not-found", onNotFound);
+				this.#ws.removeEventListener("session-joined", onJoin);
 				clearTimeout(timeout);
 				this.state = "active";
 				$session.set(session);

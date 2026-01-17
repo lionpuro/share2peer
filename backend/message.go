@@ -1,20 +1,21 @@
 package main
 
 const (
-	MessageError          = "error"
-	MessageIdentity       = "identity"
-	MessageSessionInfo    = "session-info"
-	MessageJoinSession    = "join-session"
-	MessageLeaveSession   = "leave-session"
-	MessageRequestSession = "request-session"
-	MessageSessionCreated = "session-created"
-	MessageSessionJoined  = "session-joined"
-	MessageSessionLeft    = "session-left"
-	MessageClientJoined   = "client-joined"
-	MessageClientLeft     = "client-left"
-	MessageOffer          = "offer"
-	MessageAnswer         = "answer"
-	MessageICECandidate   = "ice-candidate"
+	MessageError           = "error"
+	MessageIdentity        = "identity"
+	MessageSessionNotFound = "session-not-found"
+	MessageSessionInfo     = "session-info"
+	MessageJoinSession     = "join-session"
+	MessageLeaveSession    = "leave-session"
+	MessageRequestSession  = "request-session"
+	MessageSessionCreated  = "session-created"
+	MessageSessionJoined   = "session-joined"
+	MessageSessionLeft     = "session-left"
+	MessageClientJoined    = "client-joined"
+	MessageClientLeft      = "client-left"
+	MessageOffer           = "offer"
+	MessageAnswer          = "answer"
+	MessageICECandidate    = "ice-candidate"
 )
 
 type Message struct {

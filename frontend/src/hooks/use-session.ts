@@ -1,53 +1,47 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import type { MessageEventMap, ErrorPayload } from "#/lib/schemas";
 import { socket } from "#/lib/socket";
-import {
-	$session,
-	joinSession,
-	leaveSession,
-	requestSession,
-} from "#/lib/session";
+import { $session, SessionManager } from "#/lib/session";
 import { useSocket } from "./use-socket";
 
-const request = () => requestSession(socket);
-const join = (id: string) => joinSession(socket, id);
-const leave = (id: string) => leaveSession(socket, id);
+const manager = new SessionManager(socket);
+
+const join = (id: string) => manager.join(id);
+const leave = () => manager.leave();
+const create = () => manager.create();
 
 export function useSession(id?: string) {
-	const { connectionState } = useSocket();
 	const session = useStore($session);
-	const [error, setError] = useState<ErrorPayload | undefined>();
 
-	const handleError = (e: MessageEventMap["error"]) => {
-		const err = e.detail.payload;
-		if (err.code === "SESSION_NOT_FOUND") {
-			setError(err);
-		}
-	};
+	const { connectionState } = useSocket();
+	const [error, setError] = useState<string | undefined>();
 
 	useEffect(() => {
-		if (connectionState !== "open") {
+		if (connectionState !== "open") return;
+		if (!id) return;
+		if (session && session.id === id) {
 			return;
 		}
-		if (id === session?.id) {
+		if (manager.state === "active" || manager.state === "joining") {
 			return;
 		}
-		if (id && session?.id !== id) {
-			socket.addEventListener("error", handleError);
-			join(id);
-			return () => {
-				socket.removeEventListener("error", handleError);
-				setError(undefined);
-			};
-		}
-	}, [id, connectionState, session]);
+		manager
+			.join(id)
+			.then((s) => s)
+			.catch((err) => {
+				console.error(err);
+				if (err instanceof Error) {
+					setError(err.message);
+					return;
+				}
+			});
+	}, [connectionState, id, session]);
 
 	return {
 		session,
 		error,
-		requestSession: request,
 		joinSession: join,
 		leaveSession: leave,
+		createSession: create,
 	};
 }

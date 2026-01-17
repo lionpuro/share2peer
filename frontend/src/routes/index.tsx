@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useStore } from "@nanostores/react";
-import { Main } from "#/components/ui/main";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
+import { Main } from "#/components/ui/main";
 import { Loader } from "#/components/ui/loader";
+import { Button } from "#/components/ui/button";
+import { Heading } from "#/components/ui/heading";
+import { Footer } from "#/components/footer";
 import {
 	IconConnect,
 	IconDevices,
@@ -12,29 +14,33 @@ import {
 	IconPlus,
 	IconX,
 } from "#/components/icons";
-import { Button } from "#/components/ui/button";
-import { Heading } from "#/components/ui/heading";
-import { $availableSession } from "#/lib/session";
-import { $identity } from "#/lib/socket";
-import { Footer } from "#/components/footer";
+import { toast } from "react-toastify";
 
 export const Route = createFileRoute("/")({
 	component: Component,
 });
 
 function Component() {
-	const [joinCode, setJoinCode] = useState("");
-	const { session, requestSession, leaveSession } = useSession();
+	const navigate = useNavigate();
 	const { connectionState } = useSocket();
-	const identity = useStore($identity);
-	const availableSession = useStore($availableSession);
+	const { session, createSession, leaveSession } = useSession();
+	const [joinCode, setJoinCode] = useState("");
+
+	async function handleCreate() {
+		try {
+			const id = await createSession();
+			navigate({ to: "/s/$id", params: { id } });
+		} catch (err) {
+			console.error("create session:", err);
+			toast.error("Failed to create session");
+		}
+	}
 
 	useEffect(() => {
-		if (!session || !identity) return;
 		if (session) {
-			leaveSession(session.id);
+			leaveSession();
 		}
-	}, [session, identity, leaveSession]);
+	}, [session, leaveSession]);
 
 	if (connectionState !== "open" && connectionState !== "error") {
 		return <Loader />;
@@ -45,10 +51,6 @@ function Component() {
 				<p className="text-center">Connection error</p>
 			</Main>
 		);
-	}
-
-	if (availableSession) {
-		return <Navigate to="/s/$id" params={{ id: availableSession }} />;
 	}
 
 	return (
@@ -108,7 +110,7 @@ function Component() {
 					<span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground before:h-0.5 before:flex-1 before:bg-neutral-200 before:content-['_'] after:h-0.5 after:flex-1 after:bg-neutral-200 after:content-['_']">
 						OR
 					</span>
-					<Button onClick={requestSession} className="gap-1">
+					<Button onClick={handleCreate} className="gap-1">
 						<IconPlus />
 						Create session
 					</Button>

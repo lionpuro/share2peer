@@ -1,5 +1,4 @@
 import * as z from "zod/mini";
-import type { CustomEventTarget } from "#/lib/events";
 import { ErrorPayloadSchema } from "./error";
 import { SessionSchema } from "./session";
 import { ClientSchema } from "./client";
@@ -49,8 +48,6 @@ export class SocketMessageEvent<
 		super(type, { detail: detail });
 	}
 }
-
-export type SocketMessageEventTarget = CustomEventTarget<MessageEventMap>;
 
 export type MessageEventListener<T extends keyof MessageEventMap> = (
 	e: MessageEventMap[T],

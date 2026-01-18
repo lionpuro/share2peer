@@ -6,12 +6,11 @@ import {
 	ErrorSchema,
 	ICECandidateSchema,
 	IdentitySchema,
-	MessageType,
 	SocketMessageEvent,
-	type Message,
 	type Client,
-	type MessageEventMap,
 	parseMessage,
+	type OutgoingMessage,
+	type MessageEventMap,
 } from "#/lib/schemas";
 import {
 	closePeerConnections,
@@ -77,19 +76,19 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 				const data = JSON.parse(e.data) as unknown;
 				const message = parseMessage(data);
 				switch (message.type) {
-					case MessageType.Error:
+					case "error":
 						console.error(ErrorSchema.parse(message).payload.code);
 						break;
-					case MessageType.Identity:
+					case "identity":
 						$identity.set(IdentitySchema.parse(message).payload);
 						break;
-					case MessageType.Offer:
+					case "offer":
 						await handleOffer(this, OfferSchema.parse(message));
 						break;
-					case MessageType.Answer:
+					case "answer":
 						await handleAnswer(AnswerSchema.parse(message));
 						break;
-					case MessageType.ICECandidate:
+					case "ice-candidate":
 						await handleICECandidate(ICECandidateSchema.parse(message));
 						break;
 				}
@@ -119,7 +118,7 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 		this.dispatchEvent(new CustomEvent("close"));
 	}
 
-	send<T extends Message>(msg: T) {
+	async send(msg: OutgoingMessage) {
 		if (!this.#ws) {
 			console.error(
 				"failed to send message: not currently connected to a websocket",

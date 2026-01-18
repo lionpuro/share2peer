@@ -1,8 +1,7 @@
-import {
-	MessageType,
-	type AnswerMessage,
-	type ICECandidateMessage,
-	type OfferMessage,
+import type {
+	AnswerMessage,
+	ICECandidateMessage,
+	OfferMessage,
 } from "#/lib/schemas";
 import { $identity, type WebSocketManager } from "#/lib/socket";
 import { $session } from "#/lib/session";
@@ -58,7 +57,7 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 	await peer.connection.setLocalDescription(offer);
 
 	const msg: OfferMessage = {
-		type: MessageType.Offer,
+		type: "offer",
 		payload: {
 			session_id: session.id,
 			offer: offer,
@@ -88,7 +87,7 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 	await peer.connection.setLocalDescription(answer);
 
 	const message: AnswerMessage = {
-		type: MessageType.Answer,
+		type: "answer",
 		payload: {
 			session_id: session.id,
 			answer: answer,
@@ -129,7 +128,7 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 		if (!session || !identity) return;
 		if (!e.candidate) return;
 		const message: ICECandidateMessage = {
-			type: MessageType.ICECandidate,
+			type: "ice-candidate",
 			payload: {
 				session_id: session.id,
 				candidate: e.candidate.toJSON(),

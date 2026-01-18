@@ -3,50 +3,34 @@ import { ErrorPayloadSchema } from "./error";
 import { SessionSchema } from "./session";
 import { ClientSchema } from "./client";
 
-export const MessageType = {
-	Error: "error",
-	Identity: "identity",
-	SessionNotFound: "session-not-found",
-	SessionInfo: "session-info",
-	JoinSession: "join-session",
-	LeaveSession: "leave-session",
-	RequestSession: "request-session",
-	SessionCreated: "session-created",
-	SessionJoined: "session-joined",
-	SessionLeft: "session-left",
-	ClientJoined: "client-joined",
-	ClientLeft: "client-left",
-	Offer: "offer",
-	Answer: "answer",
-	ICECandidate: "ice-candidate",
+const types = {
+	error: "error",
+	identity: "identity",
+	sessionNotFound: "session-not-found",
+	sessionInfo: "session-info",
+	joinSession: "join-session",
+	leaveSession: "leave-session",
+	requestSession: "request-session",
+	sessionCreated: "session-created",
+	sessionJoined: "session-joined",
+	sessionLeft: "session-left",
+	clientJoined: "client-joined",
+	clientLeft: "client-left",
+	offer: "offer",
+	answer: "answer",
+	iceCandidate: "ice-candidate",
 } as const;
 
-export type SocketMessageType = (typeof MessageType)[keyof typeof MessageType];
-
-export type Message<T = unknown> = {
-	type: SocketMessageType;
-	payload?: T;
-};
-
 export type MessageEventMap = {
-	[MessageType.Error]: CustomEvent<ErrorMessage>;
-	[MessageType.Identity]: CustomEvent<IdentityMessage>;
-	[MessageType.SessionNotFound]: CustomEvent<SessionNotFoundMessage>;
-	[MessageType.SessionInfo]: CustomEvent<SessionInfoMessage>;
-	[MessageType.SessionCreated]: CustomEvent<SessionCreatedMessage>;
-	[MessageType.SessionJoined]: CustomEvent<SessionJoinedMessage>;
-	[MessageType.SessionLeft]: CustomEvent<SessionLeftMessage>;
-	[MessageType.ClientJoined]: CustomEvent<ClientJoinedMessage>;
-	[MessageType.ClientLeft]: CustomEvent<ClientLeftMessage>;
-	[MessageType.Offer]: CustomEvent<OfferMessage>;
-	[MessageType.Answer]: CustomEvent<AnswerMessage>;
-	[MessageType.ICECandidate]: CustomEvent<ICECandidateMessage>;
+	[K in keyof typeof incomingSchemas]: CustomEvent<
+		z.infer<(typeof incomingSchemas)[K]>
+	>;
 };
 
 export class SocketMessageEvent<
-	T = MessageEventMap[keyof MessageEventMap],
+	T extends IncomingMessage,
 > extends CustomEvent<T> {
-	constructor(type: SocketMessageType, detail: T) {
+	constructor(type: T["type"], detail: T) {
 		super(type, { detail: detail });
 	}
 }
@@ -56,63 +40,63 @@ export type MessageEventListener<T extends keyof MessageEventMap> = (
 ) => void;
 
 export const ErrorSchema = z.object({
-	type: z.literal(MessageType.Error),
+	type: z.literal(types.error),
 	payload: ErrorPayloadSchema,
 });
 
 export type ErrorMessage = z.infer<typeof ErrorSchema>;
 
 export const IdentitySchema = z.object({
-	type: z.literal(MessageType.Identity),
+	type: z.literal(types.identity),
 	payload: ClientSchema,
 });
 
 export type IdentityMessage = z.infer<typeof IdentitySchema>;
 
 export const SessionNotFoundSchema = z.object({
-	type: z.literal(MessageType.SessionNotFound),
+	type: z.literal(types.sessionNotFound),
 	payload: z.object({ session_id: z.string() }),
 });
 
 export type SessionNotFoundMessage = z.infer<typeof SessionNotFoundSchema>;
 
 export const SessionInfoSchema = z.object({
-	type: z.literal(MessageType.SessionInfo),
+	type: z.literal(types.sessionInfo),
 	payload: SessionSchema,
 });
 
 export type SessionInfoMessage = z.infer<typeof SessionInfoSchema>;
 
 export const SessionCreatedSchema = z.object({
-	type: z.literal(MessageType.SessionCreated),
+	type: z.literal(types.sessionCreated),
 	payload: SessionSchema,
 });
 
 export type SessionCreatedMessage = z.infer<typeof SessionCreatedSchema>;
 
 export const SessionJoinedSchema = z.object({
-	type: z.literal(MessageType.SessionJoined),
+	type: z.literal(types.sessionJoined),
 	payload: SessionSchema,
 });
 
 export type SessionJoinedMessage = z.infer<typeof SessionJoinedSchema>;
 
 export const SessionLeftSchema = z.object({
-	type: z.literal(MessageType.SessionLeft),
+	type: z.literal(types.sessionLeft),
 	payload: SessionSchema,
 });
 
 export type SessionLeftMessage = z.infer<typeof SessionLeftSchema>;
 
 export const ClientJoinedSchema = z.object({
-	type: z.literal(MessageType.ClientJoined),
+	type: z.literal(types.clientJoined),
 	payload: ClientSchema,
 });
 
 export type ClientJoinedMessage = z.infer<typeof ClientJoinedSchema>;
 
 export const ClientLeftSchema = z.object({
-	type: z.literal(MessageType.ClientLeft),
+	type: z.literal(types.clientLeft),
 	payload: ClientSchema,
 });
 
@@ -138,7 +122,7 @@ export const RTCIceCandidateSchema = z.object({
 export type ICECandidateMessage = z.infer<typeof ICECandidateSchema>;
 
 export const OfferSchema = z.object({
-	type: z.literal(MessageType.Offer),
+	type: z.literal(types.offer),
 	payload: z.object({
 		session_id: z.string(),
 		offer: RTCSessionDescriptionInitSchema,
@@ -150,7 +134,7 @@ export const OfferSchema = z.object({
 export type OfferMessage = z.infer<typeof OfferSchema>;
 
 export const AnswerSchema = z.object({
-	type: z.literal(MessageType.Answer),
+	type: z.literal(types.answer),
 	payload: z.object({
 		session_id: z.string(),
 		answer: RTCSessionDescriptionInitSchema,
@@ -162,7 +146,7 @@ export const AnswerSchema = z.object({
 export type AnswerMessage = z.infer<typeof AnswerSchema>;
 
 export const ICECandidateSchema = z.object({
-	type: z.literal(MessageType.ICECandidate),
+	type: z.literal(types.iceCandidate),
 	payload: z.object({
 		session_id: z.string(),
 		candidate: RTCIceCandidateSchema,
@@ -171,51 +155,78 @@ export const ICECandidateSchema = z.object({
 	}),
 });
 
-export function isMessageType(input: unknown): input is SocketMessageType {
+type SessionIDPayload = {
+	session_id: string;
+};
+
+type JoinSessionMessage = {
+	type: "join-session";
+	payload: SessionIDPayload;
+};
+
+type LeaveSessionMessage = {
+	type: "leave-session";
+	payload: SessionIDPayload;
+};
+
+type RequestSessionMessage = {
+	type: "request-session";
+};
+
+const rtcSchemas = {
+	[types.offer]: OfferSchema,
+	[types.answer]: AnswerSchema,
+	[types.iceCandidate]: ICECandidateSchema,
+};
+
+const incomingSchemas = {
+	[types.error]: ErrorSchema,
+	[types.identity]: IdentitySchema,
+	[types.sessionNotFound]: SessionNotFoundSchema,
+	[types.sessionInfo]: SessionInfoSchema,
+	[types.sessionCreated]: SessionCreatedSchema,
+	[types.sessionJoined]: SessionJoinedSchema,
+	[types.sessionLeft]: SessionLeftSchema,
+	[types.clientJoined]: ClientJoinedSchema,
+	[types.clientLeft]: ClientLeftSchema,
+	...rtcSchemas,
+};
+
+type RTCMessageType = keyof typeof rtcSchemas;
+type RTCMessage = z.infer<(typeof rtcSchemas)[RTCMessageType]>;
+
+type IncomingMessageType = keyof typeof incomingSchemas;
+type IncomingMessage = z.infer<(typeof incomingSchemas)[IncomingMessageType]>;
+
+export type OutgoingMessageType =
+	| RTCMessageType
+	| "join-session"
+	| "leave-session"
+	| "request-session";
+export type OutgoingMessage =
+	| RTCMessage
+	| JoinSessionMessage
+	| LeaveSessionMessage
+	| RequestSessionMessage;
+
+function isIncomingMessageType(input: unknown): input is IncomingMessageType {
 	if (typeof input !== "string") {
 		return false;
 	}
-	return Object.values(MessageType).some((v) => v === input);
+	return input in incomingSchemas;
 }
 
-export function parseMessage(msg: unknown) {
+export function parseMessage(msg: unknown): IncomingMessage {
 	if (
 		!msg ||
 		typeof msg !== "object" ||
 		!("type" in msg) ||
 		!("payload" in msg)
 	) {
-		throw new Error("invalid message");
+		throw new Error("invalid message schema");
 	}
-	if (!isMessageType(msg.type)) {
-		throw new Error("unknown message type: " + msg.type);
+	if (!isIncomingMessageType(msg.type)) {
+		throw new Error("invalid message type: " + msg.type);
 	}
-	switch (msg.type) {
-		case MessageType.Error:
-			return ErrorSchema.parse(msg);
-		case MessageType.Identity:
-			return IdentitySchema.parse(msg);
-		case MessageType.Offer:
-			return OfferSchema.parse(msg);
-		case MessageType.Answer:
-			return AnswerSchema.parse(msg);
-		case MessageType.ICECandidate:
-			return ICECandidateSchema.parse(msg);
-		case MessageType.SessionNotFound:
-			return SessionNotFoundSchema.parse(msg);
-		case MessageType.SessionInfo:
-			return SessionInfoSchema.parse(msg);
-		case MessageType.SessionCreated:
-			return SessionCreatedSchema.parse(msg);
-		case MessageType.SessionJoined:
-			return SessionJoinedSchema.parse(msg);
-		case MessageType.SessionLeft:
-			return SessionLeftSchema.parse(msg);
-		case MessageType.ClientJoined:
-			return ClientJoinedSchema.parse(msg);
-		case MessageType.ClientLeft:
-			return ClientLeftSchema.parse(msg);
-		default:
-			throw new Error("invalid message type: " + msg.type);
-	}
+	return incomingSchemas[msg.type].parse(msg);
 }

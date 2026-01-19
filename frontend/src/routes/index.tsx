@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSocket } from "#/hooks/use-socket";
 import { useSession } from "#/hooks/use-session";
 import { Main } from "#/components/ui/main";
-import { Loader } from "#/components/ui/loader";
 import { Button } from "#/components/ui/button";
 import { Heading } from "#/components/ui/heading";
 import { Footer } from "#/components/footer";
@@ -42,9 +41,6 @@ function Component() {
 		}
 	}, [session, leaveSession]);
 
-	if (connectionState !== "open" && connectionState !== "error") {
-		return <Loader />;
-	}
 	if (connectionState === "error") {
 		return (
 			<Main>

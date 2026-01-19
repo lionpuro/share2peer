@@ -45,58 +45,65 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 		this.#url = url;
 		window.__WebSocketManager?.close();
 		window.__WebSocketManager = this;
-		this.connect();
+		this.connect().catch((err) => console.error(err));
 	}
 
-	connect() {
-		// close previous connection
-		if (this.#ws) {
-			this.close();
+	async connect(): Promise<WebSocket> {
+		if (this.#ws && this.#ws.readyState === 1) {
+			return this.#ws;
 		}
 
-		$connectionState.set("connecting");
-		this.#ws = new WebSocket(this.#url);
-
-		this.#ws.addEventListener("error", (e) => {
-			$connectionState.set("error");
-			console.error("WebSocket error: " + JSON.stringify(e));
-		});
-		this.#ws.addEventListener("open", () => {
+		if ($connectionState.get() !== "open") {
+			$connectionState.set("connecting");
+		}
+		try {
+			this.#ws = await openSocket(this.#url);
 			$connectionState.set("open");
-		});
-		this.#ws.addEventListener("close", () => {
-			$connectionState.set("closed");
-			closePeerConnections();
-			setTimeout(() => {
-				this.connect();
-			}, 1000);
-		});
-		this.#ws.addEventListener("message", async (e) => {
-			try {
-				const data = JSON.parse(e.data) as unknown;
-				const message = parseMessage(data);
-				switch (message.type) {
-					case "error":
-						console.error(ErrorSchema.parse(message).payload.code);
-						break;
-					case "identity":
-						$identity.set(IdentitySchema.parse(message).payload);
-						break;
-					case "offer":
-						await handleOffer(this, OfferSchema.parse(message));
-						break;
-					case "answer":
-						await handleAnswer(AnswerSchema.parse(message));
-						break;
-					case "ice-candidate":
-						await handleICECandidate(ICECandidateSchema.parse(message));
-						break;
+
+			this.#ws.addEventListener("error", (e) => {
+				$connectionState.set("error");
+				console.error("WebSocket error: " + JSON.stringify(e));
+			});
+			this.#ws.addEventListener("close", async () => {
+				$connectionState.set("closed");
+				closePeerConnections();
+				this.dispatchEvent(new CustomEvent("close"));
+				setTimeout(() => {
+					this.connect();
+				}, 1000);
+			});
+			this.#ws.addEventListener("message", async (e) => {
+				try {
+					const data = JSON.parse(e.data) as unknown;
+					const message = parseMessage(data);
+					switch (message.type) {
+						case "error":
+							console.error(ErrorSchema.parse(message).payload.code);
+							break;
+						case "identity":
+							$identity.set(IdentitySchema.parse(message).payload);
+							break;
+						case "offer":
+							await handleOffer(this, OfferSchema.parse(message));
+							break;
+						case "answer":
+							await handleAnswer(AnswerSchema.parse(message));
+							break;
+						case "ice-candidate":
+							await handleICECandidate(ICECandidateSchema.parse(message));
+							break;
+					}
+				} catch (err) {
+					console.error(err);
 				}
-			} catch (err) {
-				console.error(err);
-			}
-		});
-		this.#ws.addEventListener("message", this.onMessage.bind(this));
+			});
+			this.#ws.addEventListener("message", this.onMessage.bind(this));
+
+			return this.#ws;
+		} catch (err) {
+			$connectionState.set("error");
+			throw err;
+		}
 	}
 
 	private onMessage(e: MessageEvent) {
@@ -115,18 +122,38 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 			this.#ws = null;
 		}
 		$connectionState.set("closed");
-		this.dispatchEvent(new CustomEvent("close"));
 	}
 
 	async send(msg: OutgoingMessage) {
-		if (!this.#ws) {
-			console.error(
-				"failed to send message: not currently connected to a websocket",
-			);
-			return;
-		}
-		this.#ws.send(JSON.stringify(msg));
+		const ws = await this.connect();
+		ws.send(JSON.stringify(msg));
 	}
+}
+
+function openSocket(url: string): Promise<WebSocket> {
+	return new Promise((resolve, reject) => {
+		const ws = new WebSocket(url);
+
+		const onError = () => {
+			clearTimeout(timeout);
+			reject("failed to connect");
+		};
+		const onOpen = () => {
+			ws.removeEventListener("error", onError);
+			ws.removeEventListener("open", onOpen);
+			clearTimeout(timeout);
+			resolve(ws);
+		};
+
+		const timeout = setTimeout(() => {
+			ws.removeEventListener("error", onError);
+			ws.removeEventListener("open", onOpen);
+			reject("connection timed out");
+		}, 5000);
+
+		ws.addEventListener("error", onError);
+		ws.addEventListener("open", onOpen);
+	});
 }
 
 function resolveSocketURL() {

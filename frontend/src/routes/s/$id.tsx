@@ -217,7 +217,7 @@ function Component() {
 							) : selectedFiles.length > 0 ? (
 								<>
 									<Heading order={2} size="sm">
-										Files ({selectedFiles.length})
+										Selected files ({selectedFiles.length})
 									</Heading>
 									<FileList>
 										{selectedFiles.map((f) => (

@@ -1,7 +1,7 @@
 import { type MapStore, map } from "nanostores";
 import { nanoid } from "nanoid";
 import { ChunkReader, downloadBlob, filestore } from "#/lib/file";
-import { createDataChannel, sendPacket, sendSignal } from "./datachannel";
+import { createDataChannel, sendPacket, sendMessage } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
 import { type Peer, findPeer } from "./peer";
 
@@ -286,7 +286,7 @@ export function requestFile(peer: Peer, fileID: string) {
 	});
 	filestore.addFile(file);
 
-	sendSignal(peer.signalChannel, {
+	sendMessage(peer.messageChannel, {
 		type: "request-file",
 		payload: { file_id: file.id },
 	});

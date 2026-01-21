@@ -17,14 +17,14 @@ import {
 	type Peer,
 } from "./peer";
 import {
-	SignalChannelEvents,
+	MessageChannelEvents,
 	RequestFileSchema,
-	sendSignal,
+	sendMessage,
 	ShareFilesSchema,
 	type DataChannelType,
 	type RequestFileMessage,
 	type ShareFilesMessage,
-	type SignalChannelMessage,
+	type MessageChannelMessage,
 } from "./datachannel";
 import {
 	incoming,
@@ -45,13 +45,13 @@ export async function createOffer(server: SignalingServer, target: string) {
 		return;
 	}
 	const peer = createPeer(client);
-	peer.signalChannel = peer.connection.createDataChannel(
-		"signal" satisfies DataChannelType,
+	peer.messageChannel = peer.connection.createDataChannel(
+		"messages" satisfies DataChannelType,
 	);
-	peer.signalChannel.binaryType = "arraybuffer";
+	peer.messageChannel.binaryType = "arraybuffer";
 	addPeer(peer);
 	registerPeerConnectionListeners(peer, server);
-	setupSignalChannel(peer);
+	setupMessageChannel(peer);
 
 	const offer = await peer.connection.createOffer();
 	await peer.connection.setLocalDescription(offer);
@@ -144,10 +144,10 @@ function registerPeerConnectionListeners(peer: Peer, server: SignalingServer) {
 		}
 	});
 	peer.connection.addEventListener("datachannel", (e) => {
-		if (e.channel.label === "signal") {
-			peer.signalChannel = e.channel;
-			peer.signalChannel.binaryType = "arraybuffer";
-			setupSignalChannel(peer);
+		if (e.channel.label === "messages") {
+			peer.messageChannel = e.channel;
+			peer.messageChannel.binaryType = "arraybuffer";
+			setupMessageChannel(peer);
 			return;
 		}
 		if (!e.channel.label.startsWith("file-")) {
@@ -163,9 +163,9 @@ function registerPeerConnectionListeners(peer: Peer, server: SignalingServer) {
 	});
 }
 
-function setupSignalChannel(peer: Peer) {
-	if (!peer.signalChannel) return;
-	peer.signalChannel.addEventListener("open", () => {
+function setupMessageChannel(peer: Peer) {
+	if (!peer.messageChannel) return;
+	peer.messageChannel.addEventListener("open", () => {
 		const identity = $identity.get();
 		const session = $session.get();
 		if (!identity || !session) return;
@@ -174,17 +174,17 @@ function setupSignalChannel(peer: Peer) {
 			return;
 		}
 		const msg = {
-			type: SignalChannelEvents.ReadyToReceive,
+			type: MessageChannelEvents.ReadyToReceive,
 			payload: {
 				client_id: $identity.get()?.id,
 			},
 		};
-		peer.signalChannel?.send(JSON.stringify(msg));
+		peer.messageChannel?.send(JSON.stringify(msg));
 	});
-	peer.signalChannel.addEventListener("close", () => {
-		console.log("signalchannel closed");
+	peer.messageChannel.addEventListener("close", () => {
+		console.log("message channel closed");
 	});
-	peer.signalChannel.addEventListener("message", async (e) => {
+	peer.messageChannel.addEventListener("message", async (e) => {
 		try {
 			if (typeof e.data !== "string") {
 				return;
@@ -195,16 +195,16 @@ function setupSignalChannel(peer: Peer) {
 				return;
 			}
 			switch (data.type) {
-				case SignalChannelEvents.ReadyToReceive:
+				case MessageChannelEvents.ReadyToReceive:
 					handleReadyToReceive(peer.id);
 					break;
-				case SignalChannelEvents.ShareFiles:
+				case MessageChannelEvents.ShareFiles:
 					handleShareFiles(peer.id, ShareFilesSchema.parse(data));
 					break;
-				case SignalChannelEvents.RequestFile:
+				case MessageChannelEvents.RequestFile:
 					await handleRequestFile(peer.id, RequestFileSchema.parse(data));
 					break;
-				case SignalChannelEvents.CancelShare:
+				case MessageChannelEvents.CancelShare:
 					handleCancelShare(peer.id);
 					break;
 				default:
@@ -222,7 +222,7 @@ function setupSignalChannel(peer: Peer) {
 
 function handleReadyToReceive(peerID: string) {
 	const peer = findPeer(peerID);
-	if (!peer || !peer.signalChannel) return;
+	if (!peer || !peer.messageChannel) return;
 	const uploads = $uploads.get();
 	if ($uploads.get().length < 1) {
 		return;
@@ -233,7 +233,7 @@ function handleReadyToReceive(peerID: string) {
 		mime: u.mime,
 		size: u.size,
 	}));
-	sendSignal(peer.signalChannel, { type: "share-files", payload: { files } });
+	sendMessage(peer.messageChannel, { type: "share-files", payload: { files } });
 }
 
 function handleShareFiles(sender: string, data: ShareFilesMessage) {
@@ -283,7 +283,7 @@ export function closePeerConnection(peerID: string) {
 	);
 	const peer = findPeer(peerID);
 	if (!peer) return;
-	peer.signalChannel?.close();
+	peer.messageChannel?.close();
 	peer.connection.close();
 	removePeer(peer.id);
 }
@@ -298,7 +298,7 @@ export function closePeerConnections() {
 		outgoing.list().map((t) => t.id),
 	);
 	$peers.get().forEach((p) => {
-		p.signalChannel?.close();
+		p.messageChannel?.close();
 		p.connection.close();
 	});
 	removePeers();
@@ -310,20 +310,20 @@ export function shareFiles(files: FileMetadata[]) {
 
 export function sendCancelShare() {
 	$peers.get().forEach((p) => {
-		if (!p.signalChannel) {
+		if (!p.messageChannel) {
 			return;
 		}
-		sendSignal(p.signalChannel, { type: "cancel-share" });
+		sendMessage(p.messageChannel, { type: "cancel-share" });
 	});
 }
 
-export function sendToPeers(msg: SignalChannelMessage) {
+export function sendToPeers(msg: MessageChannelMessage) {
 	const session = $session.get();
 	if (!session) return;
 	session.clients?.forEach((c) => {
 		const peer = findPeer(c.id);
-		if (peer && peer.signalChannel) {
-			sendSignal(peer.signalChannel, msg);
+		if (peer && peer.messageChannel) {
+			sendMessage(peer.messageChannel, msg);
 		}
 	});
 }

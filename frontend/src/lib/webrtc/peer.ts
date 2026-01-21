@@ -4,7 +4,7 @@ import type { Client } from "#/lib/schemas";
 
 export type Peer = Client & {
 	connection: RTCPeerConnection;
-	signalChannel?: RTCDataChannel;
+	messageChannel?: RTCDataChannel;
 	files: FileMetadata[];
 };
 

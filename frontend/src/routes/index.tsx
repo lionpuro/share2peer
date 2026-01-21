@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSocket } from "#/hooks/use-socket";
+import { useServer } from "#/hooks/use-server";
 import { useSession } from "#/hooks/use-session";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const { connectionState } = useSocket();
+	const { connectionState } = useServer();
 	const { session, createSession, leaveSession } = useSession();
 	const [joinCode, setJoinCode] = useState("");
 

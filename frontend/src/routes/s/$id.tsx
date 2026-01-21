@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
-import { $identity } from "#/lib/socket";
+import { $identity } from "#/lib/server";
 import { createFileMetadata } from "#/lib/file";
 import { $peers, sendCancelShare, shareFiles } from "#/lib/webrtc";
 import { useSession } from "#/hooks/use-session";

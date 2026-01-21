@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
 import type { MessageEventMap, Session } from "./schemas";
-import type { WebSocketManager } from "./socket";
+import type { SignalingServer } from "./server";
 import {
 	closePeerConnection,
 	closePeerConnections,
@@ -13,29 +13,29 @@ export const $session = atom<Session | null>(null);
 type SessionState = "idle" | "joining" | "active" | "failed";
 
 export class SessionManager {
-	#ws: WebSocketManager;
+	#server: SignalingServer;
 	state: SessionState = "idle";
 
-	constructor(ws: WebSocketManager) {
-		this.#ws = ws;
-		this.#ws.addEventListener("close", () => {
+	constructor(server: SignalingServer) {
+		this.#server = server;
+		this.#server.addEventListener("close", () => {
 			$session.set(null);
 			this.state = "idle";
 		});
-		this.#ws.addEventListener("session-info", (e) => {
+		this.#server.addEventListener("session-info", (e) => {
 			$session.set(e.detail.payload);
 		});
-		this.#ws.addEventListener("session-left", () => {
+		this.#server.addEventListener("session-left", () => {
 			$session.set(null);
 			this.state = "idle";
 			closePeerConnections();
 		});
-		this.#ws.addEventListener("client-joined", async (e) => {
+		this.#server.addEventListener("client-joined", async (e) => {
 			const id = e.detail.payload.id;
 			if (findPeer(id)) return;
-			await createOffer(this.#ws, id);
+			await createOffer(this.#server, id);
 		});
-		this.#ws.addEventListener("client-left", (e) => {
+		this.#server.addEventListener("client-left", (e) => {
 			closePeerConnection(e.detail.payload.id);
 		});
 	}
@@ -48,51 +48,51 @@ export class SessionManager {
 			}
 
 			const timeout = setTimeout(() => {
-				this.#ws.removeEventListener("error", onError);
-				this.#ws.removeEventListener("session-not-found", onNotFound);
-				this.#ws.removeEventListener("session-joined", onJoin);
+				this.#server.removeEventListener("error", onError);
+				this.#server.removeEventListener("session-not-found", onNotFound);
+				this.#server.removeEventListener("session-joined", onJoin);
 				this.state = "failed";
 				reject(new Error("request timed out"));
 			}, 10 * 1000);
 
 			const onNotFound = (e: MessageEventMap["session-not-found"]) => {
 				if (e.detail.payload.session_id === id) {
-					this.#ws.removeEventListener("error", onError);
-					this.#ws.removeEventListener("session-not-found", onNotFound);
-					this.#ws.removeEventListener("session-joined", onJoin);
+					this.#server.removeEventListener("error", onError);
+					this.#server.removeEventListener("session-not-found", onNotFound);
+					this.#server.removeEventListener("session-joined", onJoin);
 					clearTimeout(timeout);
 					this.state = "failed";
 					reject(new Error("Session not found"));
 				}
 			};
-			this.#ws.addEventListener("session-not-found", onNotFound);
+			this.#server.addEventListener("session-not-found", onNotFound);
 
 			const onError = (e: MessageEventMap["error"]) => {
-				this.#ws.removeEventListener("error", onError);
-				this.#ws.removeEventListener("session-not-found", onNotFound);
-				this.#ws.removeEventListener("session-joined", onJoin);
+				this.#server.removeEventListener("error", onError);
+				this.#server.removeEventListener("session-not-found", onNotFound);
+				this.#server.removeEventListener("session-joined", onJoin);
 				clearTimeout(timeout);
 				this.state = "failed";
 				const err = e.detail.payload;
 				reject(new Error(err.message));
 			};
-			this.#ws.addEventListener("error", onError);
+			this.#server.addEventListener("error", onError);
 
 			const onJoin = (e: MessageEventMap["session-joined"]) => {
 				const session = e.detail.payload;
 				if (session.id !== id) return;
-				this.#ws.removeEventListener("error", onError);
-				this.#ws.removeEventListener("session-not-found", onNotFound);
-				this.#ws.removeEventListener("session-joined", onJoin);
+				this.#server.removeEventListener("error", onError);
+				this.#server.removeEventListener("session-not-found", onNotFound);
+				this.#server.removeEventListener("session-joined", onJoin);
 				clearTimeout(timeout);
 				this.state = "active";
 				$session.set(session);
 				resolve(session);
 			};
-			this.#ws.addEventListener("session-joined", onJoin);
+			this.#server.addEventListener("session-joined", onJoin);
 
 			this.state = "joining";
-			this.#ws.send({
+			this.#server.send({
 				type: "join-session",
 				payload: { session_id: id },
 			});
@@ -103,7 +103,7 @@ export class SessionManager {
 		this.state = "idle";
 		const session = $session.get();
 		if (!session) return;
-		this.#ws.send({
+		this.#server.send({
 			type: "leave-session",
 			payload: { session_id: session.id },
 		});
@@ -117,33 +117,33 @@ export class SessionManager {
 		}
 		return new Promise((resolve, reject) => {
 			const onTimeout = () => {
-				this.#ws.removeEventListener("error", onError);
-				this.#ws.removeEventListener("session-created", onCreate);
+				this.#server.removeEventListener("error", onError);
+				this.#server.removeEventListener("session-created", onCreate);
 				this.state = "idle";
 				reject(new Error("request timed out"));
 			};
 			const timeout = setTimeout(onTimeout, 10 * 1000);
 
 			const onError = (e: MessageEventMap["error"]) => {
-				this.#ws.removeEventListener("error", onError);
-				this.#ws.removeEventListener("session-created", onCreate);
+				this.#server.removeEventListener("error", onError);
+				this.#server.removeEventListener("session-created", onCreate);
 				clearTimeout(timeout);
 				this.state = "failed";
 				const err = e.detail.payload;
 				reject(new Error(err.message));
 			};
-			this.#ws.addEventListener("error", onError);
+			this.#server.addEventListener("error", onError);
 
 			const onCreate = (e: MessageEventMap["session-created"]) => {
-				this.#ws.removeEventListener("session-created", onCreate);
+				this.#server.removeEventListener("session-created", onCreate);
 				clearTimeout(timeout);
 				const session = e.detail.payload;
 				resolve(session.id);
 			};
 
-			this.#ws.addEventListener("session-created", onCreate);
+			this.#server.addEventListener("session-created", onCreate);
 
-			this.#ws.send({ type: "request-session" });
+			this.#server.send({ type: "request-session" });
 		});
 	}
 }

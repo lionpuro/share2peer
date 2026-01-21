@@ -1,11 +1,11 @@
 import { useStore } from "@nanostores/react";
-import { $connectionState, socket } from "#/lib/socket";
+import { $connectionState, server } from "#/lib/server";
 
-export function useSocket() {
+export function useServer() {
 	const connectionState = useStore($connectionState);
 
 	return {
-		socket,
+		server,
 		connectionState,
 	};
 }

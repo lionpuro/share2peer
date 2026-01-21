@@ -27,7 +27,7 @@ export type MessageEventMap = {
 	>;
 };
 
-export class SocketMessageEvent<
+export class ServerMessageEvent<
 	T extends IncomingMessage,
 > extends CustomEvent<T> {
 	constructor(type: T["type"], detail: T) {

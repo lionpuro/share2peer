@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { socket } from "#/lib/socket";
+import { server } from "#/lib/server";
 import { $session, SessionManager } from "#/lib/session";
-import { useSocket } from "./use-socket";
+import { useServer } from "./use-server";
 
-const manager = new SessionManager(socket);
+const manager = new SessionManager(server);
 
 const join = (id: string) => manager.join(id);
 const leave = () => manager.leave();
@@ -12,8 +12,7 @@ const create = () => manager.create();
 
 export function useSession(id?: string) {
 	const session = useStore($session);
-
-	const { connectionState } = useSocket();
+	const { connectionState } = useServer();
 	const [error, setError] = useState<string | undefined>();
 
 	useEffect(() => {

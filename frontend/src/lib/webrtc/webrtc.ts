@@ -3,7 +3,7 @@ import type {
 	ICECandidateMessage,
 	OfferMessage,
 } from "#/lib/schemas";
-import { $identity, type WebSocketManager } from "#/lib/socket";
+import { $identity, type SignalingServer } from "#/lib/server";
 import { $session } from "#/lib/session";
 import { $uploads, getUpload, type FileMetadata } from "#/lib/file";
 import {
@@ -34,7 +34,7 @@ import {
 	stopTransfers,
 } from "./transfer";
 
-export async function createOffer(socket: WebSocketManager, target: string) {
+export async function createOffer(server: SignalingServer, target: string) {
 	const session = $session.get();
 	const identity = $identity.get();
 	if (!session || !identity) {
@@ -50,7 +50,7 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 	);
 	peer.signalChannel.binaryType = "arraybuffer";
 	addPeer(peer);
-	registerPeerConnectionListeners(peer, socket);
+	registerPeerConnectionListeners(peer, server);
 	setupSignalChannel(peer);
 
 	const offer = await peer.connection.createOffer();
@@ -66,10 +66,10 @@ export async function createOffer(socket: WebSocketManager, target: string) {
 		},
 	};
 
-	socket.send(msg);
+	server.send(msg);
 }
 
-export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
+export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 	const session = $session.get();
 	const identity = $identity.get();
 	if (!session || !identity) return;
@@ -78,7 +78,7 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 
 	const peer = createPeer(client);
 	addPeer(peer);
-	registerPeerConnectionListeners(peer, socket);
+	registerPeerConnectionListeners(peer, server);
 
 	await peer.connection
 		.setRemoteDescription(msg.payload.offer)
@@ -96,7 +96,7 @@ export async function handleOffer(socket: WebSocketManager, msg: OfferMessage) {
 		},
 	};
 
-	socket.send(message);
+	server.send(message);
 }
 
 export async function handleAnswer(msg: AnswerMessage) {
@@ -121,7 +121,7 @@ export async function handleICECandidate(msg: ICECandidateMessage) {
 		.catch(console.error);
 }
 
-function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
+function registerPeerConnectionListeners(peer: Peer, server: SignalingServer) {
 	peer.connection.addEventListener("icecandidate", (e) => {
 		const session = $session.get();
 		const identity = $identity.get();
@@ -136,7 +136,7 @@ function registerPeerConnectionListeners(peer: Peer, socket: WebSocketManager) {
 				to: peer.id,
 			},
 		};
-		socket.send(message);
+		server.send(message);
 	});
 	peer.connection.addEventListener("iceconnectionstatechange", () => {
 		if (peer.connection.connectionState === "failed") {

@@ -6,7 +6,7 @@ import {
 	ErrorSchema,
 	ICECandidateSchema,
 	IdentitySchema,
-	SocketMessageEvent,
+	ServerMessageEvent,
 	type Client,
 	parseMessage,
 	type OutgoingMessage,
@@ -21,7 +21,7 @@ import {
 
 declare global {
 	interface Window {
-		__WebSocketManager: WebSocketManager | undefined;
+		__SignalingServer: SignalingServer | undefined;
 	}
 }
 
@@ -31,20 +31,20 @@ type ConnectionState = "closed" | "connecting" | "open" | "error";
 
 export const $connectionState = atom<ConnectionState>("closed");
 
-export type SocketEventTarget = CustomEventTarget<
+export type ServerEventTarget = CustomEventTarget<
 	MessageEventMap & {
 		close: CustomEvent;
 	}
 >;
 
-export class WebSocketManager extends (EventTarget as SocketEventTarget) {
+export class SignalingServer extends (EventTarget as ServerEventTarget) {
 	#url: string;
 	#ws: WebSocket | null = null;
 	constructor(url: string) {
 		super();
 		this.#url = url;
-		window.__WebSocketManager?.close();
-		window.__WebSocketManager = this;
+		window.__SignalingServer?.close();
+		window.__SignalingServer = this;
 		this.connect().catch((err) => console.error(err));
 	}
 
@@ -110,7 +110,7 @@ export class WebSocketManager extends (EventTarget as SocketEventTarget) {
 		try {
 			const msg = JSON.parse(e.data) as unknown;
 			const event = parseMessage(msg);
-			this.dispatchEvent(new SocketMessageEvent(event.type, event));
+			this.dispatchEvent(new ServerMessageEvent(event.type, event));
 		} catch (err) {
 			console.error(err);
 		}
@@ -172,4 +172,4 @@ function resolveSocketURL() {
 	return url.toString();
 }
 
-export const socket = new WebSocketManager(resolveSocketURL());
+export const server = new SignalingServer(resolveSocketURL());

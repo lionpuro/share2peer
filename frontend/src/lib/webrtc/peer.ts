@@ -171,14 +171,21 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 	}
 
 	createMessageChannel() {
-		this.channel = this.connection.createDataChannel("messages");
-		this.channel.binaryType = "arraybuffer";
+		this.channel = createDataChannel(this.connection, "messages");
 		this.#setupMessageChannel();
 	}
 
 	async createFileChannel(fileID: string): Promise<RTCDataChannel> {
-		const chan = await createDataChannel(this.connection, `file-${fileID}`);
-		return chan;
+		return new Promise((resolve, reject) => {
+			const chan = createDataChannel(this.connection, `file-${fileID}`);
+			const timeout = setTimeout(() => {
+				reject("create channel timed out");
+			}, 5 * 1000);
+			chan.addEventListener("open", () => {
+				clearTimeout(timeout);
+				resolve(chan);
+			});
+		});
 	}
 
 	async #onMessage(e: MessageEvent) {

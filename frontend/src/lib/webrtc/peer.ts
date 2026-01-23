@@ -2,7 +2,7 @@ import { map } from "nanostores";
 import { TypedEventTarget } from "typescript-event-target";
 import { $identity } from "#/lib/server";
 import { $session } from "#/lib/session";
-import { $uploads, type FileMetadata } from "#/lib/file";
+import { $uploads, getUpload, type FileMetadata } from "#/lib/file";
 import type { Client } from "#/lib/schemas";
 import {
 	CancelShareSchema,
@@ -16,78 +16,45 @@ import {
 	type RequestFileMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
-import { handleIncomingTransfer } from "./transfer";
+import {
+	handleIncomingTransfer,
+	handleStartTransfer,
+	incoming,
+	outgoing,
+	stopTransfers,
+} from "./transfer";
 
 export type PeerState = Client & {
 	files: FileMetadata[];
 };
 
-export function createPeer(client: Client): PeerState {
-	const peer: PeerState = {
-		...client,
-		files: [],
-	};
-	return peer;
-}
-
 type PeerStore = Partial<Record<string, PeerState>>;
 
 export const $peers = map<PeerStore>({});
 
-export function findPeer(id: string): PeerState | undefined {
+function findPeer(id: string): PeerState | undefined {
 	return $peers.get()[id];
 }
 
-export function listPeers(): PeerState[] {
-	return Object.values($peers.get()) as PeerState[];
-}
-
-export function addPeer(peer: PeerState) {
-	const peers = $peers.get();
-	const existing = peers[peer.id];
-	if (existing) {
-		removeConnection(peer.id);
-	}
+function addPeer(peer: PeerState) {
 	$peers.setKey(peer.id, peer);
 }
 
-export function updatePeer(id: string, update: Partial<PeerState>) {
+function updatePeer(id: string, update: Partial<PeerState>) {
 	const peers = $peers.get();
 	const peer = peers[id];
 	if (!peer) return;
 	$peers.setKey(id, { ...peer, ...update });
 }
 
-export function removePeer(id: string) {
-	connections.get(id)?.destroy();
-	connections.delete(id);
-
+function removePeer(id: string) {
 	const peers = { ...$peers.get() };
 	delete peers[id];
 	$peers.set(peers);
 }
 
-export function removePeers() {
-	connections.forEach((c) => c.destroy());
-	connections.clear();
-
+function removePeers() {
 	$peers.set({});
-}
-
-const connections: Map<string, PeerConnection> = new Map();
-
-export function getConnection(id: string): PeerConnection | undefined {
-	return connections.get(id);
-}
-
-export function addConnection(conn: PeerConnection) {
-	removeConnection(conn.id);
-	connections.set(conn.id, conn);
-}
-
-export function removeConnection(id: string) {
-	connections.get(id)?.destroy();
-	connections.delete(id);
 }
 
 type PeerConnectionOptions = {
@@ -276,3 +243,105 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 		this.connection.close();
 	}
 }
+
+class PeerConnectionManager {
+	peers: Map<string, PeerConnection> = new Map();
+
+	getConnection(id: string): PeerConnection | undefined {
+		return this.peers.get(id);
+	}
+
+	createConnection(
+		client: Client,
+		opt?: PeerConnectionOptions,
+	): PeerConnection {
+		const existing = this.peers.get(client.id);
+		if (existing) {
+			return existing;
+		}
+
+		const peer = new PeerConnection(client.id, opt);
+		this.#attachEventListeners(peer);
+		this.peers.set(peer.id, peer);
+		addPeer({ ...client, files: [] });
+
+		return peer;
+	}
+
+	removeConnection(id: string) {
+		stopTransfers(
+			incoming,
+			incoming.findByPeer(id).map((t) => t.id),
+		);
+		stopTransfers(
+			outgoing,
+			outgoing.findByPeer(id).map((t) => t.id),
+		);
+		const peer = this.peers.get(id);
+		peer?.destroy();
+		this.peers.delete(id);
+		removePeer(id);
+	}
+
+	reset() {
+		stopTransfers(
+			incoming,
+			incoming.list().map((t) => t.id),
+		);
+		stopTransfers(
+			outgoing,
+			outgoing.list().map((t) => t.id),
+		);
+		this.peers.forEach((p) => p.destroy());
+		this.peers.clear();
+		removePeers();
+	}
+
+	#attachEventListeners(conn: PeerConnection) {
+		conn.addEventListener("ready-to-receive", () => {
+			const uploads = $uploads.get();
+			if (uploads.length < 1) return;
+			const files = uploads.map((u) => ({
+				id: u.id,
+				name: u.name,
+				mime: u.mime,
+				size: u.size,
+			}));
+			conn.send({ type: "share-files", payload: { files } });
+		});
+
+		conn.addEventListener("share-files", (e) => {
+			stopTransfers(
+				incoming,
+				incoming.findByPeer(conn.id).map((t) => t.id),
+			);
+			const peer = findPeer(conn.id);
+			if (!peer) return;
+			updatePeer(peer.id, { ...peer, files: e.detail.payload.files });
+		});
+
+		conn.addEventListener("request-file", (e) => {
+			const upload = getUpload(e.detail.payload.file_id);
+			if (!upload) {
+				console.error("requested file does not exist");
+				return;
+			}
+			const { file, ...meta } = upload;
+			handleStartTransfer(conn, meta.id, file).catch((err) =>
+				console.error("failed to send file:", err),
+			);
+		});
+
+		conn.addEventListener("cancel-share", () => {
+			stopTransfers(
+				incoming,
+				incoming.findByPeer(conn.id).map((t) => t.id),
+			);
+			const peer = findPeer(conn.id);
+			if (!peer) return;
+			updatePeer(peer.id, { files: [] });
+		});
+	}
+}
+
+export const peers = new PeerConnectionManager();

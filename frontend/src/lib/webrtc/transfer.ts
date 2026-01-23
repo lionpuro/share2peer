@@ -1,9 +1,14 @@
 import { type MapStore, map } from "nanostores";
 import { nanoid } from "nanoid";
-import { ChunkReader, downloadBlob, filestore } from "#/lib/file";
-import { createDataChannel, sendPacket, sendMessage } from "./datachannel";
+import {
+	ChunkReader,
+	downloadBlob,
+	filestore,
+	type FileMetadata,
+} from "#/lib/file";
+import { sendPacket } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
-import { type Peer, findPeer } from "./peer";
+import { PeerConnection } from "./peer";
 
 type TransferStatus =
 	| "waiting"
@@ -212,18 +217,30 @@ export type TransferContext = {
 };
 
 export async function handleStartTransfer(
-	peerID: string,
+	conn: PeerConnection,
 	fileID: string,
 	file: File,
 ) {
 	const ctx: TransferContext = {
 		transferID: nanoid(),
-		peerID: peerID,
+		peerID: conn.id,
 		fileID: fileID,
 		fileSize: file.size,
 	};
 	try {
-		const chan = await createSendChannel(ctx);
+		const chan = await conn.createFileChannel(fileID);
+		chan.addEventListener("close", () => {
+			const transfer = outgoing.find(ctx.transferID);
+			if (transfer && transfer.status !== "complete") {
+				outgoing.update(ctx.transferID, { status: "stopped", channel: null });
+			}
+		});
+		chan.addEventListener("error", () => {
+			const transfer = outgoing.find(ctx.transferID);
+			if (transfer) {
+				outgoing.update(ctx.transferID, { status: "failed", channel: null });
+			}
+		});
 		outgoing.add({
 			id: ctx.transferID,
 			peerID: ctx.peerID,
@@ -240,39 +257,11 @@ export async function handleStartTransfer(
 	}
 }
 
-async function createSendChannel(
-	ctx: TransferContext,
-): Promise<RTCDataChannel> {
-	const peer = findPeer(ctx.peerID);
-	if (!peer) {
-		throw new Error("peer not found");
-	}
-
-	const chan = await createDataChannel(peer.connection, `file-${ctx.fileID}`);
-	chan.addEventListener("close", () => {
-		const transfer = outgoing.find(ctx.transferID);
-		if (transfer && transfer.status !== "complete") {
-			outgoing.update(ctx.transferID, { status: "stopped", channel: null });
-		}
-	});
-	chan.addEventListener("error", () => {
-		const transfer = outgoing.find(ctx.transferID);
-		if (transfer) {
-			outgoing.update(ctx.transferID, { status: "failed", channel: null });
-		}
-	});
-
-	return chan;
-}
-
-export function requestFile(peer: Peer, fileID: string) {
-	const file = peer.files.find((f) => f.id === fileID);
-	if (!file) return;
-
+export function requestFile(conn: PeerConnection, file: FileMetadata) {
 	const ctx: TransferContext = {
 		transferID: nanoid(),
-		peerID: peer.id,
-		fileID: fileID,
+		peerID: conn.id,
+		fileID: file.id,
 		fileSize: file.size,
 	};
 	incoming.add({
@@ -286,7 +275,7 @@ export function requestFile(peer: Peer, fileID: string) {
 	});
 	filestore.addFile(file);
 
-	sendMessage(peer.messageChannel, {
+	conn.send({
 		type: "request-file",
 		payload: { file_id: file.id },
 	});

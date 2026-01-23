@@ -13,7 +13,7 @@ import {
 	type MessageEventMap,
 } from "#/lib/schemas";
 import {
-	peers,
+	connections,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
@@ -66,7 +66,7 @@ export class SignalingServer extends (EventTarget as ServerEventTarget) {
 			});
 			this.#ws.addEventListener("close", async () => {
 				$connectionState.set("closed");
-				peers.reset();
+				connections.clear();
 				this.dispatchEvent(new CustomEvent("close"));
 				setTimeout(() => {
 					this.connect();

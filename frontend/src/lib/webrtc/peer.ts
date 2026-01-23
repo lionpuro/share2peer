@@ -247,14 +247,11 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 class PeerConnectionManager {
 	peers: Map<string, PeerConnection> = new Map();
 
-	getConnection(id: string): PeerConnection | undefined {
+	get(id: string): PeerConnection | undefined {
 		return this.peers.get(id);
 	}
 
-	createConnection(
-		client: Client,
-		opt?: PeerConnectionOptions,
-	): PeerConnection {
+	create(client: Client, opt?: PeerConnectionOptions): PeerConnection {
 		const existing = this.peers.get(client.id);
 		if (existing) {
 			return existing;
@@ -268,7 +265,7 @@ class PeerConnectionManager {
 		return peer;
 	}
 
-	removeConnection(id: string) {
+	remove(id: string) {
 		stopTransfers(
 			incoming,
 			incoming.findByPeer(id).map((t) => t.id),
@@ -283,7 +280,7 @@ class PeerConnectionManager {
 		removePeer(id);
 	}
 
-	reset() {
+	clear() {
 		stopTransfers(
 			incoming,
 			incoming.list().map((t) => t.id),
@@ -344,4 +341,4 @@ class PeerConnectionManager {
 	}
 }
 
-export const peers = new PeerConnectionManager();
+export const connections = new PeerConnectionManager();

@@ -6,7 +6,7 @@ import type {
 } from "#/lib/schemas";
 import { $identity, type SignalingServer } from "#/lib/server";
 import { $session } from "#/lib/session";
-import { peers } from "./peer";
+import { connections } from "./peer";
 
 export async function createPeerConnection(
 	server: SignalingServer,
@@ -14,12 +14,12 @@ export async function createPeerConnection(
 	client: Client,
 ) {
 	const identity = $identity.get();
-	if (!identity || peers.getConnection(client.id)) {
+	if (!identity || connections.get(client.id)) {
 		return;
 	}
 
 	try {
-		const peer = peers.createConnection(client, {
+		const conn = connections.create(client, {
 			onIceCandidate: (candidate) => {
 				server.send({
 					type: "ice-candidate",
@@ -27,19 +27,19 @@ export async function createPeerConnection(
 						session_id: sessionID,
 						candidate: candidate.toJSON(),
 						from: identity.id,
-						to: peer.id,
+						to: conn.id,
 					},
 				});
 			},
 		});
-		peer.createMessageChannel();
-		const offer = await peer.createOffer();
+		conn.createMessageChannel();
+		const offer = await conn.createOffer();
 
 		server.send({
 			type: "offer",
 			payload: {
 				from: identity.id,
-				to: peer.id,
+				to: conn.id,
 				session_id: sessionID,
 				offer: offer,
 			},
@@ -55,7 +55,7 @@ export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 		?.clients?.find((c) => c.id === msg.payload.from);
 	if (!client) return;
 
-	const peer = peers.createConnection(client, {
+	const conn = connections.create(client, {
 		onIceCandidate: (candidate) => {
 			server.send({
 				type: "ice-candidate",
@@ -68,8 +68,8 @@ export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 			});
 		},
 	});
-	await peer.setRemoteDescription(msg.payload.offer);
-	const answer = await peer.createAnswer();
+	await conn.setRemoteDescription(msg.payload.offer);
+	const answer = await conn.createAnswer();
 
 	server.send({
 		type: "answer",
@@ -83,7 +83,7 @@ export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 }
 
 export async function handleAnswer(msg: AnswerMessage) {
-	const conn = peers.getConnection(msg.payload.from);
+	const conn = connections.get(msg.payload.from);
 	if (!conn) {
 		console.error("handle answer: connection not found");
 		return;
@@ -92,7 +92,7 @@ export async function handleAnswer(msg: AnswerMessage) {
 }
 
 export async function handleICECandidate(msg: ICECandidateMessage) {
-	const conn = peers.getConnection(msg.payload.from);
+	const conn = connections.get(msg.payload.from);
 	if (!conn) {
 		console.error("handle ice candidate: connection not found");
 		return;

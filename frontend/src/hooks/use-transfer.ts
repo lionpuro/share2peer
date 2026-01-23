@@ -8,7 +8,7 @@ import {
 	stopTransfers,
 } from "#/lib/webrtc/transfer";
 import { filestore } from "#/lib/file";
-import { type PeerState, peers as peerManager } from "#/lib/webrtc";
+import { type PeerState, connections } from "#/lib/webrtc";
 
 export function useTransfer() {
 	const incomingState = useStore($incoming);
@@ -32,7 +32,7 @@ export function useTransfer() {
 	const startDownload = (peers: PeerState[]) => {
 		peers.forEach((p) =>
 			p.files.forEach((f) => {
-				const conn = peerManager.getConnection(p.id);
+				const conn = connections.get(p.id);
 				if (!conn) {
 					console.warn("peer connection not open");
 					return;

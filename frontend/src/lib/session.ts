@@ -2,7 +2,7 @@ import { atom } from "nanostores";
 import type { MessageEventMap, Session } from "./schemas";
 import type { SignalingServer } from "./server";
 import {
-	peers,
+	connections,
 	createPeerConnection,
 	type MessageChannelMessage,
 } from "./webrtc";
@@ -27,24 +27,22 @@ export class SessionManager {
 		this.#server.addEventListener("session-left", () => {
 			$session.set(null);
 			this.state = "idle";
-			peers.reset();
+			connections.clear();
 		});
 		this.#server.addEventListener("client-joined", async (e) => {
 			const id = e.detail.payload.id;
-			if (peers.getConnection(id)) return;
+			if (connections.get(id)) return;
 			const session = $session.get();
 			if (!session) return;
 			await createPeerConnection(this.#server, session.id, e.detail.payload);
 		});
 		this.#server.addEventListener("client-left", (e) => {
-			peers.removeConnection(e.detail.payload.id);
+			connections.remove(e.detail.payload.id);
 		});
 	}
 
 	broadcast(msg: MessageChannelMessage) {
-		$session
-			.get()
-			?.clients?.forEach((c) => peers.getConnection(c.id)?.send(msg));
+		$session.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
 	}
 
 	join(id: string): Promise<Session> {

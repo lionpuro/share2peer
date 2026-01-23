@@ -96,7 +96,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 					console.error(err);
 				}
 			});
-			this.#ws.addEventListener("message", this.onMessage.bind(this));
+			this.#ws.addEventListener("message", this.#onMessage.bind(this));
 
 			return this.#ws;
 		} catch (err) {
@@ -105,7 +105,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		}
 	}
 
-	private onMessage(e: MessageEvent) {
+	#onMessage(e: MessageEvent) {
 		try {
 			const data = JSON.parse(e.data) as unknown;
 			const msg = parseMessage(data);

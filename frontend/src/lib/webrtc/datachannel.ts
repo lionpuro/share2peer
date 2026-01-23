@@ -8,19 +8,11 @@ export function createDataChannel(
 	conn: RTCPeerConnection,
 	label: DataChannelType,
 	opt?: RTCDataChannelInit,
-): Promise<RTCDataChannel> {
-	return new Promise((resolve, reject) => {
-		const chan = conn.createDataChannel(label, opt);
-		chan.binaryType = "arraybuffer";
-		chan.bufferedAmountLowThreshold = PACKET_SIZE;
-		const timeout = setTimeout(() => {
-			reject("create channel timed out");
-		}, 5 * 1000);
-		chan.addEventListener("open", () => {
-			clearTimeout(timeout);
-			resolve(chan);
-		});
-	});
+): RTCDataChannel {
+	const chan = conn.createDataChannel(label, opt);
+	chan.binaryType = "arraybuffer";
+	chan.bufferedAmountLowThreshold = PACKET_SIZE;
+	return chan;
 }
 
 export const MessageChannelEvents = {

@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
 import { $identity } from "#/lib/server";
 import { createFileMetadata } from "#/lib/file";
-import { $peers, sendCancelShare, shareFiles } from "#/lib/webrtc";
+import { $peers } from "#/lib/webrtc";
 import { useSession } from "#/hooks/use-session";
 import { useTransfer } from "#/hooks/use-transfer";
 import { useUpload } from "#/hooks/use-upload";
@@ -31,7 +31,8 @@ export const Route = createFileRoute("/s/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
-	const { session, error } = useSession(id);
+	const identity = useStore($identity);
+	const { session, error, broadcast } = useSession(id);
 	const {
 		incoming,
 		outgoing,
@@ -45,7 +46,6 @@ function Component() {
 	);
 	const { uploads, setUploads } = useUpload();
 	const peers = useStore($peers);
-	const identity = useStore($identity);
 	const [selectedFiles, setSelectedFiles] = useState<typeof uploads>([]);
 
 	const handleDrop = (files: File[]) => {
@@ -59,20 +59,23 @@ function Component() {
 	const handleStartShare = () => {
 		setUploads(selectedFiles);
 		if (session && selectedFiles.length > 0) {
-			shareFiles(
-				selectedFiles.map((u) => ({
-					id: u.id,
-					name: u.name,
-					mime: u.mime,
-					size: u.size,
-				})),
-			);
+			broadcast({
+				type: "share-files",
+				payload: {
+					files: selectedFiles.map((u) => ({
+						id: u.id,
+						name: u.name,
+						mime: u.mime,
+						size: u.size,
+					})),
+				},
+			});
 		}
 	};
 
 	const handleStopShare = () => {
 		stopOutgoing();
-		sendCancelShare();
+		broadcast({ type: "cancel-share" });
 		setUploads([]);
 	};
 
@@ -104,9 +107,10 @@ function Component() {
 		}, 1000);
 	}
 
-	const sharingPeers = peers.filter((p) => p.files.length > 0);
-	const users = [identity, ...peers];
-	const peerFiles = peers.flatMap((p) => p.files);
+	const peerList = Object.values(peers).filter((p) => !!p);
+	const sharingPeers = peerList.filter((p) => p.files.length > 0);
+	const peerFiles = peerList.flatMap((p) => p.files);
+	const users = [identity, ...peerList];
 
 	return (
 		<>

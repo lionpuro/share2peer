@@ -8,7 +8,7 @@ import {
 	stopTransfers,
 } from "#/lib/webrtc/transfer";
 import { filestore } from "#/lib/file";
-import type { Peer } from "#/lib/webrtc";
+import { type PeerState, connections } from "#/lib/webrtc";
 
 export function useTransfer() {
 	const incomingState = useStore($incoming);
@@ -29,10 +29,15 @@ export function useTransfer() {
 		);
 	};
 
-	const startDownload = (peers: Peer[]) => {
+	const startDownload = (peers: PeerState[]) => {
 		peers.forEach((p) =>
 			p.files.forEach((f) => {
-				requestFile(p, f.id);
+				const conn = connections.get(p.id);
+				if (!conn) {
+					console.warn("peer connection not open");
+					return;
+				}
+				requestFile(conn, f);
 			}),
 		);
 	};

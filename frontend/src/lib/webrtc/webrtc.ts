@@ -95,7 +95,8 @@ export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 	});
 	attachMessageListeners(conn);
 	addConnection(conn);
-	const answer = await conn.createAnswer(msg.payload.offer);
+	await conn.setRemoteDescription(msg.payload.offer);
+	const answer = await conn.createAnswer();
 
 	server.send({
 		type: "answer",
@@ -114,7 +115,7 @@ export async function handleAnswer(msg: AnswerMessage) {
 		console.error("handle answer: connection not found");
 		return;
 	}
-	await conn.handleAnswer(msg.payload.answer);
+	await conn.setRemoteDescription(msg.payload.answer);
 }
 
 export async function handleICECandidate(msg: ICECandidateMessage) {

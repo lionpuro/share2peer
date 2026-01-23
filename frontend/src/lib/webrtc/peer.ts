@@ -249,17 +249,14 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 		return offer;
 	}
 
-	async createAnswer(
-		offer: RTCSessionDescriptionInit,
-	): Promise<RTCSessionDescriptionInit> {
-		await this.connection.setRemoteDescription(offer);
+	async createAnswer(): Promise<RTCSessionDescriptionInit> {
 		const answer = await this.connection.createAnswer();
 		await this.connection.setLocalDescription(answer);
 		return answer;
 	}
 
-	async handleAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
-		await this.connection.setRemoteDescription(answer);
+	async setRemoteDescription(desc: RTCSessionDescriptionInit): Promise<void> {
+		await this.connection.setRemoteDescription(desc);
 	}
 
 	async addIceCandidate(candidate: RTCIceCandidateInit): Promise<void> {

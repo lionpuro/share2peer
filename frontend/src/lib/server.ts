@@ -1,16 +1,15 @@
 import { atom } from "nanostores";
-import type { CustomEventTarget } from "#/lib/events";
+import { TypedEventTarget } from "typescript-event-target";
 import {
 	OfferSchema,
 	AnswerSchema,
 	ErrorSchema,
 	ICECandidateSchema,
 	IdentitySchema,
-	ServerMessageEvent,
 	type Client,
 	parseMessage,
 	type OutgoingMessage,
-	type MessageEventMap,
+	type IncomingMessage,
 } from "#/lib/schemas";
 import {
 	connections,
@@ -31,13 +30,13 @@ type ConnectionState = "closed" | "connecting" | "open" | "error";
 
 export const $connectionState = atom<ConnectionState>("closed");
 
-export type ServerEventTarget = CustomEventTarget<
-	MessageEventMap & {
-		close: CustomEvent;
-	}
->;
+export type ServerEventMap = {
+	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;
+} & {
+	close: CustomEvent;
+};
 
-export class SignalingServer extends (EventTarget as ServerEventTarget) {
+export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#url: string;
 	#ws: WebSocket | null = null;
 	constructor(url: string) {
@@ -67,7 +66,7 @@ export class SignalingServer extends (EventTarget as ServerEventTarget) {
 			this.#ws.addEventListener("close", async () => {
 				$connectionState.set("closed");
 				connections.clear();
-				this.dispatchEvent(new CustomEvent("close"));
+				this.dispatchTypedEvent("close", new CustomEvent("close"));
 				setTimeout(() => {
 					this.connect();
 				}, 1000);
@@ -108,9 +107,9 @@ export class SignalingServer extends (EventTarget as ServerEventTarget) {
 
 	private onMessage(e: MessageEvent) {
 		try {
-			const msg = JSON.parse(e.data) as unknown;
-			const event = parseMessage(msg);
-			this.dispatchEvent(new ServerMessageEvent(event.type, event));
+			const data = JSON.parse(e.data) as unknown;
+			const msg = parseMessage(data);
+			this.#dispatchMessageEvent(msg);
 		} catch (err) {
 			console.error(err);
 		}
@@ -127,6 +126,83 @@ export class SignalingServer extends (EventTarget as ServerEventTarget) {
 	async send(msg: OutgoingMessage) {
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
+	}
+
+	#dispatchMessageEvent(msg: IncomingMessage) {
+		switch (msg.type) {
+			case "error":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "identity":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "session-not-found":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "session-info":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "session-created":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "session-joined":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "session-left":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "client-joined":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "client-left":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "offer":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "answer":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+			case "ice-candidate":
+				this.dispatchTypedEvent(
+					msg.type,
+					new CustomEvent(msg.type, { detail: msg.payload }),
+				);
+				break;
+		}
 	}
 }
 

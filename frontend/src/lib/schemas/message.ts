@@ -21,24 +21,6 @@ const types = {
 	iceCandidate: "ice-candidate",
 } as const;
 
-export type MessageEventMap = {
-	[K in keyof typeof incomingSchemas]: CustomEvent<
-		z.infer<(typeof incomingSchemas)[K]>
-	>;
-};
-
-export class ServerMessageEvent<
-	T extends IncomingMessage,
-> extends CustomEvent<T> {
-	constructor(type: T["type"], detail: T) {
-		super(type, { detail: detail });
-	}
-}
-
-export type MessageEventListener<T extends keyof MessageEventMap> = (
-	e: MessageEventMap[T],
-) => void;
-
 export const ErrorSchema = z.object({
 	type: z.literal(types.error),
 	payload: ErrorPayloadSchema,
@@ -195,8 +177,10 @@ const incomingSchemas = {
 type RTCMessageType = keyof typeof rtcSchemas;
 type RTCMessage = z.infer<(typeof rtcSchemas)[RTCMessageType]>;
 
-type IncomingMessageType = keyof typeof incomingSchemas;
-type IncomingMessage = z.infer<(typeof incomingSchemas)[IncomingMessageType]>;
+export type IncomingMessageType = keyof typeof incomingSchemas;
+export type IncomingMessage = z.infer<
+	(typeof incomingSchemas)[IncomingMessageType]
+>;
 
 export type OutgoingMessageType =
 	| RTCMessageType

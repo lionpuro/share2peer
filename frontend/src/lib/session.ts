@@ -1,6 +1,6 @@
 import { atom } from "nanostores";
-import type { MessageEventMap, Session } from "./schemas";
-import type { SignalingServer } from "./server";
+import type { Session } from "./schemas";
+import type { SignalingServer, ServerEventMap } from "./server";
 import {
 	connections,
 	createPeerConnection,
@@ -22,7 +22,7 @@ export class SessionManager {
 			this.state = "idle";
 		});
 		this.#server.addEventListener("session-info", (e) => {
-			$session.set(e.detail.payload);
+			$session.set(e.detail);
 		});
 		this.#server.addEventListener("session-left", () => {
 			$session.set(null);
@@ -30,14 +30,14 @@ export class SessionManager {
 			connections.clear();
 		});
 		this.#server.addEventListener("client-joined", async (e) => {
-			const id = e.detail.payload.id;
+			const id = e.detail.id;
 			if (connections.get(id)) return;
 			const session = $session.get();
 			if (!session) return;
-			await createPeerConnection(this.#server, session.id, e.detail.payload);
+			await createPeerConnection(this.#server, session.id, e.detail);
 		});
 		this.#server.addEventListener("client-left", (e) => {
-			connections.remove(e.detail.payload.id);
+			connections.remove(e.detail.id);
 		});
 	}
 
@@ -60,8 +60,8 @@ export class SessionManager {
 				reject(new Error("request timed out"));
 			}, 10 * 1000);
 
-			const onNotFound = (e: MessageEventMap["session-not-found"]) => {
-				if (e.detail.payload.session_id === id) {
+			const onNotFound = (e: ServerEventMap["session-not-found"]) => {
+				if (e.detail.session_id === id) {
 					this.#server.removeEventListener("error", onError);
 					this.#server.removeEventListener("session-not-found", onNotFound);
 					this.#server.removeEventListener("session-joined", onJoin);
@@ -72,19 +72,19 @@ export class SessionManager {
 			};
 			this.#server.addEventListener("session-not-found", onNotFound);
 
-			const onError = (e: MessageEventMap["error"]) => {
+			const onError = (e: ServerEventMap["error"]) => {
 				this.#server.removeEventListener("error", onError);
 				this.#server.removeEventListener("session-not-found", onNotFound);
 				this.#server.removeEventListener("session-joined", onJoin);
 				clearTimeout(timeout);
 				this.state = "failed";
-				const err = e.detail.payload;
+				const err = e.detail;
 				reject(new Error(err.message));
 			};
 			this.#server.addEventListener("error", onError);
 
-			const onJoin = (e: MessageEventMap["session-joined"]) => {
-				const session = e.detail.payload;
+			const onJoin = (e: ServerEventMap["session-joined"]) => {
+				const session = e.detail;
 				if (session.id !== id) return;
 				this.#server.removeEventListener("error", onError);
 				this.#server.removeEventListener("session-not-found", onNotFound);
@@ -129,20 +129,20 @@ export class SessionManager {
 			};
 			const timeout = setTimeout(onTimeout, 10 * 1000);
 
-			const onError = (e: MessageEventMap["error"]) => {
+			const onError = (e: ServerEventMap["error"]) => {
 				this.#server.removeEventListener("error", onError);
 				this.#server.removeEventListener("session-created", onCreate);
 				clearTimeout(timeout);
 				this.state = "failed";
-				const err = e.detail.payload;
+				const err = e.detail;
 				reject(new Error(err.message));
 			};
 			this.#server.addEventListener("error", onError);
 
-			const onCreate = (e: MessageEventMap["session-created"]) => {
+			const onCreate = (e: ServerEventMap["session-created"]) => {
 				this.#server.removeEventListener("session-created", onCreate);
 				clearTimeout(timeout);
-				const session = e.detail.payload;
+				const session = e.detail;
 				resolve(session.id);
 			};
 

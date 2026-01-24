@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServer } from "#/hooks/use-server";
 import { useSession } from "#/hooks/use-session";
@@ -33,6 +33,13 @@ function Component() {
 			console.error("create session:", err);
 			toast.error("Failed to create session");
 		}
+	}
+
+	function handleCodeKeyUp(e: KeyboardEvent<HTMLInputElement>) {
+		e.preventDefault();
+		if (e.key !== "Enter") return;
+		if (joinCode.length < 6) return;
+		navigate({ to: "/s/$id", params: { id: joinCode } });
 	}
 
 	useEffect(() => {
@@ -83,6 +90,7 @@ function Component() {
 								maxLength={6}
 								value={joinCode}
 								onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+								onKeyUp={handleCodeKeyUp}
 								className="w-full rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-neutral-400"
 							/>
 							{joinCode.length > 0 && (

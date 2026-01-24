@@ -36,6 +36,8 @@ export type ServerEventMap = {
 	close: CustomEvent;
 };
 
+type ServerEvent = ServerEventMap[keyof ServerEventMap];
+
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#url: string;
 	#ws: WebSocket | null = null;
@@ -129,80 +131,10 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	#dispatchMessageEvent(msg: IncomingMessage) {
-		switch (msg.type) {
-			case "error":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "identity":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "session-not-found":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "session-info":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "session-created":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "session-joined":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "session-left":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "client-joined":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "client-left":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "offer":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "answer":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-			case "ice-candidate":
-				this.dispatchTypedEvent(
-					msg.type,
-					new CustomEvent(msg.type, { detail: msg.payload }),
-				);
-				break;
-		}
+		const event: ServerEvent = new CustomEvent(msg.type, {
+			detail: msg.payload,
+		});
+		this.dispatchTypedEvent(msg.type, event);
 	}
 }
 

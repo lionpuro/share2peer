@@ -79,19 +79,19 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 					const message = parseMessage(data);
 					switch (message.type) {
 						case "error":
-							console.error(ErrorSchema.parse(message).payload.code);
+							console.error(message.payload.code);
 							break;
 						case "identity":
-							$identity.set(IdentitySchema.parse(message).payload);
+							$identity.set(message.payload);
 							break;
 						case "offer":
-							await handleOffer(this, OfferSchema.parse(message));
+							await handleOffer(this, message);
 							break;
 						case "answer":
-							await handleAnswer(AnswerSchema.parse(message));
+							await handleAnswer(message);
 							break;
 						case "ice-candidate":
-							await handleICECandidate(ICECandidateSchema.parse(message));
+							await handleICECandidate(message);
 							break;
 					}
 				} catch (err) {

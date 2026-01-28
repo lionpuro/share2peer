@@ -5,16 +5,24 @@ RUN groupadd -g 1000 dev && \
 RUN mkdir /home/dev
 RUN chown -R dev:dev /home/dev /go
 
-# Install Node.js
-RUN apt-get update && \
-	apt-get upgrade -y && \
-	apt-get install -y curl
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-	apt-get install -y nodejs build-essential
+USER dev
+
+# Use bash for the shell
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Create a script file sourced by both interactive and non-interactive bash shells
+ENV BASH_ENV /home/dev/.bash_env
+RUN touch "${BASH_ENV}"
+RUN echo '. "${BASH_ENV}"' >> /home/dev/.bashrc
+
+# Install nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | PROFILE="${BASH_ENV}" bash
+RUN echo node > .nvmrc
+
+# Install node
+RUN nvm install 22 && nvm use 22
 
 WORKDIR /app
-
-USER dev
 
 RUN go install github.com/bokwoon95/wgo@latest
 RUN curl -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh" | sh -s -- -b $(go env GOPATH)/bin v2.7.2

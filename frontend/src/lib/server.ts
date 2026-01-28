@@ -1,11 +1,6 @@
 import { atom } from "nanostores";
 import { TypedEventTarget } from "typescript-event-target";
 import {
-	OfferSchema,
-	AnswerSchema,
-	ErrorSchema,
-	ICECandidateSchema,
-	IdentitySchema,
 	type Client,
 	parseMessage,
 	type OutgoingMessage,

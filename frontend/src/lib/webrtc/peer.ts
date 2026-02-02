@@ -68,6 +68,13 @@ type EventMap = {
 	"cancel-share": CustomEvent<CancelShareMessage>;
 };
 
+function rtcConfig(): RTCConfiguration {
+	const servers = import.meta.env.VITE_ICE_SERVERS.split(",");
+	return {
+		iceServers: [{ urls: servers }],
+	};
+}
+
 export class PeerConnection extends TypedEventTarget<EventMap> {
 	id: string;
 	connection: RTCPeerConnection;
@@ -82,9 +89,7 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 	}
 
 	#createConnection(): RTCPeerConnection {
-		const conn = new RTCPeerConnection({
-			iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-		});
+		const conn = new RTCPeerConnection(rtcConfig());
 		conn.addEventListener("icecandidate", (e) => {
 			if (!e.candidate) return;
 			this.#options.onIceCandidate?.(e.candidate);

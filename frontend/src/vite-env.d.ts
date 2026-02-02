@@ -3,6 +3,7 @@ interface ImportMetaEnv {
 	VITE_WS_PROTOCOL: "ws" | "wss";
 	VITE_WS_HOST: string;
 	VITE_WS_ENDPOINT: string;
+	VITE_ICE_SERVERS: string;
 }
 
 interface ImportMeta {

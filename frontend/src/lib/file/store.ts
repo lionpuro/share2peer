@@ -1,18 +1,20 @@
+import type { FileSystemFileHandle } from "native-file-system-adapter";
 import type { Chunk, FileMetadata } from "./file";
 
 type StoredFile = {
 	metadata: FileMetadata;
 	currentSize: number;
-	chunks: { [index: number]: Uint8Array };
+	chunks: { [index: number]: Uint8Array<ArrayBuffer> };
+	handle: FileSystemFileHandle | undefined;
 };
 
 export interface FileStore {
 	getFile(id: string): StoredFile | undefined;
-	addFile(meta: FileMetadata): void;
+	addFile(file: FileMetadata, handle: FileSystemFileHandle): Promise<void>;
 	removeFile(id: string): void;
 	getChunk(fileID: string, index: number): Uint8Array | undefined;
 	addChunk(chunk: Chunk): void;
-	getResult(fileID: string): Promise<ReadableStream<Uint8Array>>;
+	streamFile(id: string): ReadableStream<Uint8Array<ArrayBuffer>>;
 	reset(): void;
 }
 
@@ -23,8 +25,13 @@ export class FileStoreInMem implements FileStore {
 		return this.files.get(id);
 	}
 
-	addFile(meta: FileMetadata) {
-		this.files.set(meta.id, { metadata: meta, currentSize: 0, chunks: {} });
+	async addFile(file: FileMetadata, handle: FileSystemFileHandle) {
+		this.files.set(file.id, {
+			metadata: file,
+			currentSize: 0,
+			chunks: {},
+			handle,
+		});
 	}
 
 	removeFile(id: string) {
@@ -45,15 +52,15 @@ export class FileStoreInMem implements FileStore {
 		this.files.set(chunk.fileID, file);
 	}
 
-	async getResult(fileID: string): Promise<ReadableStream<Uint8Array>> {
-		const file = this.files.get(fileID);
+	streamFile(id: string): ReadableStream<Uint8Array<ArrayBuffer>> {
+		const file = this.files.get(id);
 		if (!file) {
 			throw new Error("file not found");
 		}
 		const chunkCount = Object.keys(file.chunks).length;
 		let current = 0;
 
-		return new ReadableStream<Uint8Array>({
+		return new ReadableStream({
 			async pull(controller) {
 				try {
 					if (current >= chunkCount) {
@@ -64,7 +71,7 @@ export class FileStoreInMem implements FileStore {
 					const chunk = file.chunks[current];
 					if (!chunk) {
 						controller.error(
-							new Error(`missing chunk ${current} for file ${fileID}`),
+							new Error(`missing chunk ${current} for file ${id}`),
 						);
 						return;
 					}

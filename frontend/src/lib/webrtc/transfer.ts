@@ -273,7 +273,6 @@ export function requestFile(conn: PeerConnection, file: FileMetadata) {
 		totalBytes: ctx.fileSize,
 		channel: null,
 	});
-	filestore.addFile(file);
 
 	conn.send({
 		type: "request-file",
@@ -281,13 +280,16 @@ export function requestFile(conn: PeerConnection, file: FileMetadata) {
 	});
 }
 
-export function handleIncomingTransfer(
+const streamSupported = !("safari" in window) && !("WebKitPoint" in window);
+
+export async function handleIncomingTransfer(
 	fileID: string,
 	chan: RTCDataChannel,
-): RTCDataChannel {
+): Promise<RTCDataChannel> {
 	chan.binaryType = "arraybuffer";
 	const transfer = incoming.findByFile(fileID).at(0);
-	if (!transfer || !filestore.getFile(fileID)) {
+	const file = filestore.getFile(fileID);
+	if (!transfer || !file) {
 		chan.close();
 		incoming.remove(fileID);
 		throw new Error("incoming transfer not registered for file " + fileID);
@@ -297,22 +299,41 @@ export function handleIncomingTransfer(
 	incoming.update(id, { channel: chan });
 
 	chan.addEventListener("message", async (e) => {
-		if (!(e.data instanceof ArrayBuffer)) {
+		const data: unknown = e.data;
+		if (!(data instanceof ArrayBuffer)) {
 			console.error("filechannel: unrecognized message type");
 			return;
 		}
 		try {
-			const chunk = decodeChunk(e.data as ArrayBuffer);
+			const chunk = decodeChunk(data);
+
 			filestore.addChunk(chunk);
+
 			const current = incoming.find(id);
 			if (!current) return;
 			const bytes = current.transferredBytes + chunk.data.byteLength;
+
 			incoming.update(id, {
 				status: "transferring",
 				transferredBytes: bytes,
 			});
+
 			if (bytes === current.totalBytes) {
-				await handleTransferComplete(chan, id, fileID);
+				const file = filestore.getFile(chunk.fileID);
+				if (!file || !file.handle) return;
+
+				if (streamSupported) {
+					const readable = filestore.streamFile(chunk.fileID);
+					const writable = await file.handle.createWritable();
+					await readable.pipeTo(writable);
+				} else {
+					const readable = filestore.streamFile(chunk.fileID);
+					const blob = await new Response(readable).blob();
+					downloadBlob(blob, file.metadata.name);
+				}
+
+				incoming.update(id, { status: "complete" });
+				chan.close();
 			}
 		} catch (err) {
 			console.error("filechannel:", err);
@@ -324,20 +345,6 @@ export function handleIncomingTransfer(
 	});
 
 	return chan;
-}
-
-async function handleTransferComplete(
-	chan: RTCDataChannel,
-	transferID: string,
-	fileID: string,
-) {
-	const file = filestore.getFile(fileID);
-	if (!file) return;
-	const stream = await filestore.getResult(fileID);
-	const blob = await new Response(stream).blob();
-	downloadBlob(blob, file.metadata.name);
-	incoming.update(transferID, { status: "complete" });
-	chan.close();
 }
 
 async function sendFile(ctx: TransferContext, file: File) {

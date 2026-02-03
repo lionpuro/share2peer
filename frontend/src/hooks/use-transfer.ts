@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { showSaveFilePicker } from "native-file-system-adapter";
 import {
 	incoming,
 	outgoing,
@@ -29,17 +30,26 @@ export function useTransfer() {
 		);
 	};
 
-	const startDownload = (peers: PeerState[]) => {
-		peers.forEach((p) =>
-			p.files.forEach((f) => {
-				const conn = connections.get(p.id);
-				if (!conn) {
-					console.warn("peer connection not open");
-					return;
-				}
-				requestFile(conn, f);
-			}),
-		);
+	const startDownload = async (peers: PeerState[]) => {
+		const files = peers.flatMap((p) => {
+			return p.files.map((f) => ({ ...f, peerID: p.id }));
+		});
+
+		for (const file of files) {
+			const handle = await showSaveFilePicker({
+				_preferPolyfill: false,
+				suggestedName: file.name,
+			});
+			await filestore.addFile(file, handle);
+		}
+		files.forEach((file) => {
+			const conn = connections.get(file.peerID);
+			if (!conn) {
+				console.error("peer connection not open");
+				return;
+			}
+			requestFile(conn, file);
+		});
 	};
 
 	return {

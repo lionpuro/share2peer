@@ -21,7 +21,7 @@ export function deleteUploads() {
 export type Chunk = {
 	fileID: string;
 	index: number;
-	data: Uint8Array;
+	data: Uint8Array<ArrayBuffer>;
 };
 
 export const FileMetadataSchema = z.object({

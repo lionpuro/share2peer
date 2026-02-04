@@ -25,6 +25,7 @@ import {
 } from "./transfer";
 
 export type PeerState = Client & {
+	connectionState: ConnectionState;
 	files: FileMetadata[];
 };
 
@@ -56,6 +57,8 @@ function removePeer(id: string) {
 function removePeers() {
 	$peers.set({});
 }
+
+type ConnectionState = "disconnected" | "connecting" | "connected" | "failed";
 
 type PeerConnectionOptions = {
 	onIceCandidate?: (candidate: RTCIceCandidate) => void;
@@ -93,6 +96,9 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 		conn.addEventListener("icecandidate", (e) => {
 			if (!e.candidate) return;
 			this.#options.onIceCandidate?.(e.candidate);
+		});
+		conn.addEventListener("connectionstatechange", () => {
+			updatePeer(this.id, { connectionState: this.state() });
 		});
 		conn.addEventListener("datachannel", (e) => {
 			if (e.channel.label === "messages") {
@@ -235,6 +241,20 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 		await this.connection.addIceCandidate(candidate);
 	}
 
+	state(): ConnectionState {
+		switch (this.connection.connectionState) {
+			case "connecting":
+			case "connected":
+			case "failed":
+				return this.connection.connectionState;
+			case "closed":
+			case "disconnected":
+				return "disconnected";
+			case "new":
+				return "connecting";
+		}
+	}
+
 	send(msg: MessageChannelMessage) {
 		if (!this.channel || this.channel.readyState !== "open") {
 			console.warn("message channel not open");
@@ -265,7 +285,7 @@ class PeerConnectionManager {
 		const peer = new PeerConnection(client.id, opt);
 		this.#attachEventListeners(peer);
 		this.peers.set(peer.id, peer);
-		addPeer({ ...client, files: [] });
+		addPeer({ ...client, connectionState: peer.state(), files: [] });
 
 		return peer;
 	}

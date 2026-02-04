@@ -107,10 +107,9 @@ function Component() {
 		}, 1000);
 	}
 
-	const peerList = Object.values(peers).filter((p) => !!p);
-	const sharingPeers = peerList.filter((p) => p.files.length > 0);
-	const peerFiles = peerList.flatMap((p) => p.files);
-	const users = [identity, ...peerList];
+	const users = Object.values(peers).filter((p) => !!p);
+	const sharingPeers = users.filter((p) => p.files.length > 0);
+	const peerFiles = users.flatMap((p) => p.files);
 
 	return (
 		<>
@@ -153,6 +152,14 @@ function Component() {
 							Users
 						</Heading>
 						<ul>
+							<li key={identity.id} className="flex items-center gap-2">
+								<DeviceIcon
+									deviceType={identity.device_type}
+									width={16}
+									height={16}
+								/>
+								<p>{identity.display_name + " (me)"}</p>
+							</li>
 							{users.map((u) => (
 								<li key={u.id} className="flex items-center gap-2">
 									<DeviceIcon
@@ -160,9 +167,10 @@ function Component() {
 										width={16}
 										height={16}
 									/>
-									<p className="">
-										{u.display_name + (u.id === identity.id ? " (me)" : "")}
-									</p>
+									<p>{u.display_name}</p>
+									<span className="ml-auto text-sm font-medium text-muted-foreground">
+										{u.connectionState}
+									</span>
 								</li>
 							))}
 						</ul>

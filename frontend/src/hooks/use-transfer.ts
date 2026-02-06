@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import { showSaveFilePicker } from "native-file-system-adapter";
 import {
 	incoming,
 	outgoing,
@@ -8,7 +7,6 @@ import {
 	requestFile,
 	stopTransfers,
 } from "#/lib/webrtc/transfer";
-import { filestore } from "#/lib/file";
 import { type PeerState, connections } from "#/lib/webrtc";
 
 export function useTransfer() {
@@ -20,7 +18,6 @@ export function useTransfer() {
 			incoming,
 			incoming.list().map((t) => t.id),
 		);
-		filestore.reset();
 	};
 
 	const stopOutgoing = () => {
@@ -36,20 +33,11 @@ export function useTransfer() {
 		});
 
 		for (const file of files) {
-			const handle = await showSaveFilePicker({
-				_preferPolyfill: false,
-				suggestedName: file.name,
-			});
-			await filestore.addFile(file, handle);
-		}
-		files.forEach((file) => {
 			const conn = connections.get(file.peerID);
-			if (!conn) {
-				console.error("peer connection not open");
-				return;
+			if (conn) {
+				await requestFile(conn, file);
 			}
-			requestFile(conn, file);
-		});
+		}
 	};
 
 	return {

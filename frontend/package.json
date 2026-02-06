@@ -17,7 +17,6 @@
 		"clsx": "^2.1.1",
 		"nanoid": "^3.3.11",
 		"nanostores": "^1.1.0",
-		"native-file-system-adapter": "^3.0.1",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
 		"react-toastify": "^11.0.5",

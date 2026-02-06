@@ -1,4 +1,4 @@
-import { showSaveFilePicker } from "native-file-system-adapter";
+import { showSaveFilePicker } from "#/lib/native-file-system-adapter";
 
 export interface Download {
 	start(): Promise<void>;

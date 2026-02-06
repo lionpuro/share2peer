@@ -1,14 +1,15 @@
 import { type MapStore, map } from "nanostores";
 import { nanoid } from "nanoid";
-import {
-	ChunkReader,
-	downloadBlob,
-	filestore,
-	type FileMetadata,
-} from "#/lib/file";
+import { ChunkReader, type FileMetadata } from "#/lib/file";
 import { sendPacket } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
 import { PeerConnection } from "./peer";
+import {
+	createBlobWriteStream,
+	createDefaultWriteStream,
+	createDownload,
+	type Download,
+} from "#/lib/file/download";
 
 type TransferStatus =
 	| "waiting"
@@ -257,7 +258,11 @@ export async function handleStartTransfer(
 	}
 }
 
-export function requestFile(conn: PeerConnection, file: FileMetadata) {
+const streamSupported = !("safari" in window) && !("WebKitPoint" in window);
+
+const downloads: Map<string, Download> = new Map();
+
+export async function requestFile(conn: PeerConnection, file: FileMetadata) {
 	const ctx: TransferContext = {
 		transferID: nanoid(),
 		peerID: conn.id,
@@ -274,13 +279,17 @@ export function requestFile(conn: PeerConnection, file: FileMetadata) {
 		channel: null,
 	});
 
+	const writable = streamSupported
+		? await createDefaultWriteStream(file.name)
+		: createBlobWriteStream(file.name, file.mime);
+	const download = await createDownload(writable);
+	downloads.set(ctx.transferID, download);
+
 	conn.send({
 		type: "request-file",
 		payload: { file_id: file.id },
 	});
 }
-
-const streamSupported = !("safari" in window) && !("WebKitPoint" in window);
 
 export async function handleIncomingTransfer(
 	fileID: string,
@@ -288,11 +297,16 @@ export async function handleIncomingTransfer(
 ): Promise<RTCDataChannel> {
 	chan.binaryType = "arraybuffer";
 	const transfer = incoming.findByFile(fileID).at(0);
-	const file = filestore.getFile(fileID);
-	if (!transfer || !file) {
+	if (!transfer) {
 		chan.close();
 		incoming.remove(fileID);
 		throw new Error("incoming transfer not registered for file " + fileID);
+	}
+	const download = downloads.get(transfer.id);
+	if (!download) {
+		chan.close();
+		incoming.remove(fileID);
+		throw new Error("no download registered for file " + fileID);
 	}
 
 	const id = transfer.id;
@@ -307,7 +321,7 @@ export async function handleIncomingTransfer(
 		try {
 			const chunk = decodeChunk(data);
 
-			filestore.addChunk(chunk);
+			download.enqueue(chunk.data);
 
 			const current = incoming.find(id);
 			if (!current) return;
@@ -319,21 +333,7 @@ export async function handleIncomingTransfer(
 			});
 
 			if (bytes === current.totalBytes) {
-				const file = filestore.getFile(chunk.fileID);
-				if (!file || !file.handle) return;
-
-				if (streamSupported) {
-					const readable = filestore.streamFile(chunk.fileID);
-					const writable = await file.handle.createWritable();
-					await readable.pipeTo(writable);
-				} else {
-					const readable = filestore.streamFile(chunk.fileID);
-					const blob = await new Response(readable).blob();
-					downloadBlob(blob, file.metadata.name);
-				}
-
-				incoming.update(id, { status: "complete" });
-				chan.close();
+				download.close();
 			}
 		} catch (err) {
 			console.error("filechannel:", err);
@@ -341,8 +341,20 @@ export async function handleIncomingTransfer(
 	});
 	chan.addEventListener("close", () => {
 		incoming.update(id, { channel: null });
-		filestore.removeFile(id);
 	});
+
+	download
+		.start()
+		.then(() => {
+			console.log("download finished");
+			incoming.update(id, { status: "complete" });
+			chan.close();
+		})
+		.catch((err) => {
+			console.error("download:", err);
+			incoming.update(id, { status: "failed" });
+			chan.close();
+		});
 
 	return chan;
 }

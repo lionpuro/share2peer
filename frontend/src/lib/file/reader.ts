@@ -1,9 +1,7 @@
 import { CHUNK_DATA_SIZE } from "../webrtc";
+import type { ChunkData } from "./file";
 
-type OnReaderRead = (
-	chunk: Uint8Array<ArrayBuffer>,
-	index: number,
-) => Promise<void>;
+type OnReaderRead = (chunk: ChunkData, index: number) => Promise<void>;
 
 export class ChunkReader {
 	#reading: boolean = false;

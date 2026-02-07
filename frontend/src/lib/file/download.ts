@@ -1,10 +1,11 @@
 import { showSaveFilePicker } from "#/lib/native-file-system-adapter";
+import type { ChunkData } from "./file";
 
 export interface Download {
 	start(): Promise<void>;
 	abort(): Promise<void>;
 	close(): void;
-	enqueue(chunk: Uint8Array<ArrayBuffer>): void;
+	enqueue(chunk: ChunkData): void;
 }
 
 export async function createDownload(
@@ -29,13 +30,13 @@ export async function createDownload(
 }
 
 interface Readable {
-	stream(): ReadableStream<Uint8Array<ArrayBuffer>>;
-	controller: ReadableStreamDefaultController<Uint8Array<ArrayBuffer>>;
+	stream(): ReadableStream<ChunkData>;
+	controller: ReadableStreamDefaultController<ChunkData>;
 }
 
 function createReadable(): Promise<Readable> {
 	return new Promise((resolve) => {
-		const stream = new ReadableStream<Uint8Array<ArrayBuffer>>({
+		const stream = new ReadableStream<ChunkData>({
 			start(controller) {
 				resolve({ stream: () => stream, controller });
 			},
@@ -56,8 +57,8 @@ export async function createDefaultWriteStream(
 }
 
 export function createBlobWriteStream(filename: string, filetype?: string) {
-	let chunks: Uint8Array<ArrayBuffer>[] = [];
-	const stream = new WritableStream<Uint8Array<ArrayBuffer>>({
+	let chunks: ChunkData[] = [];
+	const stream = new WritableStream<ChunkData>({
 		write(chunk) {
 			chunks.push(chunk);
 		},

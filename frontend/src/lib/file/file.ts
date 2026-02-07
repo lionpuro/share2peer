@@ -18,10 +18,12 @@ export function deleteUploads() {
 	$uploads.set([]);
 }
 
+export type ChunkData = Uint8Array<ArrayBuffer>;
+
 export type Chunk = {
 	fileID: string;
 	index: number;
-	data: Uint8Array<ArrayBuffer>;
+	data: ChunkData;
 };
 
 export const FileMetadataSchema = z.object({

@@ -299,13 +299,12 @@ export async function handleIncomingTransfer(
 	const transfer = incoming.findByFile(fileID).at(0);
 	if (!transfer) {
 		chan.close();
-		incoming.remove(fileID);
 		throw new Error("incoming transfer not registered for file " + fileID);
 	}
 	const download = downloads.get(transfer.id);
 	if (!download) {
 		chan.close();
-		incoming.remove(fileID);
+		incoming.remove(transfer.id);
 		throw new Error("no download registered for file " + fileID);
 	}
 

@@ -62,7 +62,7 @@ export class FileHandle {
 			const headers = {
 				"content-disposition": "attachment; filename*=UTF-8''" + fileName,
 				"content-type": "application/octet-stream; charset=utf-8",
-				...(options.size ? { "content-length": options.size } : {}),
+				...(options.size ? { "content-length": String(options.size) } : {}),
 			};
 
 			const keepAlive = setInterval(() => sw.active.postMessage(0), 10000);

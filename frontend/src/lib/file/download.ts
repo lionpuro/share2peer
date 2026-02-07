@@ -43,12 +43,15 @@ function createReadable(): Promise<Readable> {
 	});
 }
 
-export async function createDefaultWriteStream(filename: string) {
+export async function createDefaultWriteStream(
+	filename: string,
+	filesize: number,
+) {
 	const handle = await showSaveFilePicker({
 		_preferPolyfill: false,
 		suggestedName: filename,
 	});
-	const stream = await handle.createWritable();
+	const stream = await handle.createWritable({ size: filesize });
 	return stream;
 }
 

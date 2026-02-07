@@ -280,7 +280,7 @@ export async function requestFile(conn: PeerConnection, file: FileMetadata) {
 	});
 
 	const writable = streamSupported
-		? await createDefaultWriteStream(file.name)
+		? await createDefaultWriteStream(file.name, file.size)
 		: createBlobWriteStream(file.name, file.mime);
 	const download = await createDownload(writable);
 	downloads.set(ctx.transferID, download);

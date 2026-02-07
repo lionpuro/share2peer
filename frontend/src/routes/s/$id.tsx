@@ -16,9 +16,8 @@ import { FileList, FileListItem } from "#/components/file-list";
 import {
 	DeviceIcon,
 	IconArrowLeft,
-	IconCheck,
-	IconCopy,
 	IconDownload,
+	IconLink,
 	IconUpload,
 	IconX,
 } from "#/components/icons";
@@ -129,20 +128,20 @@ function Component() {
 				</div>
 			</div>
 			<Main>
-				<div className="mx-auto flex w-full max-w-md gap-2 max-sm:mb-4 sm:order-1 sm:mt-auto sm:pt-8">
+				<div className="mb-6 flex gap-3 sm:mb-8">
 					<input
 						readOnly={true}
 						value={sessionURL}
-						className="flex-1 overflow-x-scroll rounded-lg border border-secondary px-2 py-1.5 text-sm font-medium text-neutral-600 outline-none"
+						className="flex-1 overflow-x-scroll rounded-lg border border-secondary px-3 py-1.5 text-sm font-medium text-neutral-600 outline-none"
 					/>
 					<Button
 						disabled={copied}
 						onClick={handleCopy}
 						variant="secondary"
 						title="Copy link"
-						className="gap-2 pl-3"
+						className="gap-1.5 pl-3"
 					>
-						{copied ? <IconCheck /> : <IconCopy />}
+						<IconLink />
 						Copy
 					</Button>
 				</div>

@@ -71,7 +71,7 @@ function Component() {
 				</div>
 				<div className="mx-auto mt-8 flex w-full max-w-xs flex-col gap-4">
 					<Heading order={2}>Join session</Heading>
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-3">
 						<div className="relative flex flex-1">
 							<input
 								id="input-code"

@@ -86,10 +86,11 @@ export class FileHandle {
 					clearInterval(keepAlive);
 				});
 
+			const url = sw.scope + "download/" + fileName;
 			// Transfer the stream to service worker
 			sw.active.postMessage(
 				{
-					url: sw.scope + fileName,
+					url,
 					headers,
 					readablePort,
 				},
@@ -99,7 +100,7 @@ export class FileHandle {
 			// Trigger the download with a hidden iframe
 			const iframe = document.createElement("iframe");
 			iframe.hidden = true;
-			iframe.src = sw.scope + fileName;
+			iframe.src = url;
 			document.body.appendChild(iframe);
 		}
 

@@ -1,6 +1,5 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServer } from "#/hooks/use-server";
 import { useSession } from "#/hooks/use-session";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
@@ -21,7 +20,6 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const { connectionState } = useServer();
 	const { session, createSession, leaveSession } = useSession();
 	const [joinCode, setJoinCode] = useState("");
 
@@ -47,14 +45,6 @@ function Component() {
 			leaveSession();
 		}
 	}, [session, leaveSession]);
-
-	if (connectionState === "error") {
-		return (
-			<Main>
-				<p className="text-center">Connection error</p>
-			</Main>
-		);
-	}
 
 	return (
 		<>

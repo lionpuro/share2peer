@@ -108,7 +108,7 @@ func (s *SessionStore) Delete(id string) {
 
 const (
 	shareCodeLength = 6
-	shareCodeChars  = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ" // 0-9 and A-Z except for I and O
+	shareCodeChars  = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ" // 1-9 and A-Z except for I and O
 )
 
 func generateSessionID() (string, error) {

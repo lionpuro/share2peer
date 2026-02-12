@@ -9,7 +9,7 @@ export interface Download {
 }
 
 export async function createDownload(
-	writable: WritableStream,
+	writable: WritableStream<ChunkData>,
 ): Promise<Download> {
 	const readable = await createReadable();
 	return {
@@ -44,19 +44,30 @@ function createReadable(): Promise<Readable> {
 	});
 }
 
-export async function createDefaultWriteStream(
-	filename: string,
-	filesize: number,
-) {
-	const handle = await showSaveFilePicker({
-		_preferPolyfill: false,
-		suggestedName: filename,
-	});
-	const stream = await handle.createWritable({ size: filesize });
+type FileHeader = {
+	name: string;
+	mime: string;
+	size: number;
+};
+
+export async function createWriteStream(header: FileHeader) {
+	const streamable = !("safari" in window) && !("WebKitPoint" in window);
+	const stream = streamable
+		? await createDefaultWriteStream(header)
+		: createBlobWriteStream(header);
 	return stream;
 }
 
-export function createBlobWriteStream(filename: string, filetype?: string) {
+async function createDefaultWriteStream(file: FileHeader) {
+	const handle = await showSaveFilePicker({
+		_preferPolyfill: false,
+		suggestedName: file.name,
+	});
+	const stream = await handle.createWritable({ size: file.size });
+	return stream;
+}
+
+function createBlobWriteStream(file: FileHeader) {
 	let chunks: ChunkData[] = [];
 	const stream = new WritableStream<ChunkData>({
 		write(chunk) {
@@ -64,11 +75,11 @@ export function createBlobWriteStream(filename: string, filetype?: string) {
 		},
 		close() {
 			const blob = new Blob(chunks, {
-				type: filetype || "application/octet-stream; charset=utf-8",
+				type: file.mime || "application/octet-stream; charset=utf-8",
 			});
 			const link = document.createElement("a");
 			link.href = URL.createObjectURL(blob);
-			link.download = filename;
+			link.download = file.name;
 			link.click();
 		},
 		abort() {

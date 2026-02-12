@@ -5,8 +5,7 @@ import { sendPacket } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
 import { PeerConnection } from "./peer";
 import {
-	createBlobWriteStream,
-	createDefaultWriteStream,
+	createWriteStream,
 	createDownload,
 	type Download,
 } from "#/lib/file/download";
@@ -258,8 +257,6 @@ export async function handleStartTransfer(
 	}
 }
 
-const streamSupported = !("safari" in window) && !("WebKitPoint" in window);
-
 const downloads: Map<string, Download> = new Map();
 
 export async function requestFile(conn: PeerConnection, file: FileMetadata) {
@@ -279,10 +276,7 @@ export async function requestFile(conn: PeerConnection, file: FileMetadata) {
 		channel: null,
 	});
 
-	const writable = streamSupported
-		? await createDefaultWriteStream(file.name, file.size)
-		: createBlobWriteStream(file.name, file.mime);
-	const download = await createDownload(writable);
+	const download = await createDownload(await createWriteStream(file));
 	downloads.set(ctx.transferID, download);
 
 	conn.send({

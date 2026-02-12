@@ -333,6 +333,12 @@ export async function handleIncomingTransfer(
 		}
 	});
 	chan.addEventListener("close", () => {
+		const state = incoming.find(id);
+		if (state?.status !== "complete") {
+			download.abort();
+			incoming.remove(id);
+			return;
+		}
 		incoming.update(id, { channel: null });
 	});
 

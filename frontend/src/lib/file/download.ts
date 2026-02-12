@@ -3,7 +3,7 @@ import type { ChunkData } from "./file";
 
 export interface Download {
 	start(): Promise<void>;
-	abort(): Promise<void>;
+	abort(): void;
 	close(): void;
 	enqueue(chunk: ChunkData): void;
 }
@@ -16,9 +16,8 @@ export async function createDownload(
 		async start() {
 			await readable.stream().pipeTo(writable);
 		},
-		async abort() {
-			readable.controller.close();
-			await writable.abort();
+		abort() {
+			readable.controller.error("download canceled");
 		},
 		close() {
 			readable.controller.close();

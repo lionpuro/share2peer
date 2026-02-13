@@ -4,7 +4,7 @@ import {
 	outgoing,
 	$incoming,
 	$outgoing,
-	requestFile,
+	startDownload,
 	stopTransfers,
 } from "#/lib/webrtc/transfer";
 import { type PeerState, connections } from "#/lib/webrtc";
@@ -27,7 +27,7 @@ export function useTransfer() {
 		);
 	};
 
-	const startDownload = async (peers: PeerState[]) => {
+	const download = async (peers: PeerState[]) => {
 		const files = peers.flatMap((p) => {
 			return p.files.map((f) => ({ ...f, peerID: p.id }));
 		});
@@ -35,7 +35,7 @@ export function useTransfer() {
 		for (const file of files) {
 			const conn = connections.get(file.peerID);
 			if (conn) {
-				await requestFile(conn, file);
+				await startDownload(conn, file);
 			}
 		}
 	};
@@ -46,6 +46,6 @@ export function useTransfer() {
 		stopIncoming,
 		stopOutgoing,
 		findIncoming: (fileID: string) => incoming.findByFile(fileID).at(0),
-		startDownload,
+		startDownload: download,
 	};
 }

@@ -209,75 +209,59 @@ function computeTransferState(value: TransferStoreValue): TransferState {
 	};
 }
 
-export type TransferContext = {
-	transferID: string;
-	peerID: string;
-	fileID: string;
-	fileSize: number;
-};
-
 export async function handleStartTransfer(
 	conn: PeerConnection,
 	fileID: string,
 	file: File,
 ) {
-	const ctx: TransferContext = {
-		transferID: nanoid(),
-		peerID: conn.id,
-		fileID: fileID,
-		fileSize: file.size,
-	};
+	const transferID = nanoid();
 	try {
 		const chan = await conn.createFileChannel(fileID);
 		chan.addEventListener("close", () => {
-			const transfer = outgoing.find(ctx.transferID);
+			const transfer = outgoing.find(transferID);
 			if (transfer && transfer.status !== "complete") {
-				outgoing.update(ctx.transferID, { status: "stopped", channel: null });
+				outgoing.update(transferID, { status: "stopped", channel: null });
 			}
 		});
 		chan.addEventListener("error", () => {
-			const transfer = outgoing.find(ctx.transferID);
+			const transfer = outgoing.find(transferID);
 			if (transfer) {
-				outgoing.update(ctx.transferID, { status: "failed", channel: null });
+				outgoing.update(transferID, { status: "failed", channel: null });
 			}
 		});
-		outgoing.add({
-			id: ctx.transferID,
-			peerID: ctx.peerID,
-			fileID: ctx.fileID,
+		const transfer: Transfer = {
+			id: transferID,
+			peerID: conn.id,
+			fileID: fileID,
 			status: "waiting",
 			transferredBytes: 0,
-			totalBytes: ctx.fileSize,
+			totalBytes: file.size,
 			channel: chan,
-		});
-		sendFile(ctx, file);
+		};
+		outgoing.add(transfer);
+		sendFile(transfer, file);
 	} catch (err) {
 		console.error(err);
-		outgoing.remove(ctx.transferID);
+		outgoing.remove(transferID);
 	}
 }
 
 const downloads: Map<string, Download> = new Map();
 
 export async function requestFile(conn: PeerConnection, file: FileMetadata) {
-	const ctx: TransferContext = {
-		transferID: nanoid(),
+	const transferID = nanoid();
+	incoming.add({
+		id: transferID,
 		peerID: conn.id,
 		fileID: file.id,
-		fileSize: file.size,
-	};
-	incoming.add({
-		id: ctx.transferID,
-		peerID: ctx.peerID,
-		fileID: ctx.fileID,
 		status: "waiting",
 		transferredBytes: 0,
-		totalBytes: ctx.fileSize,
+		totalBytes: file.size,
 		channel: null,
 	});
 
 	const download = await createDownload(await createWriteStream(file));
-	downloads.set(ctx.transferID, download);
+	downloads.set(transferID, download);
 
 	conn.send({
 		type: "request-file",
@@ -358,14 +342,14 @@ export async function handleIncomingTransfer(
 	return chan;
 }
 
-async function sendFile(ctx: TransferContext, file: File) {
-	const chan = outgoing.find(ctx.transferID)?.channel;
+async function sendFile(transfer: Transfer, file: File) {
+	const chan = outgoing.find(transfer.id)?.channel;
 	if (!chan) {
-		outgoing.update(ctx.transferID, { status: "failed" });
+		outgoing.update(transfer.id, { status: "failed" });
 		return;
 	}
 
-	outgoing.update(ctx.transferID, { status: "transferring" });
+	outgoing.update(transfer.id, { status: "transferring" });
 
 	const reader = new ChunkReader();
 	await reader.read(file, async (chunk, index) => {
@@ -374,16 +358,16 @@ async function sendFile(ctx: TransferContext, file: File) {
 			return;
 		}
 		const packet = encodeChunk({
-			fileID: ctx.fileID,
+			fileID: transfer.fileID,
 			index: index,
 			data: chunk,
 		});
 		await sendPacket(chan, packet);
-		const current = outgoing.find(ctx.transferID);
+		const current = outgoing.find(transfer.id);
 		if (!current) return;
 		const bytes = current.transferredBytes + chunk.byteLength;
-		const complete = bytes === ctx.fileSize;
-		outgoing.update(ctx.transferID, {
+		const complete = bytes === file.size;
+		outgoing.update(transfer.id, {
 			status: complete ? "complete" : current.status,
 			transferredBytes: bytes,
 		});

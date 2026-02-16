@@ -15,9 +15,13 @@ export function createDataChannel(
 	return chan;
 }
 
+export function setupDataChannel(chan: RTCDataChannel) {
+	chan.binaryType = "arraybuffer";
+	chan.bufferedAmountLowThreshold = PACKET_SIZE;
+}
+
 export const MessageChannelEvents = {
 	ShareFiles: "share-files",
-	RequestFile: "request-file",
 	CancelShare: "cancel-share",
 	StopTransfer: "stop-transfer",
 	ReadyToReceive: "ready-to-receive",
@@ -32,13 +36,6 @@ export const ShareFilesSchema = z.object({
 });
 
 export type ShareFilesMessage = z.infer<typeof ShareFilesSchema>;
-
-export const RequestFileSchema = z.object({
-	type: z.literal(MessageChannelEvents.RequestFile),
-	payload: z.object({ file_id: z.string() }),
-});
-
-export type RequestFileMessage = z.infer<typeof RequestFileSchema>;
 
 export const CancelShareSchema = z.object({
 	type: z.literal(MessageChannelEvents.CancelShare),
@@ -62,7 +59,6 @@ export type ReadyToReceiveMessage = z.infer<typeof ReadyToReceiveSchema>;
 
 export type MessageChannelMessage =
 	| ShareFilesMessage
-	| RequestFileMessage
 	| CancelShareMessage
 	| StopTransferMessage
 	| ReadyToReceiveMessage;

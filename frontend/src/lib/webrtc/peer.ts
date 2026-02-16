@@ -2,27 +2,20 @@ import { map } from "nanostores";
 import { TypedEventTarget } from "typescript-event-target";
 import { $identity } from "#/lib/server";
 import { $session } from "#/lib/session";
-import { $uploads, getUpload, type FileMetadata } from "#/lib/file";
+import { $uploads, type FileMetadata } from "#/lib/file";
 import type { Client } from "#/lib/schemas";
 import {
 	CancelShareSchema,
 	createDataChannel,
 	ReadyToReceiveSchema,
-	RequestFileSchema,
 	ShareFilesSchema,
 	type CancelShareMessage,
 	type MessageChannelMessage,
 	type ReadyToReceiveMessage,
-	type RequestFileMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
-import {
-	handleIncomingTransfer,
-	handleStartTransfer,
-	incoming,
-	outgoing,
-	stopTransfers,
-} from "./transfer";
+import { startUpload, stopTransfer } from "./transfer";
+import { findTransfersByPeer, listTransfers } from "#/stores/transfer";
 
 export type PeerState = Client & {
 	connectionState: ConnectionState;
@@ -67,7 +60,6 @@ type PeerConnectionOptions = {
 type EventMap = {
 	"ready-to-receive": CustomEvent<ReadyToReceiveMessage>;
 	"share-files": CustomEvent<ShareFilesMessage>;
-	"request-file": CustomEvent<RequestFileMessage>;
 	"cancel-share": CustomEvent<CancelShareMessage>;
 };
 
@@ -111,11 +103,7 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 				return;
 			}
 			const fileID = e.channel.label.slice(5);
-			try {
-				handleIncomingTransfer(fileID, e.channel);
-			} catch (err) {
-				console.error("set up receive channel:", err);
-			}
+			startUpload(e.channel, this.id, fileID);
 		});
 		return conn;
 	}
@@ -190,14 +178,6 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 						data.type,
 						new CustomEvent(data.type, {
 							detail: ShareFilesSchema.parse(data),
-						}),
-					);
-					break;
-				case "request-file":
-					this.dispatchTypedEvent(
-						data.type,
-						new CustomEvent(data.type, {
-							detail: RequestFileSchema.parse(data),
 						}),
 					);
 					break;
@@ -291,14 +271,7 @@ class PeerConnectionManager {
 	}
 
 	remove(id: string) {
-		stopTransfers(
-			incoming,
-			incoming.findByPeer(id).map((t) => t.id),
-		);
-		stopTransfers(
-			outgoing,
-			outgoing.findByPeer(id).map((t) => t.id),
-		);
+		findTransfersByPeer(id).forEach((t) => stopTransfer(t));
 		const peer = this.peers.get(id);
 		peer?.destroy();
 		this.peers.delete(id);
@@ -306,17 +279,14 @@ class PeerConnectionManager {
 	}
 
 	clear() {
-		stopTransfers(
-			incoming,
-			incoming.list().map((t) => t.id),
-		);
-		stopTransfers(
-			outgoing,
-			outgoing.list().map((t) => t.id),
-		);
+		listTransfers().forEach((t) => stopTransfer(t));
 		this.peers.forEach((p) => p.destroy());
 		this.peers.clear();
 		removePeers();
+	}
+
+	broadcast(msg: MessageChannelMessage) {
+		$session.get()?.clients?.forEach((c) => this.get(c.id)?.send(msg));
 	}
 
 	#attachEventListeners(conn: PeerConnection) {
@@ -333,31 +303,17 @@ class PeerConnectionManager {
 		});
 
 		conn.addEventListener("share-files", (e) => {
-			stopTransfers(
-				incoming,
-				incoming.findByPeer(conn.id).map((t) => t.id),
+			findTransfersByPeer(conn.id).forEach(
+				(t) => t.type === "download" && stopTransfer(t),
 			);
 			const peer = findPeer(conn.id);
 			if (!peer) return;
 			updatePeer(peer.id, { ...peer, files: e.detail.payload.files });
 		});
 
-		conn.addEventListener("request-file", (e) => {
-			const upload = getUpload(e.detail.payload.file_id);
-			if (!upload) {
-				console.error("requested file does not exist");
-				return;
-			}
-			const { file, ...meta } = upload;
-			handleStartTransfer(conn, meta.id, file).catch((err) =>
-				console.error("failed to send file:", err),
-			);
-		});
-
 		conn.addEventListener("cancel-share", () => {
-			stopTransfers(
-				incoming,
-				incoming.findByPeer(conn.id).map((t) => t.id),
+			findTransfersByPeer(conn.id).forEach(
+				(t) => t.type === "download" && stopTransfer(t),
 			);
 			const peer = findPeer(conn.id);
 			if (!peer) return;

@@ -1,8 +1,8 @@
 import type { LiHTMLAttributes, ReactNode } from "react";
 import type { FileMetadata } from "#/lib/file";
-import type { Transfer } from "#/lib/webrtc/transfer";
 import { FileIcon } from "#/components/icons";
-import { calcProgress, cn, formatFileSize, toTitleCase } from "#/lib/helper";
+import { cn, formatFileSize, toTitleCase } from "#/lib/helper";
+import type { TransferStatus } from "#/stores/transfer";
 
 export function FileList({
 	className,
@@ -23,6 +23,11 @@ export function FileList({
 	);
 }
 
+interface TransferState {
+	status: TransferStatus;
+	progress: number;
+}
+
 export function FileListItem({
 	file,
 	transfer,
@@ -30,7 +35,7 @@ export function FileListItem({
 	...props
 }: {
 	file: FileMetadata;
-	transfer?: Transfer;
+	transfer?: TransferState;
 } & LiHTMLAttributes<HTMLLIElement>) {
 	return (
 		<li
@@ -56,20 +61,15 @@ export function FileListItem({
 				</div>
 				{transfer ? (
 					<div className="flex w-full items-center gap-2 text-sm">
-						{transfer.status === "transferring" ||
-						transfer.status === "waiting" ? (
+						{transfer.status === "active" || transfer.status === "waiting" ? (
 							<>
 								<progress
-									value={calcProgress(
-										transfer.transferredBytes,
-										transfer.totalBytes,
-									)}
+									value={transfer.progress}
 									max={100}
 									className="progress h-2 flex-1"
 								></progress>
 								<span className="font-medium text-muted-foreground">
-									{calcProgress(transfer.transferredBytes, transfer.totalBytes)}
-									%
+									{transfer.progress}%
 								</span>
 							</>
 						) : (

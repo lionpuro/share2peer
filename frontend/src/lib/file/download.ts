@@ -1,17 +1,18 @@
 import { showSaveFilePicker } from "#/lib/native-file-system-adapter";
 import type { ChunkData } from "./file";
 
-export interface Download {
+export interface DownloadStream {
 	start(): Promise<void>;
 	abort(): void;
 	close(): void;
 	enqueue(chunk: ChunkData): void;
 }
 
-export async function createDownload(
-	writable: WritableStream<ChunkData>,
-): Promise<Download> {
+export async function createDownloadStream(
+	header: FileHeader,
+): Promise<DownloadStream> {
 	const readable = await createReadable();
+	const writable = await createWriteStream(header);
 	return {
 		async start() {
 			await readable.stream().pipeTo(writable);
@@ -49,7 +50,7 @@ type FileHeader = {
 	size: number;
 };
 
-export async function createWriteStream(header: FileHeader) {
+async function createWriteStream(header: FileHeader) {
 	const streamable = !("safari" in window) && !("WebKitPoint" in window);
 	const stream = streamable
 		? await createDefaultWriteStream(header)

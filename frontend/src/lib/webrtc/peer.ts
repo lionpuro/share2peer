@@ -14,7 +14,8 @@ import {
 	type ReadyToReceiveMessage,
 	type ShareFilesMessage,
 } from "./datachannel";
-import { incoming, outgoing, startUpload, stopTransfers } from "./transfer";
+import { startUpload, stopTransfer } from "./transfer";
+import { findTransfersByPeer, listTransfers } from "#/stores/transfer";
 
 export type PeerState = Client & {
 	connectionState: ConnectionState;
@@ -270,14 +271,7 @@ class PeerConnectionManager {
 	}
 
 	remove(id: string) {
-		stopTransfers(
-			incoming,
-			incoming.findByPeer(id).map((t) => t.id),
-		);
-		stopTransfers(
-			outgoing,
-			outgoing.findByPeer(id).map((t) => t.id),
-		);
+		findTransfersByPeer(id).forEach((t) => stopTransfer(t));
 		const peer = this.peers.get(id);
 		peer?.destroy();
 		this.peers.delete(id);
@@ -285,17 +279,14 @@ class PeerConnectionManager {
 	}
 
 	clear() {
-		stopTransfers(
-			incoming,
-			incoming.list().map((t) => t.id),
-		);
-		stopTransfers(
-			outgoing,
-			outgoing.list().map((t) => t.id),
-		);
+		listTransfers().forEach((t) => stopTransfer(t));
 		this.peers.forEach((p) => p.destroy());
 		this.peers.clear();
 		removePeers();
+	}
+
+	broadcast(msg: MessageChannelMessage) {
+		$session.get()?.clients?.forEach((c) => this.get(c.id)?.send(msg));
 	}
 
 	#attachEventListeners(conn: PeerConnection) {
@@ -312,9 +303,8 @@ class PeerConnectionManager {
 		});
 
 		conn.addEventListener("share-files", (e) => {
-			stopTransfers(
-				incoming,
-				incoming.findByPeer(conn.id).map((t) => t.id),
+			findTransfersByPeer(conn.id).forEach(
+				(t) => t.type === "download" && stopTransfer(t),
 			);
 			const peer = findPeer(conn.id);
 			if (!peer) return;
@@ -322,9 +312,8 @@ class PeerConnectionManager {
 		});
 
 		conn.addEventListener("cancel-share", () => {
-			stopTransfers(
-				incoming,
-				incoming.findByPeer(conn.id).map((t) => t.id),
+			findTransfersByPeer(conn.id).forEach(
+				(t) => t.type === "download" && stopTransfer(t),
 			);
 			const peer = findPeer(conn.id);
 			if (!peer) return;

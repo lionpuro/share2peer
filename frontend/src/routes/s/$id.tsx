@@ -6,8 +6,7 @@ import { $identity } from "#/lib/server";
 import { createFileMetadata } from "#/lib/file";
 import { $peers } from "#/lib/webrtc";
 import { useSession } from "#/hooks/use-session";
-import { useTransfer } from "#/hooks/use-transfer";
-import { useUpload } from "#/hooks/use-upload";
+import { useUploads, useDownloads } from "#/hooks/transfer";
 import { Main } from "#/components/ui/main";
 import { Heading } from "#/components/ui/heading";
 import { Button } from "#/components/ui/button";
@@ -31,52 +30,8 @@ export const Route = createFileRoute("/s/$id")({
 function Component() {
 	const { id } = Route.useParams();
 	const identity = useStore($identity);
-	const { session, error, broadcast } = useSession(id);
-	const {
-		incoming,
-		outgoing,
-		stopIncoming,
-		stopOutgoing,
-		findIncoming,
-		startDownload,
-	} = useTransfer();
-	const incomingFiles = Object.entries(incoming.byTransfer).map(
-		([id, progress]) => ({ id, ...progress }),
-	);
-	const { uploads, setUploads } = useUpload();
+	const { session, error } = useSession(id);
 	const peers = useStore($peers);
-	const [selectedFiles, setSelectedFiles] = useState<typeof uploads>([]);
-
-	const handleDrop = (files: File[]) => {
-		const uploads = files.map((file) => {
-			const meta = createFileMetadata(file);
-			return { ...meta, file: file };
-		});
-		setSelectedFiles(uploads);
-	};
-
-	const handleStartShare = () => {
-		setUploads(selectedFiles);
-		if (session && selectedFiles.length > 0) {
-			broadcast({
-				type: "share-files",
-				payload: {
-					files: selectedFiles.map((u) => ({
-						id: u.id,
-						name: u.name,
-						mime: u.mime,
-						size: u.size,
-					})),
-				},
-			});
-		}
-	};
-
-	const handleStopShare = () => {
-		stopOutgoing();
-		broadcast({ type: "cancel-share" });
-		setUploads([]);
-	};
 
 	const [copied, setCopied] = useState(false);
 
@@ -107,8 +62,6 @@ function Component() {
 	}
 
 	const users = Object.values(peers).filter((p) => !!p);
-	const sharingPeers = users.filter((p) => p.files.length > 0);
-	const peerFiles = users.flatMap((p) => p.files);
 
 	return (
 		<>
@@ -175,156 +128,176 @@ function Component() {
 						</ul>
 					</div>
 
-					{identity.id === session.host ? (
-						<div className="flex flex-col gap-4">
-							{uploads.length > 0 ? (
-								<>
-									<Heading order={2} size="sm">
-										Shared files
-									</Heading>
-									<FileList>
-										{uploads.map((f) => (
-											<FileListItem key={"up" + f.id} file={f} />
-										))}
-									</FileList>
-									<div className="flex gap-2 max-sm:flex-col">
-										<span
-											className={cn(
-												"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
-												outgoing.status === "transferring"
-													? "text-green-600/90"
-													: "text-muted-foreground before:text-neutral-400",
-											)}
-										>
-											{outgoing.status === "transferring"
-												? "Transferring"
-												: "Waiting for a peer to start download"}
-										</span>
-										<Button
-											variant="secondary"
-											size="sm"
-											className="max-sm:mt-4 sm:ml-auto"
-											onClick={handleStopShare}
-										>
-											Stop sharing
-										</Button>
-									</div>
-									{outgoing.status === "transferring" ? (
-										<div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-											<span className="w-full text-sm font-medium text-muted-foreground">
-												Transfer progress
-											</span>
-											<progress
-												value={outgoing.progress}
-												max={100}
-												className="progress h-2 flex-1"
-											></progress>
-											<span className="text-sm font-medium text-muted-foreground">
-												{outgoing.progress}%
-											</span>
-										</div>
-									) : null}
-								</>
-							) : selectedFiles.length > 0 ? (
-								<>
-									<Heading order={2} size="sm">
-										Selected files ({selectedFiles.length})
-									</Heading>
-									<FileList>
-										{selectedFiles.map((f) => (
-											<FileListItem key={"up" + f.id} file={f} />
-										))}
-									</FileList>
-									<div className="flex gap-2 sm:ml-auto sm:w-48">
-										<Button
-											variant="secondary"
-											size="sm"
-											onClick={() => setSelectedFiles([])}
-											className="basis-1/2"
-										>
-											Cancel
-										</Button>
-										<Button
-											variant="primary"
-											size="sm"
-											onClick={handleStartShare}
-											className="basis-1/2"
-										>
-											Share
-										</Button>
-									</div>
-								</>
-							) : (
-								<>
-									<Heading order={2} size="sm" className="mt-8">
-										Share files
-									</Heading>
-									<FileInput
-										className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 sm:py-16"
-										activeClassName="sm:border-primary/80 sm:bg-primary/10"
-										multiple={true}
-										onFileInput={handleDrop}
-									>
-										<IconUpload className="pointer-events-none size-9 text-neutral-400" />
-										<span className="pointer-events-none mt-1 text-center text-sm font-medium text-muted-foreground">
-											Click to browse or drop files here
-										</span>
-										<span className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker">
-											Browse files
-										</span>
-									</FileInput>
-								</>
-							)}
-						</div>
-					) : (
-						<div className="flex flex-col gap-4">
-							{peerFiles.length === 0 ? (
-								<span className="mt-4 text-center text-muted-foreground">
-									Waiting for a peer to share files
-								</span>
-							) : (
-								<>
-									<Heading order={2} size="sm">
-										Files
-									</Heading>
-									<FileList>
-										{peerFiles.map((f) => (
-											<FileListItem
-												key={"file" + f.id}
-												file={f}
-												transfer={findIncoming(f.id)}
-											/>
-										))}
-									</FileList>
-									{incomingFiles.length === 0 ? (
-										<Button
-											variant="primary"
-											size="sm"
-											className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
-											onClick={() => startDownload(sharingPeers)}
-										>
-											<IconDownload />
-											Download ({peerFiles.length})
-										</Button>
-									) : incomingFiles.some(
-											(t) => t?.status === "transferring",
-									  ) ? (
-										<Button
-											variant="secondary"
-											size="sm"
-											className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
-											onClick={stopIncoming}
-										>
-											<IconX />
-											Cancel download
-										</Button>
-									) : null}
-								</>
-							)}
-						</div>
-					)}
+					{identity.id === session.host ? <UploadView /> : <DownloadView />}
 				</div>
 			</Main>
 		</>
+	);
+}
+
+function UploadView() {
+	const { files, start, stop, transferring, totalSize, currentSize } =
+		useUploads();
+	const progress = Math.round(currentSize / totalSize);
+	const [selectedFiles, setSelectedFiles] = useState<typeof files>([]);
+	const handleDrop = (files: File[]) => {
+		const uploads = files.map((file) => {
+			const meta = createFileMetadata(file);
+			return { ...meta, file: file };
+		});
+		setSelectedFiles(uploads);
+	};
+
+	return (
+		<div className="flex flex-col gap-4">
+			{files.length > 0 ? (
+				<>
+					<Heading order={2} size="sm">
+						Shared files
+					</Heading>
+					<FileList>
+						{files.map((f) => (
+							<FileListItem key={"up" + f.id} file={f} />
+						))}
+					</FileList>
+					<div className="flex gap-2 max-sm:flex-col">
+						<span
+							className={cn(
+								"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
+								transferring
+									? "text-green-600/90"
+									: "text-muted-foreground before:text-neutral-400",
+							)}
+						>
+							{transferring
+								? "Transferring"
+								: "Waiting for a peer to start download"}
+						</span>
+						<Button
+							variant="secondary"
+							size="sm"
+							className="max-sm:mt-4 sm:ml-auto"
+							onClick={stop}
+						>
+							Stop sharing
+						</Button>
+					</div>
+					{transferring ? (
+						<div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+							<span className="w-full text-sm font-medium text-muted-foreground">
+								Transfer progress
+							</span>
+							<progress
+								value={progress}
+								max={100}
+								className="progress h-2 flex-1"
+							></progress>
+							<span className="text-sm font-medium text-muted-foreground">
+								{progress}%
+							</span>
+						</div>
+					) : null}
+				</>
+			) : selectedFiles.length > 0 ? (
+				<>
+					<Heading order={2} size="sm">
+						Selected files ({selectedFiles.length})
+					</Heading>
+					<FileList>
+						{selectedFiles.map((f) => (
+							<FileListItem key={"up" + f.id} file={f} />
+						))}
+					</FileList>
+					<div className="flex gap-2 sm:ml-auto sm:w-48">
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => setSelectedFiles([])}
+							className="basis-1/2"
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="primary"
+							size="sm"
+							onClick={() => start(selectedFiles)}
+							className="basis-1/2"
+						>
+							Share
+						</Button>
+					</div>
+				</>
+			) : (
+				<>
+					<Heading order={2} size="sm" className="mt-8">
+						Share files
+					</Heading>
+					<FileInput
+						className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 sm:py-16"
+						activeClassName="sm:border-primary/80 sm:bg-primary/10"
+						multiple={true}
+						onFileInput={handleDrop}
+					>
+						<IconUpload className="pointer-events-none size-9 text-neutral-400" />
+						<span className="pointer-events-none mt-1 text-center text-sm font-medium text-muted-foreground">
+							Click to browse or drop files here
+						</span>
+						<span className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker">
+							Browse files
+						</span>
+					</FileInput>
+				</>
+			)}
+		</div>
+	);
+}
+
+function DownloadView() {
+	const { files, downloads, transfersByFile, stop, start, transferring } =
+		useDownloads();
+	return (
+		<div className="flex flex-col gap-4">
+			{files.length === 0 ? (
+				<span className="mt-4 text-center text-muted-foreground">
+					Waiting for a peer to share files
+				</span>
+			) : (
+				<>
+					<Heading order={2} size="sm">
+						Files
+					</Heading>
+					<FileList>
+						{files.map((f) => (
+							<FileListItem
+								key={"file" + f.id}
+								file={f}
+								transfer={transfersByFile[f.id]?.[0]}
+							/>
+						))}
+					</FileList>
+					{downloads.length === 0 ? (
+						<Button
+							variant="primary"
+							size="sm"
+							className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
+							onClick={start}
+						>
+							<IconDownload />
+							Download ({files.length})
+						</Button>
+					) : transferring ? (
+						<Button
+							variant="secondary"
+							size="sm"
+							className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
+							onClick={stop}
+						>
+							<IconX />
+							Cancel download
+						</Button>
+					) : null}
+				</>
+			)}
+		</div>
 	);
 }

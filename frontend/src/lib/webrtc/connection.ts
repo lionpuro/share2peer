@@ -1,6 +1,4 @@
 import { TypedEventTarget } from "typescript-event-target";
-import { $identity } from "#/lib/server";
-import { $session } from "#/lib/session";
 import type { Client } from "#/lib/schemas";
 import {
 	CancelShareSchema,
@@ -22,6 +20,7 @@ import {
 	updatePeer,
 } from "#/stores/peer";
 import { $uploads } from "#/stores/file";
+import { $identity, $session } from "#/stores/signaling";
 
 export type ConnectionState =
 	| "disconnected"

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { server } from "#/lib/server";
-import { $session, SessionManager } from "#/lib/session";
+import { SessionManager } from "#/lib/session";
 import type { MessageChannelMessage } from "#/lib/webrtc";
 import { useServer } from "./use-server";
+import { $session } from "#/stores/signaling";
 
 const manager = new SessionManager(server);
 

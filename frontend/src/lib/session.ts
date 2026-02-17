@@ -1,4 +1,4 @@
-import { atom } from "nanostores";
+import { $session } from "#/stores/signaling";
 import type { Session } from "./schemas";
 import type { SignalingServer, ServerEventMap } from "./server";
 import {
@@ -6,8 +6,6 @@ import {
 	createPeerConnection,
 	type MessageChannelMessage,
 } from "./webrtc";
-
-export const $session = atom<Session | null>(null);
 
 type SessionState = "idle" | "joining" | "active" | "failed";
 

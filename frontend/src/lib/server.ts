@@ -1,7 +1,5 @@
-import { atom } from "nanostores";
 import { TypedEventTarget } from "typescript-event-target";
 import {
-	type Client,
 	parseMessage,
 	type OutgoingMessage,
 	type IncomingMessage,
@@ -12,18 +10,13 @@ import {
 	handleICECandidate,
 	handleOffer,
 } from "#/lib/webrtc";
+import { $connectionState, $identity } from "#/stores/signaling";
 
 declare global {
 	interface Window {
 		__SignalingServer: SignalingServer | undefined;
 	}
 }
-
-export const $identity = atom<Client | null>(null);
-
-type ConnectionState = "closed" | "connecting" | "open" | "error";
-
-export const $connectionState = atom<ConnectionState>("closed");
 
 export type ServerEventMap = {
 	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;

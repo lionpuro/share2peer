@@ -1,7 +1,12 @@
 import { $session } from "#/stores/signaling";
 import type { Session } from "./schemas";
 import type { SignalingServer, ServerEventMap } from "./server";
-import { connections, createPeerConnection } from "./webrtc";
+import {
+	createPeerConnection,
+	findConnection,
+	removeConnection,
+	removeConnections,
+} from "./webrtc";
 
 type SessionState = "idle" | "joining" | "active" | "failed";
 
@@ -21,17 +26,17 @@ export class SessionManager {
 		this.#server.addEventListener("session-left", () => {
 			$session.set(null);
 			this.state = "idle";
-			connections.clear();
+			removeConnections();
 		});
 		this.#server.addEventListener("client-joined", async (e) => {
 			const id = e.detail.id;
-			if (connections.get(id)) return;
+			if (findConnection(id)) return;
 			const session = $session.get();
 			if (!session) return;
 			await createPeerConnection(this.#server, session.id, e.detail);
 		});
 		this.#server.addEventListener("client-left", (e) => {
-			connections.remove(e.detail.id);
+			removeConnection(e.detail.id);
 		});
 	}
 

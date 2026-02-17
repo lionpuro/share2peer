@@ -5,10 +5,10 @@ import {
 	type IncomingMessage,
 } from "#/lib/schemas";
 import {
-	connections,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
+	removeConnections,
 } from "#/lib/webrtc";
 import { $connectionState, $identity } from "#/stores/signaling";
 
@@ -55,7 +55,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			});
 			this.#ws.addEventListener("close", async () => {
 				$connectionState.set("closed");
-				connections.clear();
+				removeConnections();
 				this.dispatchTypedEvent("close", new CustomEvent("close"));
 				setTimeout(() => {
 					this.connect();

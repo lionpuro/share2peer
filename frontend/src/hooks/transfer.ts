@@ -5,7 +5,7 @@ import {
 	removeTransfer,
 	type Transfer,
 } from "#/stores/transfer";
-import { connections } from "#/lib/webrtc";
+import { broadcast, findConnection } from "#/lib/webrtc";
 import { startDownload } from "#/lib/webrtc/transfer";
 import { $peers } from "#/stores/peer";
 import { $uploads, setUploads } from "#/stores/file";
@@ -33,7 +33,7 @@ export function useUploads() {
 	const start = (uploads: typeof files) => {
 		if (uploads.length > 0) {
 			setUploads(uploads);
-			connections.broadcast({
+			broadcast({
 				type: "share-files",
 				payload: {
 					files: uploads.map((u) => ({
@@ -48,7 +48,7 @@ export function useUploads() {
 	};
 
 	const stop = () => {
-		connections.broadcast({ type: "cancel-share" });
+		broadcast({ type: "cancel-share" });
 		listTransfers().forEach((t) => {
 			if (t?.type === "upload") {
 				t.channel?.close();
@@ -106,7 +106,7 @@ export function useDownloads() {
 
 	const start = async () => {
 		for (const file of files) {
-			const conn = connections.get(file.peerID);
+			const conn = findConnection(file.peerID);
 			if (conn) {
 				await startDownload(file, conn);
 			}

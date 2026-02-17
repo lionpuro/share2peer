@@ -224,77 +224,74 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 	}
 }
 
-class PeerConnectionManager {
-	peers: Map<string, PeerConnection> = new Map();
+const connections: Map<string, PeerConnection> = new Map();
 
-	get(id: string): PeerConnection | undefined {
-		return this.peers.get(id);
-	}
-
-	create(client: Client, opt?: PeerConnectionOptions): PeerConnection {
-		const existing = this.peers.get(client.id);
-		if (existing) {
-			return existing;
-		}
-
-		const peer = new PeerConnection(client.id, opt);
-		this.#attachEventListeners(peer);
-		this.peers.set(peer.id, peer);
-		addPeer({ ...client, connectionState: peer.state(), files: [] });
-
-		return peer;
-	}
-
-	remove(id: string) {
-		findTransfersByPeer(id).forEach((t) => stopTransfer(t));
-		const peer = this.peers.get(id);
-		peer?.destroy();
-		this.peers.delete(id);
-		removePeer(id);
-	}
-
-	clear() {
-		listTransfers().forEach((t) => stopTransfer(t));
-		this.peers.forEach((p) => p.destroy());
-		this.peers.clear();
-		removePeers();
-	}
-
-	broadcast(msg: MessageChannelMessage) {
-		$session.get()?.clients?.forEach((c) => this.get(c.id)?.send(msg));
-	}
-
-	#attachEventListeners(conn: PeerConnection) {
-		conn.addEventListener("ready-to-receive", () => {
-			const uploads = $uploads.get();
-			if (uploads.length < 1) return;
-			const files = uploads.map((u) => ({
-				id: u.id,
-				name: u.name,
-				mime: u.mime,
-				size: u.size,
-			}));
-			conn.send({ type: "share-files", payload: { files } });
-		});
-
-		conn.addEventListener("share-files", (e) => {
-			findTransfersByPeer(conn.id).forEach(
-				(t) => t.type === "download" && stopTransfer(t),
-			);
-			const peer = findPeer(conn.id);
-			if (!peer) return;
-			updatePeer(peer.id, { ...peer, files: e.detail.payload.files });
-		});
-
-		conn.addEventListener("cancel-share", () => {
-			findTransfersByPeer(conn.id).forEach(
-				(t) => t.type === "download" && stopTransfer(t),
-			);
-			const peer = findPeer(conn.id);
-			if (!peer) return;
-			updatePeer(peer.id, { files: [] });
-		});
-	}
+export function findConnection(id: string): PeerConnection | undefined {
+	return connections.get(id);
 }
 
-export const connections = new PeerConnectionManager();
+export function createConnection(
+	client: Client,
+	opt?: PeerConnectionOptions,
+): PeerConnection {
+	const existing = connections.get(client.id);
+	if (existing) {
+		return existing;
+	}
+
+	const conn = new PeerConnection(client.id, opt);
+
+	conn.addEventListener("ready-to-receive", () => {
+		const uploads = $uploads.get();
+		if (uploads.length < 1) return;
+		const files = uploads.map((u) => ({
+			id: u.id,
+			name: u.name,
+			mime: u.mime,
+			size: u.size,
+		}));
+		conn.send({ type: "share-files", payload: { files } });
+	});
+
+	conn.addEventListener("share-files", (e) => {
+		findTransfersByPeer(conn.id).forEach(
+			(t) => t.type === "download" && stopTransfer(t),
+		);
+		const peer = findPeer(conn.id);
+		if (!peer) return;
+		updatePeer(peer.id, { ...peer, files: e.detail.payload.files });
+	});
+
+	conn.addEventListener("cancel-share", () => {
+		findTransfersByPeer(conn.id).forEach(
+			(t) => t.type === "download" && stopTransfer(t),
+		);
+		const peer = findPeer(conn.id);
+		if (!peer) return;
+		updatePeer(peer.id, { files: [] });
+	});
+
+	connections.set(conn.id, conn);
+	addPeer({ ...client, connectionState: conn.state(), files: [] });
+
+	return conn;
+}
+
+export function removeConnection(id: string) {
+	findTransfersByPeer(id).forEach((t) => stopTransfer(t));
+	const conn = connections.get(id);
+	conn?.destroy();
+	connections.delete(id);
+	removePeer(id);
+}
+
+export function removeConnections() {
+	listTransfers().forEach((t) => stopTransfer(t));
+	connections.forEach((p) => p.destroy());
+	connections.clear();
+	removePeers();
+}
+
+export function broadcast(msg: MessageChannelMessage) {
+	$session.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
+}

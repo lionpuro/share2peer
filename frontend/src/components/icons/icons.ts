@@ -19,6 +19,7 @@ export { default as IconGithub } from "~icons/mdi/github";
 export { default as IconArrowLeft } from "~icons/mdi/arrow-left";
 export { default as IconPlus } from "~icons/mdi/plus";
 export { default as IconLink } from "~icons/mdi/link-variant";
+export { default as IconShare } from "~icons/mdi/share-variant";
 
 export { default as IconDevices } from "~icons/material-symbols/devices";
 

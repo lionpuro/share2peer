@@ -16,6 +16,7 @@ import {
 	IconArrowLeft,
 	IconDownload,
 	IconLink,
+	IconShare,
 	IconUpload,
 	IconX,
 } from "#/components/icons";
@@ -61,6 +62,16 @@ function Component() {
 		}, 1000);
 	}
 
+	function handleShare() {
+		if (typeof navigator.share !== "function") return;
+		if (!session) return;
+		navigator.share({
+			title: "Share files",
+			text: `Join my session ${session.id} on share2peer to share files`,
+			url: sessionURL,
+		});
+	}
+
 	const users = Object.values(peers).filter((p) => !!p);
 
 	return (
@@ -78,6 +89,16 @@ function Component() {
 				<div className="flex items-center gap-2">
 					<span className="font-semibold text-muted-foreground">Session:</span>
 					<span className="font-bold">{session.id}</span>
+				</div>
+				<div className="flex">
+					{typeof navigator.share === "function" && (
+						<button
+							onClick={handleShare}
+							className="ml-auto p-2 text-lg text-muted-foreground/70 hover:text-muted-foreground"
+						>
+							<IconShare />
+						</button>
+					)}
 				</div>
 			</div>
 			<Main>

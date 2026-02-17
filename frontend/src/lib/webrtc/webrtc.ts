@@ -4,9 +4,9 @@ import type {
 	ICECandidateMessage,
 	OfferMessage,
 } from "#/lib/schemas";
-import { $identity, type SignalingServer } from "#/lib/server";
-import { $session } from "#/lib/session";
-import { connections } from "./peer";
+import type { SignalingServer } from "#/lib/server";
+import { $identity, $session } from "#/stores/signaling";
+import { connections } from "./connection";
 
 export async function createPeerConnection(
 	server: SignalingServer,

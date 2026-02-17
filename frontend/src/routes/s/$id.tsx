@@ -2,9 +2,8 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
-import { $identity } from "#/lib/server";
 import { createFileMetadata } from "#/lib/file";
-import { $peers } from "#/lib/webrtc";
+import { $peers } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
 import { useUploads, useDownloads } from "#/hooks/transfer";
 import { Main } from "#/components/ui/main";
@@ -22,6 +21,7 @@ import {
 } from "#/components/icons";
 import { Loader } from "#/components/ui/loader";
 import { FileInput } from "#/components/ui/file-input";
+import { $identity } from "#/stores/signaling";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,

@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
-import { $connectionState, server } from "#/lib/server";
+import { server } from "#/lib/server";
+import { $connectionState } from "#/stores/signaling";
 
 export function useServer() {
 	const connectionState = useStore($connectionState);

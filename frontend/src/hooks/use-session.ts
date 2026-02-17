@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { server } from "#/lib/server";
 import { SessionManager } from "#/lib/session";
-import type { MessageChannelMessage } from "#/lib/webrtc";
 import { useServer } from "./use-server";
 import { $session } from "#/stores/signaling";
 
@@ -11,7 +10,6 @@ const manager = new SessionManager(server);
 const join = (id: string) => manager.join(id);
 const leave = () => manager.leave();
 const create = () => manager.create();
-const broadcast = (msg: MessageChannelMessage) => manager.broadcast(msg);
 
 export function useSession(id?: string) {
 	const session = useStore($session);
@@ -45,6 +43,5 @@ export function useSession(id?: string) {
 		joinSession: join,
 		leaveSession: leave,
 		createSession: create,
-		broadcast,
 	};
 }

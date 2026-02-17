@@ -1,11 +1,7 @@
 import { $session } from "#/stores/signaling";
 import type { Session } from "./schemas";
 import type { SignalingServer, ServerEventMap } from "./server";
-import {
-	connections,
-	createPeerConnection,
-	type MessageChannelMessage,
-} from "./webrtc";
+import { connections, createPeerConnection } from "./webrtc";
 
 type SessionState = "idle" | "joining" | "active" | "failed";
 
@@ -37,10 +33,6 @@ export class SessionManager {
 		this.#server.addEventListener("client-left", (e) => {
 			connections.remove(e.detail.id);
 		});
-	}
-
-	broadcast(msg: MessageChannelMessage) {
-		$session.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
 	}
 
 	join(id: string): Promise<Session> {

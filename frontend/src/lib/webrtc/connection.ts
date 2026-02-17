@@ -1,8 +1,7 @@
-import { map } from "nanostores";
 import { TypedEventTarget } from "typescript-event-target";
 import { $identity } from "#/lib/server";
 import { $session } from "#/lib/session";
-import { $uploads, type FileMetadata } from "#/lib/file";
+import { $uploads } from "#/lib/file";
 import type { Client } from "#/lib/schemas";
 import {
 	CancelShareSchema,
@@ -16,42 +15,19 @@ import {
 } from "./datachannel";
 import { startUpload, stopTransfer } from "./transfer";
 import { findTransfersByPeer, listTransfers } from "#/stores/transfer";
+import {
+	addPeer,
+	findPeer,
+	removePeer,
+	removePeers,
+	updatePeer,
+} from "#/stores/peer";
 
-export type PeerState = Client & {
-	connectionState: ConnectionState;
-	files: FileMetadata[];
-};
-
-type PeerStore = Partial<Record<string, PeerState>>;
-
-export const $peers = map<PeerStore>({});
-
-function findPeer(id: string): PeerState | undefined {
-	return $peers.get()[id];
-}
-
-function addPeer(peer: PeerState) {
-	$peers.setKey(peer.id, peer);
-}
-
-function updatePeer(id: string, update: Partial<PeerState>) {
-	const peers = $peers.get();
-	const peer = peers[id];
-	if (!peer) return;
-	$peers.setKey(id, { ...peer, ...update });
-}
-
-function removePeer(id: string) {
-	const peers = { ...$peers.get() };
-	delete peers[id];
-	$peers.set(peers);
-}
-
-function removePeers() {
-	$peers.set({});
-}
-
-type ConnectionState = "disconnected" | "connecting" | "connected" | "failed";
+export type ConnectionState =
+	| "disconnected"
+	| "connecting"
+	| "connected"
+	| "failed";
 
 type PeerConnectionOptions = {
 	onIceCandidate?: (candidate: RTCIceCandidate) => void;

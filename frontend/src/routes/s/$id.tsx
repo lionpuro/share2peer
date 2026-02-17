@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
 import { $identity } from "#/lib/server";
 import { createFileMetadata } from "#/lib/file";
-import { $peers } from "#/lib/webrtc";
+import { $peers } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
 import { useUploads, useDownloads } from "#/hooks/transfer";
 import { Main } from "#/components/ui/main";

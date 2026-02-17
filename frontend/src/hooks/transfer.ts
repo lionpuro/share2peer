@@ -5,9 +5,10 @@ import {
 	removeTransfer,
 	type Transfer,
 } from "#/stores/transfer";
-import { $peers, connections } from "#/lib/webrtc";
+import { connections } from "#/lib/webrtc";
 import { startDownload } from "#/lib/webrtc/transfer";
 import { $uploads, setUploads } from "#/lib/file";
+import { $peers } from "#/stores/peer";
 
 export function useUploads() {
 	const files = useStore($uploads);

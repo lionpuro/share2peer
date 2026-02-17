@@ -1,4 +1,4 @@
 export * from "./webrtc";
-export * from "./peer";
+export * from "./connection";
 export * from "./datachannel";
 export * from "./protocol";

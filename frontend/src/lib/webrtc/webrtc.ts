@@ -6,7 +6,7 @@ import type {
 } from "#/lib/schemas";
 import { $identity, type SignalingServer } from "#/lib/server";
 import { $session } from "#/lib/session";
-import { connections } from "./peer";
+import { connections } from "./connection";
 
 export async function createPeerConnection(
 	server: SignalingServer,

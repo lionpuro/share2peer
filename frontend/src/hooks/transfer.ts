@@ -7,8 +7,8 @@ import {
 } from "#/stores/transfer";
 import { connections } from "#/lib/webrtc";
 import { startDownload } from "#/lib/webrtc/transfer";
-import { $uploads, setUploads } from "#/lib/file";
 import { $peers } from "#/stores/peer";
+import { $uploads, setUploads } from "#/stores/file";
 
 export function useUploads() {
 	const files = useStore($uploads);

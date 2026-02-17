@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { ChunkReader, getUpload, type FileMetadata } from "#/lib/file";
+import { ChunkReader, type FileMetadata } from "#/lib/file";
 import { sendPacket, setupDataChannel } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
 import type { PeerConnection } from "./connection";
@@ -11,6 +11,7 @@ import {
 	updateTransfer,
 	type Transfer,
 } from "#/stores/transfer";
+import { getUpload } from "#/stores/file";
 
 export function stopTransfer(t: Transfer) {
 	t.channel?.close();

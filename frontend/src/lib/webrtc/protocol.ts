@@ -34,6 +34,9 @@ export function decodeChunk(buf: ArrayBuffer): Chunk {
 	const id = new Uint8Array(buf, 0, FILE_ID_SIZE);
 	const fileID = decodeID(id);
 	const index = new Uint32Array(buf, FILE_ID_SIZE, 1)[0];
+	if (index === undefined) {
+		throw new Error("chunk index is missing");
+	}
 	const data = new Uint8Array(buf, FILE_ID_SIZE + CHUNK_INDEX_SIZE);
 	const chunk: Chunk = {
 		fileID: fileID,
@@ -59,7 +62,11 @@ export function encodeID(id: string): Uint8Array {
 	let bitsInBuffer = 0;
 	let byteIndex = 0;
 	for (let i = 0; i < 21; i++) {
-		const charValue = nanoidChars.indexOf(id[i]);
+		const char = id[i];
+		if (char === undefined) {
+			throw new Error("invalid id");
+		}
+		const charValue = nanoidChars.indexOf(char);
 		bitBuffer = (bitBuffer << 6) | charValue;
 		bitsInBuffer += 6;
 		while (bitsInBuffer >= 8) {
@@ -82,7 +89,11 @@ export function decodeID(buffer: Uint8Array): string {
 	let bitsInBuffer = 0;
 	let id = "";
 	for (let i = 0; i < FILE_ID_SIZE; i++) {
-		bitBuffer = (bitBuffer << 8) | value[i];
+		const char = value[i];
+		if (char === undefined) {
+			throw new Error("invalid id");
+		}
+		bitBuffer = (bitBuffer << 8) | char;
 		bitsInBuffer += 8;
 		while (bitsInBuffer >= 6) {
 			bitsInBuffer -= 6;

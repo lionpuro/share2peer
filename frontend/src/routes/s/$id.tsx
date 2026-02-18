@@ -72,7 +72,7 @@ function Component() {
 		});
 	}
 
-	const users = Object.values(peers).filter((p) => !!p);
+	const users = Object.values(peers);
 
 	return (
 		<>

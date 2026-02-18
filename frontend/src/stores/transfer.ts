@@ -13,12 +13,12 @@ export type Transfer = {
 	channel: RTCDataChannel | undefined;
 };
 
-export type TransferStoreValue = Partial<Record<string, Transfer>>;
+export type TransferStoreValue = Record<string, Transfer>;
 
 export const $transfers = map<TransferStoreValue>({});
 
 export function listTransfers(): Transfer[] {
-	return Object.values($transfers.get()) as Transfer[];
+	return Object.values($transfers.get());
 }
 
 export function addTransfer(v: Transfer) {
@@ -30,12 +30,12 @@ export function findTransfer(id: string): Transfer | undefined {
 }
 
 export function findTransfersByFile(fileID: string): Transfer[] {
-	const transfers = Object.values($transfers.get()) as Transfer[];
+	const transfers = Object.values($transfers.get());
 	return transfers.filter((t) => t?.fileID === fileID);
 }
 
 export function findTransfersByPeer(peerID: string): Transfer[] {
-	const transfers = Object.values($transfers.get()) as Transfer[];
+	const transfers = Object.values($transfers.get());
 	return transfers.filter((t) => t?.peer === peerID);
 }
 

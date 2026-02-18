@@ -14,8 +14,8 @@ export function useUploads() {
 	const files = useStore($uploads);
 	const transfers = useStore($transfers);
 	const uploads = Object.values(transfers).filter(
-		(t) => !!t && t.status !== "canceled" && t.type === "upload",
-	) as Transfer[];
+		(t) => t.status !== "canceled" && t.type === "upload",
+	);
 	const state = uploads.reduce(
 		(acc, tr) => {
 			if (tr.status === "canceled") {
@@ -76,8 +76,8 @@ export function useDownloads() {
 	});
 	const transfers = useStore($transfers);
 	const downloads = Object.values(transfers).filter(
-		(t) => !!t && t.type === "download",
-	) as Transfer[];
+		(t) => t.type === "download",
+	);
 
 	const state = downloads.reduce(
 		(acc, tr) => {
@@ -100,7 +100,7 @@ export function useDownloads() {
 			active: boolean;
 			totalSize: number;
 			currentSize: number;
-			byFile: Partial<Record<string, Transfer[]>>;
+			byFile: Record<string, Transfer[]>;
 		},
 	);
 

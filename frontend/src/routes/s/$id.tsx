@@ -76,7 +76,7 @@ function Component() {
 
 	return (
 		<>
-			<div className="mx-auto grid w-full max-w-screen-lg grid-cols-[1fr_auto_1fr] grid-rows-1 px-4 sm:px-6">
+			<div className="mx-auto grid w-full max-w-screen-xl grid-cols-[1fr_auto_1fr] grid-rows-1 px-4 sm:px-6">
 				<div className="flex">
 					<Link
 						to="/"

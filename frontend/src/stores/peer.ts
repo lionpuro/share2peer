@@ -8,7 +8,7 @@ export type PeerState = Client & {
 	files: FileMetadata[];
 };
 
-export const $peers = map<Partial<Record<string, PeerState>>>({});
+export const $peers = map<Record<string, PeerState>>({});
 
 export function findPeer(id: string): PeerState | undefined {
 	return $peers.get()[id];

@@ -86,7 +86,7 @@ self.addEventListener("message", (e) => {
 self.addEventListener("fetch", (e) => {
 	const url = e.request.url;
 	const data = downloads.get(url);
-	if (!data) return null;
+	if (!data) return;
 	downloads.delete(url);
 
 	e.respondWith(

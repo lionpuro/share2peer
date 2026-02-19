@@ -1,4 +1,4 @@
-module github.com/lionpuro/share2peer/backend
+module github.com/lionpuro/websend/backend
 
 go 1.25.4
 

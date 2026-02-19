@@ -1,4 +1,4 @@
-name: share2peer-dev
+name: websend-dev
 services:
   shell:
     build:

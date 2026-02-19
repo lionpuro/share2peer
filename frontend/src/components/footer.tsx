@@ -7,10 +7,10 @@ export function Footer() {
 			<div className="mx-auto flex w-full max-w-screen-xl px-6 sm:px-8">
 				<Link to="/" className="flex items-center gap-1 font-medium">
 					<IconAccessPoint className="size-6 text-primary" />
-					share2peer
+					WebSend
 				</Link>
 				<a
-					href="https://github.com/lionpuro/share2peer"
+					href="https://github.com/lionpuro/websend"
 					target="_blank"
 					rel="noopener noreferrer"
 					className="ml-auto flex items-center gap-1 text-sm font-medium text-muted-foreground"

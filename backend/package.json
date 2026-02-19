@@ -1,10 +1,10 @@
 {
-	"name": "@share2peer/backend",
+	"name": "@websend/backend",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "go build -o bin/share2peer",
+		"build": "go build -o bin/websend",
 		"lint": "golangci-lint run"
 	}
 }

@@ -67,7 +67,7 @@ function Component() {
 		if (!session) return;
 		navigator.share({
 			title: "Share files",
-			text: `Join my session ${session.id} on share2peer to share files`,
+			text: `Join my session ${session.id} on WebSend to share files`,
 			url: sessionURL,
 		});
 	}

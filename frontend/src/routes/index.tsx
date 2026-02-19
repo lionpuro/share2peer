@@ -51,22 +51,23 @@ function Component() {
 			<Main className="min-h-screen">
 				<div className="mx-auto my-12 flex max-w-lg flex-wrap gap-x-4 gap-y-3">
 					<Heading order={1} className="mb-1 w-full">
-						Share files quickly and privately
+						Seamless file transfer in your browser
 					</Heading>
-					<p className="w-full text-secondary-foreground/80">
-						Transfer files between devices without storing them in the cloud.
-					</p>
+					<div className="w-full text-secondary-foreground/80">
+						<p>Send files to any device with only a web browser.</p>
+						<p>No registration, no install, no storage</p>
+					</div>
 					<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
 						<IconConnect />
 						Peer-to-peer
 					</span>
 					<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
-						<IconInfinity />
-						No size limits
-					</span>
-					<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
 						<IconDevices />
 						Cross-platform
+					</span>
+					<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+						<IconInfinity />
+						No size limits
 					</span>
 				</div>
 				<div className="mx-auto mt-8 flex w-full max-w-xs flex-col gap-4">

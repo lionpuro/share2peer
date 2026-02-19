@@ -6,10 +6,13 @@ export const CHUNK_INDEX_SIZE = 4;
 export const CHUNK_DATA_SIZE = PACKET_SIZE - FILE_ID_SIZE - CHUNK_INDEX_SIZE;
 
 /**
- * Creates a binary packet with the following structure:
- * 16 bytes: file id
- * 4 bytes: chunk index
- * n bytes: chunk data
+ * Format of serialized chunk:
+ *
+ * | Field  | Bytes | Type   |
+ * |--------|-------|--------|
+ * | FileID | 16    | Uint8  |
+ * | Index  | 4     | Uint32 |
+ * | Data   | var   | Uint8  |
  */
 export function encodeChunk(chunk: Chunk): ArrayBuffer {
 	const { fileID, index, data } = chunk;

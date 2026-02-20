@@ -74,15 +74,15 @@ func (s *SessionStore) Create(host uuid.UUID) (*Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	code, err := generateSessionID()
+	id, err := generateSessionID()
 	if err != nil {
-		return nil, fmt.Errorf("generate share code: %s", err.Error())
+		return nil, fmt.Errorf("generate session id: %s", err.Error())
 	}
 	session := &Session{
-		ID:   code,
+		ID:   id,
 		Host: host,
 	}
-	s.sessions[code] = session
+	s.sessions[id] = session
 	return session, nil
 }
 
@@ -107,19 +107,18 @@ func (s *SessionStore) Delete(id string) {
 }
 
 const (
-	shareCodeLength = 6
-	shareCodeChars  = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ" // 1-9 and A-Z except for I and O
+	idLength = 6
+	idChars  = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ" // 1-9 and A-Z except for I and O
 )
 
 func generateSessionID() (string, error) {
-	length := shareCodeLength
-	bytes := make([]byte, length)
-	for i := range length {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(shareCodeChars))))
+	bytes := make([]byte, idLength)
+	for i := range idLength {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(idChars))))
 		if err != nil {
 			return "", err
 		}
-		bytes[i] = shareCodeChars[num.Int64()]
+		bytes[i] = idChars[num.Int64()]
 	}
 
 	return string(bytes), nil

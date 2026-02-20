@@ -232,7 +232,6 @@ export function createConnection(
 
 	conn.addEventListener("ready-to-receive", () => {
 		const uploads = $uploads.get();
-		if (uploads.length < 1) return;
 		const files = uploads.map((u) => ({
 			id: u.id,
 			name: u.name,
@@ -252,7 +251,7 @@ export function createConnection(
 	});
 
 	connections.set(conn.id, conn);
-	addPeer({ ...client, connectionState: conn.state(), files: [] });
+	addPeer({ ...client, connectionState: conn.state() });
 
 	return conn;
 }

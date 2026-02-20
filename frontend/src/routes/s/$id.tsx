@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
 import { createFileMetadata } from "#/lib/file";
-import { $peers } from "#/stores/peer";
+import { $peers, type PeerState } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
 import { useUploads, useDownloads } from "#/hooks/transfer";
 import { Main } from "#/components/ui/main";
@@ -23,6 +23,7 @@ import {
 import { Loader } from "#/components/ui/loader";
 import { FileInput } from "#/components/ui/file-input";
 import { $identity } from "#/stores/signaling";
+import type { Session } from "#/lib/schemas";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -149,7 +150,11 @@ function Component() {
 						</ul>
 					</div>
 
-					{identity.id === session.host ? <UploadView /> : <DownloadView />}
+					{identity.id === session.host ? (
+						<UploadView />
+					) : (
+						<DownloadView session={session} peers={peers} />
+					)}
 				</div>
 			</Main>
 		</>
@@ -273,9 +278,21 @@ function UploadView() {
 	);
 }
 
-function DownloadView() {
+function DownloadView({
+	session,
+	peers,
+}: {
+	session: Session;
+	peers: Record<string, PeerState>;
+}) {
 	const { files, downloads, transfersByFile, stop, start, transferring } =
 		useDownloads();
+	const host = session.host ? peers[session.host] : undefined;
+	const loading = !host || host.files === undefined;
+
+	if (loading) {
+		return null;
+	}
 	return (
 		<div className="flex flex-col gap-4">
 			{files.length === 0 ? (

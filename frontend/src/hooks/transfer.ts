@@ -72,7 +72,7 @@ export function useUploads() {
 export function useDownloads() {
 	const peers = useStore($peers);
 	const files = Object.values(peers).flatMap((p) => {
-		return p?.files.map((f) => ({ ...f, peerID: p.id })) || [];
+		return p?.files?.map((f) => ({ ...f, peerID: p.id })) || [];
 	});
 	const transfers = useStore($transfers);
 	const downloads = Object.values(transfers).filter(

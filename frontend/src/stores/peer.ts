@@ -5,7 +5,7 @@ import type { ConnectionState } from "#/lib/webrtc";
 
 export type PeerState = Client & {
 	connectionState: ConnectionState;
-	files: FileMetadata[];
+	files?: FileMetadata[];
 };
 
 export const $peers = map<Record<string, PeerState>>({});

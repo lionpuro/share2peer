@@ -3,6 +3,7 @@ import type { FileMetadata } from "#/lib/file";
 import { FileIcon } from "#/components/icons";
 import { cn, formatFileSize, toTitleCase } from "#/lib/helper";
 import type { TransferStatus } from "#/stores/transfer";
+import { Progress } from "./ui/progress";
 
 export function FileList({
 	className,
@@ -63,11 +64,7 @@ export function FileListItem({
 					<div className="flex w-full items-center gap-2 text-sm">
 						{transfer.status === "active" || transfer.status === "waiting" ? (
 							<>
-								<progress
-									value={transfer.progress}
-									max={100}
-									className="progress h-2 flex-1"
-								></progress>
+								<Progress value={transfer.progress} max={100} />
 								<span className="font-medium text-muted-foreground">
 									{transfer.progress}%
 								</span>

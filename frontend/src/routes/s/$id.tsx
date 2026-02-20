@@ -24,6 +24,7 @@ import { Loader } from "#/components/ui/loader";
 import { FileInput } from "#/components/ui/file-input";
 import { $identity } from "#/stores/signaling";
 import type { Session } from "#/lib/schemas";
+import { Progress } from "#/components/ui/progress";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -201,11 +202,7 @@ function UploadView() {
 							<span className="w-full text-sm font-medium text-muted-foreground">
 								Transfer progress
 							</span>
-							<progress
-								value={progress}
-								max={100}
-								className="progress h-2 flex-1"
-							></progress>
+							<Progress value={progress} max={100} />
 							<span className="text-sm font-medium text-muted-foreground">
 								{progress}%
 							</span>

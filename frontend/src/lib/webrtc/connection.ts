@@ -1,11 +1,9 @@
 import { TypedEventTarget } from "typescript-event-target";
 import type { Client } from "#/lib/schemas";
 import {
-	CancelShareSchema,
 	createDataChannel,
 	ReadyToReceiveSchema,
 	ShareFilesSchema,
-	type CancelShareMessage,
 	type MessageChannelMessage,
 	type ReadyToReceiveMessage,
 	type ShareFilesMessage,
@@ -35,7 +33,6 @@ type PeerConnectionOptions = {
 type EventMap = {
 	"ready-to-receive": CustomEvent<ReadyToReceiveMessage>;
 	"share-files": CustomEvent<ShareFilesMessage>;
-	"cancel-share": CustomEvent<CancelShareMessage>;
 };
 
 function rtcConfig(): RTCConfiguration {
@@ -156,14 +153,6 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 						}),
 					);
 					break;
-				case "cancel-share":
-					this.dispatchTypedEvent(
-						data.type,
-						new CustomEvent(data.type, {
-							detail: CancelShareSchema.parse(data),
-						}),
-					);
-					break;
 				default:
 					console.warn(
 						"datachannel message: unrecognized message type:",
@@ -260,15 +249,6 @@ export function createConnection(
 		const peer = findPeer(conn.id);
 		if (!peer) return;
 		updatePeer(peer.id, { ...peer, files: e.detail.payload.files });
-	});
-
-	conn.addEventListener("cancel-share", () => {
-		findTransfersByPeer(conn.id).forEach(
-			(t) => t.type === "download" && stopTransfer(t),
-		);
-		const peer = findPeer(conn.id);
-		if (!peer) return;
-		updatePeer(peer.id, { files: [] });
 	});
 
 	connections.set(conn.id, conn);

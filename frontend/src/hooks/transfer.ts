@@ -48,7 +48,7 @@ export function useUploads() {
 	};
 
 	const stop = () => {
-		broadcast({ type: "cancel-share" });
+		broadcast({ type: "share-files", payload: { files: [] } });
 		listTransfers().forEach((t) => {
 			if (t?.type === "upload") {
 				t.channel?.close();

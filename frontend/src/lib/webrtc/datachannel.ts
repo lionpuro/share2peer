@@ -23,7 +23,6 @@ export function setupDataChannel(chan: RTCDataChannel) {
 export const MessageChannelEvents = {
 	ShareFiles: "share-files",
 	CancelShare: "cancel-share",
-	StopTransfer: "stop-transfer",
 	ReadyToReceive: "ready-to-receive",
 } as const;
 
@@ -43,13 +42,6 @@ export const CancelShareSchema = z.object({
 
 export type CancelShareMessage = z.infer<typeof CancelShareSchema>;
 
-export const StopTransferMessageSchema = z.object({
-	type: z.literal(MessageChannelEvents.StopTransfer),
-	payload: z.object({ id: z.string() }),
-});
-
-export type StopTransferMessage = z.infer<typeof StopTransferMessageSchema>;
-
 export const ReadyToReceiveSchema = z.object({
 	type: z.literal(MessageChannelEvents.ReadyToReceive),
 	payload: z.object({ client_id: z.string() }),
@@ -60,7 +52,6 @@ export type ReadyToReceiveMessage = z.infer<typeof ReadyToReceiveSchema>;
 export type MessageChannelMessage =
 	| ShareFilesMessage
 	| CancelShareMessage
-	| StopTransferMessage
 	| ReadyToReceiveMessage;
 
 export function sendMessage(

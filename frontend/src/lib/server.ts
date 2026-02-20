@@ -28,7 +28,7 @@ type ServerEvent = ServerEventMap[keyof ServerEventMap];
 
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#url: string;
-	#ws: WebSocket | null = null;
+	#ws: WebSocket | undefined = undefined;
 	constructor(url: string) {
 		super();
 		this.#url = url;
@@ -108,7 +108,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	close() {
 		if (this.#ws) {
 			this.#ws.close();
-			this.#ws = null;
+			this.#ws = undefined;
 		}
 		$connectionState.set("closed");
 	}

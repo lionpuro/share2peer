@@ -17,14 +17,14 @@ export class SessionManager {
 	constructor(server: SignalingServer) {
 		this.#server = server;
 		this.#server.addEventListener("close", () => {
-			$session.set(null);
+			$session.set(undefined);
 			this.state = "idle";
 		});
 		this.#server.addEventListener("session-info", (e) => {
 			$session.set(e.detail);
 		});
 		this.#server.addEventListener("session-left", () => {
-			$session.set(null);
+			$session.set(undefined);
 			this.state = "idle";
 			removeConnections();
 		});

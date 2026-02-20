@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
-import { cn, toTitleCase } from "#/lib/helper";
+import { toTitleCase } from "#/lib/helper";
 import { createFileMetadata } from "#/lib/file";
 import { $peers, type PeerState } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
@@ -187,18 +187,6 @@ function UploadView() {
 						))}
 					</FileList>
 					<div className="flex gap-2 max-sm:flex-col">
-						<span
-							className={cn(
-								"flex items-center before:mr-1.5 before:text-xs before:content-['●']",
-								transferring
-									? "text-green-600/90"
-									: "text-muted-foreground before:text-neutral-400",
-							)}
-						>
-							{transferring
-								? "Transferring"
-								: "Waiting for a peer to start download"}
-						</span>
 						<Button
 							variant="secondary"
 							size="sm"

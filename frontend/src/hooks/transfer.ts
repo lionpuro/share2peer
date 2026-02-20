@@ -5,8 +5,7 @@ import {
 	removeTransfer,
 	type Transfer,
 } from "#/stores/transfer";
-import { broadcast, findConnection } from "#/lib/webrtc";
-import { startDownload } from "#/lib/webrtc/transfer";
+import { broadcast, findConnection, startDownload } from "#/lib/webrtc";
 import { $peers } from "#/stores/peer";
 import { $uploads, setUploads } from "#/stores/file";
 

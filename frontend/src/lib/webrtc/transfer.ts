@@ -1,9 +1,13 @@
 import { nanoid } from "nanoid";
-import { ChunkReader, type FileMetadata } from "#/lib/file";
+import {
+	ChunkReader,
+	createDownloadStream,
+	type DownloadStream,
+	type FileMetadata,
+} from "#/lib/file";
 import { sendPacket, setupDataChannel } from "./datachannel";
 import { decodeChunk, encodeChunk } from "./protocol";
 import type { PeerConnection } from "./connection";
-import { createDownloadStream, type DownloadStream } from "#/lib/file/download";
 import {
 	addTransfer,
 	findTransfer,

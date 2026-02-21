@@ -104,7 +104,7 @@ function Component() {
 				</div>
 			</div>
 			<Main>
-				<div className="mb-6 flex gap-3 sm:mb-8">
+				<div className="mb-6 flex gap-3">
 					<input
 						readOnly={true}
 						value={sessionURL}
@@ -122,10 +122,7 @@ function Component() {
 					</Button>
 				</div>
 				<div className="flex flex-col gap-6">
-					<div className="flex flex-col gap-2">
-						<Heading order={2} size="sm">
-							Users
-						</Heading>
+					<div className="mb-4 flex flex-col gap-2">
 						<ul>
 							<li key={identity.id} className="flex items-center gap-2">
 								<DeviceIcon
@@ -142,7 +139,10 @@ function Component() {
 										width={16}
 										height={16}
 									/>
-									<p>{u.display_name}</p>
+									<p>
+										{u.display_name}{" "}
+										<span className="max-sm:hidden">({u.device_name})</span>
+									</p>
 									<span className="ml-auto text-sm font-medium text-muted-foreground">
 										{u.connectionState}
 									</span>
@@ -240,7 +240,7 @@ function UploadView() {
 				</>
 			) : (
 				<>
-					<Heading order={2} size="sm" className="mt-8">
+					<Heading order={2} size="sm">
 						Share files
 					</Heading>
 					<FileInput
@@ -276,13 +276,13 @@ function DownloadView({
 	const loading = !host || host.files === undefined;
 
 	if (loading) {
-		return null;
+		return <Loader />;
 	}
 	return (
 		<div className="flex flex-col gap-4">
 			{files.length === 0 ? (
-				<span className="mt-4 text-center text-muted-foreground">
-					Waiting for a peer to share files
+				<span className="text-center text-muted-foreground">
+					Waiting for files
 				</span>
 			) : (
 				<>
@@ -302,7 +302,7 @@ function DownloadView({
 						<Button
 							variant="primary"
 							size="sm"
-							className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
+							className="gap-1.5 sm:ml-auto sm:pl-3"
 							onClick={start}
 						>
 							<IconDownload />
@@ -312,7 +312,7 @@ function DownloadView({
 						<Button
 							variant="secondary"
 							size="sm"
-							className="mt-2 gap-1.5 sm:ml-auto sm:pl-3"
+							className="gap-1.5 sm:ml-auto sm:pl-3"
 							onClick={stop}
 						>
 							<IconX />

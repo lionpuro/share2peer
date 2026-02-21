@@ -15,7 +15,7 @@ export function FileList({
 	return (
 		<ul
 			className={cn(
-				"flex flex-col gap-[2px] overflow-hidden rounded-xl",
+				"flex flex-col gap-px overflow-hidden rounded-xl border bg-neutral-200",
 				className,
 			)}
 		>
@@ -42,7 +42,7 @@ export function FileListItem({
 		<li
 			{...props}
 			className={cn(
-				"flex min-h-17 items-center gap-2 bg-card px-4 py-3",
+				"flex min-h-17 items-center gap-2 bg-background px-4 py-3",
 				className,
 			)}
 		>

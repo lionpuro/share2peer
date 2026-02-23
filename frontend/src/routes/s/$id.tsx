@@ -2,29 +2,21 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { toTitleCase } from "#/lib/helper";
-import { createFileMetadata } from "#/lib/file";
-import { $peers, type PeerState } from "#/stores/peer";
+import { $identity } from "#/stores/signaling";
+import { $peers } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
-import { useUploads, useDownloads } from "#/hooks/transfer";
 import { Main } from "#/components/ui/main";
-import { Heading } from "#/components/ui/heading";
 import { Button } from "#/components/ui/button";
+import { Loader } from "#/components/ui/loader";
 import { ErrorComponent } from "#/components/error";
-import { FileList, FileListItem } from "#/components/file-list";
 import {
 	DeviceIcon,
 	IconArrowLeft,
-	IconDownload,
 	IconLink,
 	IconShare,
-	IconUpload,
-	IconX,
 } from "#/components/icons";
-import { Loader } from "#/components/ui/loader";
-import { FileInput } from "#/components/ui/file-input";
-import { $identity } from "#/stores/signaling";
-import type { Session } from "#/lib/schemas";
-import { Progress } from "#/components/ui/progress";
+import { Sender } from "#/components/sender";
+import { Receiver } from "#/components/receiver";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -152,175 +144,12 @@ function Component() {
 					</div>
 
 					{identity.id === session.host ? (
-						<UploadView />
+						<Sender />
 					) : (
-						<DownloadView session={session} peers={peers} />
+						<Receiver session={session} peers={peers} />
 					)}
 				</div>
 			</Main>
 		</>
-	);
-}
-
-function UploadView() {
-	const { files, start, stop, transferring, totalSize, currentSize } =
-		useUploads();
-	const progress = Math.round(currentSize / totalSize);
-	const [selectedFiles, setSelectedFiles] = useState<typeof files>([]);
-	const handleDrop = (files: File[]) => {
-		const uploads = files.map((file) => {
-			const meta = createFileMetadata(file);
-			return { ...meta, file: file };
-		});
-		setSelectedFiles(uploads);
-	};
-
-	return (
-		<div className="flex flex-col gap-4">
-			{files.length > 0 ? (
-				<>
-					<Heading order={2} size="sm">
-						Shared files
-					</Heading>
-					<FileList>
-						{files.map((f) => (
-							<FileListItem key={"up" + f.id} file={f} />
-						))}
-					</FileList>
-					<div className="flex gap-2 max-sm:flex-col">
-						<Button
-							variant="secondary"
-							size="sm"
-							className="max-sm:mt-4 sm:ml-auto"
-							onClick={stop}
-						>
-							Stop sharing
-						</Button>
-					</div>
-					{transferring ? (
-						<div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-							<span className="w-full text-sm font-medium text-muted-foreground">
-								Transfer progress
-							</span>
-							<Progress value={progress} max={100} />
-							<span className="text-sm font-medium text-muted-foreground">
-								{progress}%
-							</span>
-						</div>
-					) : null}
-				</>
-			) : selectedFiles.length > 0 ? (
-				<>
-					<Heading order={2} size="sm">
-						Selected files ({selectedFiles.length})
-					</Heading>
-					<FileList>
-						{selectedFiles.map((f) => (
-							<FileListItem key={"up" + f.id} file={f} />
-						))}
-					</FileList>
-					<div className="flex gap-2 sm:ml-auto sm:w-48">
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={() => setSelectedFiles([])}
-							className="basis-1/2"
-						>
-							Cancel
-						</Button>
-						<Button
-							variant="primary"
-							size="sm"
-							onClick={() => start(selectedFiles)}
-							className="basis-1/2"
-						>
-							Share
-						</Button>
-					</div>
-				</>
-			) : (
-				<>
-					<Heading order={2} size="sm">
-						Share files
-					</Heading>
-					<FileInput
-						className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 sm:py-16"
-						activeClassName="sm:border-primary/80 sm:bg-primary/10"
-						multiple={true}
-						onFileInput={handleDrop}
-					>
-						<IconUpload className="pointer-events-none size-9 text-neutral-400" />
-						<span className="pointer-events-none mt-1 text-center text-sm font-medium text-muted-foreground">
-							Click to browse or drop files here
-						</span>
-						<span className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker">
-							Browse files
-						</span>
-					</FileInput>
-				</>
-			)}
-		</div>
-	);
-}
-
-function DownloadView({
-	session,
-	peers,
-}: {
-	session: Session;
-	peers: Record<string, PeerState>;
-}) {
-	const { files, downloads, transfersByFile, stop, start, transferring } =
-		useDownloads();
-	const host = session.host ? peers[session.host] : undefined;
-	const loading = !host || host.files === undefined;
-
-	if (loading) {
-		return <Loader />;
-	}
-	return (
-		<div className="flex flex-col gap-4">
-			{files.length === 0 ? (
-				<span className="text-center text-muted-foreground">
-					Waiting for files
-				</span>
-			) : (
-				<>
-					<Heading order={2} size="sm">
-						Files
-					</Heading>
-					<FileList>
-						{files.map((f) => (
-							<FileListItem
-								key={"file" + f.id}
-								file={f}
-								transfer={transfersByFile[f.id]?.[0]}
-							/>
-						))}
-					</FileList>
-					{downloads.length === 0 ? (
-						<Button
-							variant="primary"
-							size="sm"
-							className="gap-1.5 sm:ml-auto sm:pl-3"
-							onClick={start}
-						>
-							<IconDownload />
-							Download ({files.length})
-						</Button>
-					) : transferring ? (
-						<Button
-							variant="secondary"
-							size="sm"
-							className="gap-1.5 sm:ml-auto sm:pl-3"
-							onClick={stop}
-						>
-							<IconX />
-							Cancel download
-						</Button>
-					) : null}
-				</>
-			)}
-		</div>
 	);
 }

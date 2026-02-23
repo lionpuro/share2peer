@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { toTitleCase } from "#/lib/helper";
-import { $identity } from "#/stores/signaling";
+import { $connectionState, $identity } from "#/stores/signaling";
 import { $peers } from "#/stores/peer";
 import { useSession } from "#/hooks/use-session";
 import { Main } from "#/components/ui/main";
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/s/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
+	const connectionState = useStore($connectionState);
 	const identity = useStore($identity);
 	const { session, error } = useSession(id);
 	const peers = useStore($peers);
@@ -42,7 +43,7 @@ function Component() {
 			</ErrorComponent>
 		);
 	}
-	if (!session || !identity) {
+	if (connectionState === "connecting" || !session || !identity) {
 		return <Loader />;
 	}
 
@@ -67,6 +68,10 @@ function Component() {
 	}
 
 	const users = Object.values(peers);
+
+	if (connectionState !== "open") {
+		return "Failed to connect";
+	}
 
 	return (
 		<>

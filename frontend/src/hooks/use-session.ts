@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { server } from "#/lib/server";
 import { SessionManager } from "#/lib/session";
-import { $connectionState, $session } from "#/stores/signaling";
+import { $session } from "#/stores/signaling";
 
 const manager = new SessionManager(server);
 
@@ -12,11 +12,9 @@ const create = () => manager.create();
 
 export function useSession(id?: string) {
 	const session = useStore($session);
-	const connectionState = useStore($connectionState);
 	const [error, setError] = useState<string | undefined>();
 
 	useEffect(() => {
-		if (connectionState !== "open") return;
 		if (!id) return;
 		if (session && session.id === id) {
 			return;
@@ -34,7 +32,7 @@ export function useSession(id?: string) {
 					return;
 				}
 			});
-	}, [connectionState, id, session]);
+	}, [id, session]);
 
 	return {
 		session,

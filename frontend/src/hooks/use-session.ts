@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { server } from "#/lib/server";
 import { SessionManager } from "#/lib/session";
-import { useServer } from "./use-server";
-import { $session } from "#/stores/signaling";
+import { $connectionState, $session } from "#/stores/signaling";
 
 const manager = new SessionManager(server);
 
@@ -13,7 +12,7 @@ const create = () => manager.create();
 
 export function useSession(id?: string) {
 	const session = useStore($session);
-	const { connectionState } = useServer();
+	const connectionState = useStore($connectionState);
 	const [error, setError] = useState<string | undefined>();
 
 	useEffect(() => {

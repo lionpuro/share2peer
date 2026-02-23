@@ -10,6 +10,7 @@
 	"scripts": {
 		"build": "npm run build --workspaces --if-present",
 		"build:frontend": "npm run build -w frontend",
+		"dev": "wgo -cd backend -debounce 100ms -xdir frontend go run . :: wgo -xdir . npm run dev -w frontend",
 		"lint": "npm run lint --workspaces --if-present",
 		"format": "prettier --write . && gofmt -l -s -w backend"
 	},

@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ["/app/entry.sh"]
+    command: ["/app/entrypoint.sh"]
     stdin_open: true
     tty: true
     network_mode: "host"

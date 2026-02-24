@@ -72,15 +72,15 @@ function Component() {
 						</span>
 					</div>
 					<div className="flex w-full flex-col gap-4 rounded-xl border p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm">
-						<span className="text-sm">Create a session to send files</span>
+						<span className="text-sm">Create a room to send files</span>
 						<Button onClick={handleCreate} className="gap-1">
 							<IconPlus />
-							New Session
+							New Room
 						</Button>
 						<span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground/70 before:h-0.5 before:flex-1 before:bg-neutral-200 before:content-['_'] after:h-0.5 after:flex-1 after:bg-neutral-200 after:content-['_']">
 							OR
 						</span>
-						<span className="text-sm">Enter a code to join a session</span>
+						<span className="text-sm">Enter a code to join a room</span>
 						<div className="flex items-center gap-3">
 							<div className="relative flex flex-1">
 								<input

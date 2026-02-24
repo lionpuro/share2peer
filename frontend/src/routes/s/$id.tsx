@@ -62,7 +62,7 @@ function Component() {
 		if (!session) return;
 		navigator.share({
 			title: "Share files",
-			text: `Join my session ${session.id} on WebSend to share files`,
+			text: `Join my room ${session.id} on WebSend to share files`,
 			url: sessionURL,
 		});
 	}
@@ -86,7 +86,7 @@ function Component() {
 					</Link>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="font-semibold text-muted-foreground">Session:</span>
+					<span className="font-semibold text-muted-foreground">Room:</span>
 					<span className="font-bold">{session.id}</span>
 				</div>
 				<div className="flex">

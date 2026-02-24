@@ -10,10 +10,7 @@ export function Main({
 }) {
 	return (
 		<main
-			className={cn(
-				"mx-auto flex w-full max-w-screen-sm grow flex-col p-6 sm:p-8",
-				className,
-			)}
+			className={cn("mx-auto flex w-full grow flex-col p-6 sm:p-8", className)}
 		>
 			{children}
 		</main>

@@ -100,7 +100,7 @@ function Component() {
 					)}
 				</div>
 			</div>
-			<Main>
+			<Main className="max-w-screen-sm">
 				<div className="mb-6 flex gap-3">
 					<input
 						readOnly={true}

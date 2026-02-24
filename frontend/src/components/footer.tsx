@@ -3,7 +3,7 @@ import { IconAccessPoint, IconGithub } from "./icons";
 
 export function Footer() {
 	return (
-		<footer className="flex border-t border-secondary bg-card py-6">
+		<footer className="mt-8 flex border-t border-secondary bg-card py-6">
 			<div className="mx-auto flex w-full max-w-screen-xl px-6 sm:px-8">
 				<Link to="/" className="flex items-center gap-1 font-medium">
 					<IconAccessPoint className="size-6 text-primary" />

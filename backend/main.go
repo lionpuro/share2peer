@@ -10,14 +10,12 @@ import (
 )
 
 func main() {
-	wh := &WebSocketHandler{
-		sessions: NewSessionStore(),
-	}
+	wh := NewWebSocketHandler(NewSessionStore())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		(w).Header().Set("Access-Control-Allow-Origin", "*")
-		conn, err := upgrader.Upgrade(w, r, nil)
+		conn, err := wh.upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			if !strings.Contains(err.Error(), "the client is not using the websocket protocol") {
 				log.Printf("upgrade request: %v", err)

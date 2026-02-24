@@ -10,14 +10,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
 type WebSocketHandler struct {
 	sessions *SessionStore
+	upgrader websocket.Upgrader
+}
+
+func NewWebSocketHandler(ss *SessionStore) *WebSocketHandler {
+	return &WebSocketHandler{
+		sessions: ss,
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	}
 }
 
 func (wh *WebSocketHandler) serve(conn *websocket.Conn, header http.Header) error {

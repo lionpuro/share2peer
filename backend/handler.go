@@ -10,13 +10,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WebSocketHandler struct {
+type SignalHandler struct {
 	sessions *SessionStore
 	upgrader websocket.Upgrader
 }
 
-func NewWebSocketHandler(ss *SessionStore) *WebSocketHandler {
-	return &WebSocketHandler{
+func NewSignalHandler(ss *SessionStore) *SignalHandler {
+	return &SignalHandler{
 		sessions: ss,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -26,12 +26,12 @@ func NewWebSocketHandler(ss *SessionStore) *WebSocketHandler {
 	}
 }
 
-func (wh *WebSocketHandler) serve(conn *websocket.Conn, header http.Header) error {
+func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	ci := extractClientInfo(header.Get("User-Agent"))
 	c := createClient(conn, ci.deviceType, ci.deviceName)
 	log.Printf("connect client: %s", c.ID)
 	defer func() {
-		if err := wh.disconnect(c); err != nil {
+		if err := sh.disconnect(c); err != nil {
 			log.Printf("disconnect: %v", err)
 		}
 	}()
@@ -58,13 +58,13 @@ func (wh *WebSocketHandler) serve(conn *websocket.Conn, header http.Header) erro
 			continue
 		}
 
-		if err := wh.handleMessage(c, message); err != nil {
+		if err := sh.handleMessage(c, message); err != nil {
 			return err
 		}
 	}
 }
 
-func (wh *WebSocketHandler) disconnect(c *Client) error {
+func (sh *SignalHandler) disconnect(c *Client) error {
 	defer func() {
 		if err := c.conn.Close(); err != nil {
 			log.Printf("close connection: %v", err)
@@ -76,7 +76,7 @@ func (wh *WebSocketHandler) disconnect(c *Client) error {
 		return nil
 	}
 
-	sess, err := wh.sessions.Get(c.sessionID)
+	sess, err := sh.sessions.Get(c.sessionID)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (wh *WebSocketHandler) disconnect(c *Client) error {
 				log.Printf("write json: %v", err)
 			}
 		})
-		wh.sessions.Delete(sess.ID)
+		sh.sessions.Delete(sess.ID)
 		return nil
 	}
 
@@ -101,14 +101,14 @@ func (wh *WebSocketHandler) disconnect(c *Client) error {
 		return nil
 	}
 
-	if err := wh.broadcast(c.conn, Message{
+	if err := sh.broadcast(c.conn, Message{
 		Type:    MessageClientLeft,
 		Payload: c,
 	}, sess.ID); err != nil {
 		return fmt.Errorf("broadcast client-left: %v", err)
 	}
 
-	err = wh.broadcast(c.conn, Message{
+	err = sh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,
 		Payload: sess,
 	}, sess.ID)
@@ -119,8 +119,8 @@ func (wh *WebSocketHandler) disconnect(c *Client) error {
 	return nil
 }
 
-func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, sessionID string) error {
-	sess, err := wh.sessions.Get(sessionID)
+func (sh *SignalHandler) broadcast(sender *websocket.Conn, json interface{}, sessionID string) error {
+	sess, err := sh.sessions.Get(sessionID)
 	if err != nil {
 		return err
 	}
@@ -137,23 +137,23 @@ func (wh *WebSocketHandler) broadcast(sender *websocket.Conn, json interface{}, 
 	return nil
 }
 
-func (wh *WebSocketHandler) handleMessage(c *Client, msg Message) error {
+func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	switch msg.Type {
 	case MessageRequestSession:
-		return wh.handleRequestSession(c)
+		return sh.handleRequestSession(c)
 	case MessageJoinSession:
-		return wh.handleJoinSession(c, msg)
+		return sh.handleJoinSession(c, msg)
 	case MessageLeaveSession:
-		return wh.handleLeaveSession(c, msg)
+		return sh.handleLeaveSession(c, msg)
 	case MessageAnswer, MessageOffer, MessageICECandidate:
-		return wh.handleWebRTCMessage(msg)
+		return sh.handleWebRTCMessage(msg)
 	default:
 		return ErrUnknownMessageType
 	}
 }
 
-func (wh *WebSocketHandler) handleRequestSession(c *Client) error {
-	sess, err := wh.sessions.Create(c.ID)
+func (sh *SignalHandler) handleRequestSession(c *Client) error {
+	sess, err := sh.sessions.Create(c.ID)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (wh *WebSocketHandler) handleRequestSession(c *Client) error {
 	})
 }
 
-func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
+func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
 	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
@@ -174,7 +174,7 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		return err
 	}
 
-	sess, err := wh.sessions.Get(payload.SessionID)
+	sess, err := sh.sessions.Get(payload.SessionID)
 	if err != nil {
 		if errors.Is(err, ErrSessionNotFound) {
 			return c.send(Message{
@@ -189,10 +189,10 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 
 	// leave previous session in case the client hasn't done it already
 	if c.sessionID != "" {
-		sess, err := wh.sessions.Get(c.sessionID)
+		sess, err := sh.sessions.Get(c.sessionID)
 		sess.RemoveClient(c)
 		if err == nil {
-			err = wh.broadcast(c.conn, Message{
+			err = sh.broadcast(c.conn, Message{
 				Type:    MessageClientLeft,
 				Payload: c,
 			}, sess.ID)
@@ -214,20 +214,20 @@ func (wh *WebSocketHandler) handleJoinSession(c *Client, msg Message) error {
 		return err
 	}
 
-	if err := wh.broadcast(c.conn, Message{
+	if err := sh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,
 		Payload: sess,
 	}, sess.ID); err != nil {
 		return err
 	}
 
-	return wh.broadcast(c.conn, Message{
+	return sh.broadcast(c.conn, Message{
 		Type:    MessageClientJoined,
 		Payload: c,
 	}, sess.ID)
 }
 
-func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
+func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
 	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
@@ -237,7 +237,7 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 		return err
 	}
 
-	sess, err := wh.sessions.Get(payload.SessionID)
+	sess, err := sh.sessions.Get(payload.SessionID)
 	if err != nil {
 		if errors.Is(err, ErrSessionNotFound) {
 			return c.send(Message{
@@ -269,24 +269,24 @@ func (wh *WebSocketHandler) handleLeaveSession(c *Client, msg Message) error {
 				log.Printf("write json: %v", err)
 			}
 		})
-		wh.sessions.Delete(sess.ID)
+		sh.sessions.Delete(sess.ID)
 		return nil
 	}
 
-	if err := wh.broadcast(c.conn, Message{
+	if err := sh.broadcast(c.conn, Message{
 		Type:    MessageSessionInfo,
 		Payload: sess,
 	}, sess.ID); err != nil {
 		return err
 	}
 
-	return wh.broadcast(c.conn, Message{
+	return sh.broadcast(c.conn, Message{
 		Type:    MessageClientLeft,
 		Payload: c,
 	}, sess.ID)
 }
 
-func (wh *WebSocketHandler) handleWebRTCMessage(msg Message) error {
+func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 	var info RTCMessageInfo
 	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
@@ -296,7 +296,7 @@ func (wh *WebSocketHandler) handleWebRTCMessage(msg Message) error {
 		return err
 	}
 
-	sess, err := wh.sessions.Get(info.SessionID)
+	sess, err := sh.sessions.Get(info.SessionID)
 	if err != nil {
 		return err
 	}

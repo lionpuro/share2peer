@@ -1,6 +1,6 @@
 import { $session } from "#/stores/signaling";
-import type { Session } from "./schemas";
-import type { SignalingServer, ServerEventMap } from "./server";
+import { parseBody, type Session } from "./schemas";
+import type { SignalingServer } from "./server";
 import {
 	createPeerConnection,
 	findConnection,
@@ -40,110 +40,67 @@ export class SessionManager {
 		});
 	}
 
-	join(id: string): Promise<Session> {
-		return new Promise((resolve, reject) => {
-			if (this.state === "joining") {
-				reject(new Error("already joining a session"));
-				return;
-			}
-
-			const timeout = setTimeout(() => {
-				this.#server.removeEventListener("error", onError);
-				this.#server.removeEventListener("session-not-found", onNotFound);
-				this.#server.removeEventListener("session-joined", onJoin);
-				this.state = "failed";
-				reject(new Error("request timed out"));
-			}, 10 * 1000);
-
-			const onNotFound = (e: ServerEventMap["session-not-found"]) => {
-				if (e.detail.session_id === id) {
-					this.#server.removeEventListener("error", onError);
-					this.#server.removeEventListener("session-not-found", onNotFound);
-					this.#server.removeEventListener("session-joined", onJoin);
-					clearTimeout(timeout);
-					this.state = "failed";
-					reject(new Error("Session not found"));
-				}
-			};
-			this.#server.addEventListener("session-not-found", onNotFound);
-
-			const onError = (e: ServerEventMap["error"]) => {
-				this.#server.removeEventListener("error", onError);
-				this.#server.removeEventListener("session-not-found", onNotFound);
-				this.#server.removeEventListener("session-joined", onJoin);
-				clearTimeout(timeout);
-				this.state = "failed";
-				const err = e.detail;
-				reject(new Error(err.message));
-			};
-			this.#server.addEventListener("error", onError);
-
-			const onJoin = (e: ServerEventMap["session-joined"]) => {
-				const session = e.detail;
-				if (session.id !== id) return;
-				this.#server.removeEventListener("error", onError);
-				this.#server.removeEventListener("session-not-found", onNotFound);
-				this.#server.removeEventListener("session-joined", onJoin);
-				clearTimeout(timeout);
-				this.state = "active";
-				$session.set(session);
-				resolve(session);
-			};
-			this.#server.addEventListener("session-joined", onJoin);
-
-			this.state = "joining";
-			this.#server.send({
-				type: "join-session",
-				payload: { session_id: id },
-			});
+	async join(id: string): Promise<Session> {
+		if (this.state === "joining" || this.state === "active") {
+			throw new Error("already joining a session");
+		}
+		this.state = "joining";
+		const response = await this.#server.sendRequest({
+			type: "join-session",
+			payload: { session_id: id },
 		});
+		const body = parseBody(response.body);
+		switch (body.type) {
+			case "session-joined":
+				this.state = "active";
+				$session.set(body.payload);
+				return body.payload;
+			case "error":
+				this.state = "failed";
+				throw new Error(
+					body.payload.code === "NOT_FOUND"
+						? "Room not found"
+						: body.payload.message,
+				);
+			default:
+				this.state = "failed";
+				throw new Error("Failed to join room");
+		}
 	}
 
-	leave() {
-		this.state = "idle";
+	async leave() {
 		const session = $session.get();
 		if (!session) return;
-		this.#server.send({
-			type: "leave-session",
-			payload: { session_id: session.id },
-		});
+		await this.#server
+			.sendRequest({
+				type: "leave-session",
+				payload: { session_id: session.id },
+			})
+			.catch(console.error);
+		this.state = "idle";
+		$session.set(undefined);
+		removeConnections();
 	}
 
-	create(): Promise<string> {
+	async create(): Promise<string> {
 		this.state = "idle";
 		const session = $session.get();
 		if (session) {
-			this.leave();
+			await this.leave();
 		}
-		return new Promise((resolve, reject) => {
-			const onTimeout = () => {
-				this.#server.removeEventListener("error", onError);
-				this.#server.removeEventListener("session-created", onCreate);
-				this.state = "idle";
-				reject(new Error("request timed out"));
-			};
-			const timeout = setTimeout(onTimeout, 10 * 1000);
-
-			const onError = (e: ServerEventMap["error"]) => {
-				this.#server.removeEventListener("error", onError);
-				this.#server.removeEventListener("session-created", onCreate);
-				clearTimeout(timeout);
-				this.state = "failed";
-				const err = e.detail;
-				reject(new Error(err.message));
-			};
-			this.#server.addEventListener("error", onError);
-
-			const onCreate = (e: ServerEventMap["session-created"]) => {
-				this.#server.removeEventListener("session-created", onCreate);
-				clearTimeout(timeout);
-				const session = e.detail;
-				resolve(session.id);
-			};
-
-			this.#server.addEventListener("session-created", onCreate);
-
-			this.#server.send({ type: "request-session" });
+		const response = await this.#server.sendRequest({
+			type: "request-session",
 		});
+		const body = parseBody(response.body);
+		switch (body.type) {
+			case "session-created":
+				return body.payload.id;
+			case "error":
+				this.state = "failed";
+				throw new Error(body.payload.message);
+			default:
+				this.state = "failed";
+				throw new Error("Failed to create room");
+		}
 	}
 }

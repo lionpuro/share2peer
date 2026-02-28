@@ -1,9 +1,4 @@
-import type {
-	AnswerMessage,
-	Client,
-	ICECandidateMessage,
-	OfferMessage,
-} from "#/lib/schemas";
+import type { Client, IncomingMessageBody } from "#/lib/schemas";
 import type { SignalingServer } from "#/lib/server";
 import { $identity, $session } from "#/stores/signaling";
 import { createConnection, findConnection } from "./connection";
@@ -49,7 +44,10 @@ export async function createPeerConnection(
 	}
 }
 
-export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
+export async function handleOffer(
+	server: SignalingServer,
+	msg: Extract<IncomingMessageBody, { type: "offer" }>,
+) {
 	const client = $session
 		.get()
 		?.clients?.find((c) => c.id === msg.payload.from);
@@ -82,7 +80,9 @@ export async function handleOffer(server: SignalingServer, msg: OfferMessage) {
 	});
 }
 
-export async function handleAnswer(msg: AnswerMessage) {
+export async function handleAnswer(
+	msg: Extract<IncomingMessageBody, { type: "answer" }>,
+) {
 	const conn = findConnection(msg.payload.from);
 	if (!conn) {
 		console.error("handle answer: connection not found");
@@ -91,7 +91,9 @@ export async function handleAnswer(msg: AnswerMessage) {
 	await conn.setRemoteDescription(msg.payload.answer);
 }
 
-export async function handleICECandidate(msg: ICECandidateMessage) {
+export async function handleICECandidate(
+	msg: Extract<IncomingMessageBody, { type: "ice-candidate" }>,
+) {
 	const conn = findConnection(msg.payload.from);
 	if (!conn) {
 		console.error("handle ice candidate: connection not found");

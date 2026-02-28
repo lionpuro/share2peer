@@ -37,9 +37,11 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	}()
 
 	if err := c.send(Message{
-		Type:    MessageIdentity,
-		Payload: c,
-	}); err != nil {
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalIdentity,
+			Payload: c,
+		}}); err != nil {
 		return err
 	}
 
@@ -86,9 +88,11 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 		sess.ForEachClient(func(client *Client) {
 			client.sessionID = ""
 			err := client.send(Message{
-				Type:    MessageSessionLeft,
-				Payload: sess,
-			})
+				Type: "message",
+				Body: MessageBody{
+					Type:    SignalSessionLeft,
+					Payload: sess,
+				}})
 			if err != nil {
 				log.Printf("write json: %v", err)
 			}
@@ -102,15 +106,20 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 	}
 
 	if err := sh.broadcast(c.conn, Message{
-		Type:    MessageClientLeft,
-		Payload: c,
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalClientLeft,
+			Payload: c,
+		},
 	}, sess.ID); err != nil {
 		return fmt.Errorf("broadcast client-left: %v", err)
 	}
 
-	err = sh.broadcast(c.conn, Message{
-		Type:    MessageSessionInfo,
-		Payload: sess,
+	err = sh.broadcast(c.conn, Message{Type: "message",
+		Body: MessageBody{
+			Type:    SignalSessionInfo,
+			Payload: sess,
+		},
 	}, sess.ID)
 	if err != nil {
 		return fmt.Errorf("broadcast session-info: %v", err)
@@ -119,7 +128,7 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 	return nil
 }
 
-func (sh *SignalHandler) broadcast(sender *websocket.Conn, json interface{}, sessionID string) error {
+func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, sessionID string) error {
 	sess, err := sh.sessions.Get(sessionID)
 	if err != nil {
 		return err
@@ -138,49 +147,68 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json interface{}, ses
 }
 
 func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
-	switch msg.Type {
-	case MessageRequestSession:
-		return sh.handleRequestSession(c)
-	case MessageJoinSession:
+	switch msg.Body.Type {
+	case SignalRequestSession:
+		return sh.handleRequestSession(c, msg)
+	case SignalJoinSession:
 		return sh.handleJoinSession(c, msg)
-	case MessageLeaveSession:
+	case SignalLeaveSession:
 		return sh.handleLeaveSession(c, msg)
-	case MessageAnswer, MessageOffer, MessageICECandidate:
+	case SignalAnswer, SignalOffer, SignalICECandidate:
 		return sh.handleWebRTCMessage(msg)
 	default:
 		return ErrUnknownMessageType
 	}
 }
 
-func (sh *SignalHandler) handleRequestSession(c *Client) error {
+func (sh *SignalHandler) handleRequestSession(c *Client, msg Message) error {
 	sess, err := sh.sessions.Create(c.ID)
 	if err != nil {
-		return err
+		return c.send(Message{
+			Transaction: msg.Transaction,
+			Type:        "response",
+			Body: MessageBody{
+				Type: SignalError,
+				Payload: ErrorPayload{
+					Code:    ErrCodeServerError,
+					Message: "Server error",
+				},
+			},
+		})
 	}
 
 	return c.send(Message{
-		Type:    MessageSessionCreated,
-		Payload: sess,
+		Transaction: msg.Transaction,
+		Type:        "response",
+		Body: MessageBody{
+			Type:    SignalSessionCreated,
+			Payload: sess,
+		},
 	})
 }
 
 func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
-	bytes, err := json.Marshal(msg.Payload)
+	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	sess, err := sh.sessions.Get(payload.SessionID)
 	if err != nil {
 		if errors.Is(err, ErrSessionNotFound) {
 			return c.send(Message{
-				Type: MessageSessionNotFound,
-				Payload: SessionIDPayload{
-					SessionID: payload.SessionID,
+				Transaction: msg.Transaction,
+				Type:        "response",
+				Body: MessageBody{
+					Type: SignalError,
+					Payload: ErrorPayload{
+						Code:    ErrCodeNotFound,
+						Message: "Session not found",
+					},
 				},
 			})
 		}
@@ -193,9 +221,11 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 		sess.RemoveClient(c)
 		if err == nil {
 			err = sh.broadcast(c.conn, Message{
-				Type:    MessageClientLeft,
-				Payload: c,
-			}, sess.ID)
+				Type: "message",
+				Body: MessageBody{
+					Type:    SignalClientLeft,
+					Payload: c,
+				}}, sess.ID)
 			if err != nil {
 				log.Printf("join session: failed to broadcast to previous session: %v", err)
 			}
@@ -203,47 +233,69 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 	}
 
 	if err := sess.AddClient(c); err != nil {
-		return err
+		return c.send(Message{
+			Transaction: msg.Transaction,
+			Type:        "response",
+			Body: MessageBody{
+				Type: SignalError,
+				Payload: ErrorPayload{
+					Code:    ErrCodeServerError,
+					Message: "Server error",
+				},
+			}})
 	}
 
-	err = c.send(Message{
-		Type:    MessageSessionJoined,
-		Payload: sess,
-	})
-	if err != nil {
+	if err := c.send(Message{
+		Transaction: msg.Transaction,
+		Type:        "response",
+		Body: MessageBody{
+			Type:    SignalSessionJoined,
+			Payload: sess,
+		}}); err != nil {
 		return err
 	}
 
 	if err := sh.broadcast(c.conn, Message{
-		Type:    MessageSessionInfo,
-		Payload: sess,
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalSessionInfo,
+			Payload: sess,
+		},
 	}, sess.ID); err != nil {
 		return err
 	}
 
 	return sh.broadcast(c.conn, Message{
-		Type:    MessageClientJoined,
-		Payload: c,
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalClientJoined,
+			Payload: c,
+		},
 	}, sess.ID)
 }
 
 func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
-	bytes, err := json.Marshal(msg.Payload)
+	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	sess, err := sh.sessions.Get(payload.SessionID)
 	if err != nil {
 		if errors.Is(err, ErrSessionNotFound) {
 			return c.send(Message{
-				Type: MessageSessionNotFound,
-				Payload: SessionIDPayload{
-					SessionID: payload.SessionID,
+				Transaction: msg.Transaction,
+				Type:        "response",
+				Body: MessageBody{
+					Type: SignalError,
+					Payload: ErrorPayload{
+						Code:    ErrCodeNotFound,
+						Message: "Session not found",
+					},
 				},
 			})
 		}
@@ -252,8 +304,12 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 
 	sess.RemoveClient(c)
 	if err := c.send(Message{
-		Type:    MessageSessionLeft,
-		Payload: sess,
+		Transaction: msg.Transaction,
+		Type:        "response",
+		Body: MessageBody{
+			Type:    SignalSessionLeft,
+			Payload: sess,
+		},
 	}); err != nil {
 		return err
 	}
@@ -262,8 +318,11 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 		sess.ForEachClient(func(client *Client) {
 			client.sessionID = ""
 			err := client.send(Message{
-				Type:    MessageSessionLeft,
-				Payload: sess,
+				Type: "message",
+				Body: MessageBody{
+					Type:    SignalSessionLeft,
+					Payload: sess,
+				},
 			})
 			if err != nil {
 				log.Printf("write json: %v", err)
@@ -274,21 +333,27 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 	}
 
 	if err := sh.broadcast(c.conn, Message{
-		Type:    MessageSessionInfo,
-		Payload: sess,
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalSessionInfo,
+			Payload: sess,
+		},
 	}, sess.ID); err != nil {
 		return err
 	}
 
 	return sh.broadcast(c.conn, Message{
-		Type:    MessageClientLeft,
-		Payload: c,
+		Type: "message",
+		Body: MessageBody{
+			Type:    SignalClientLeft,
+			Payload: c,
+		},
 	}, sess.ID)
 }
 
 func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 	var info RTCMessageInfo
-	bytes, err := json.Marshal(msg.Payload)
+	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
 		return err
 	}

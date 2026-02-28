@@ -10,4 +10,6 @@ var (
 
 const (
 	ErrCodeServerError = "SERVER_ERROR"
+	ErrCodeNotFound    = "NOT_FOUND"
+	ErrCodeBadRequest  = "BAD_REQUEST"
 )

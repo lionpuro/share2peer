@@ -1,16 +1,20 @@
 import { TypedEventTarget } from "typescript-event-target";
 import {
+	parseBody,
 	parseMessage,
+	RequestResponseMap,
+	type IncomingMessageBody,
+	type Message,
 	type OutgoingMessage,
-	type IncomingMessage,
-} from "#/lib/schemas";
+	type OutgoingMessageBody,
+} from "#/lib/schemas/signaling";
+import { $connectionState, $identity } from "#/stores/signaling";
 import {
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
 	removeConnections,
 } from "#/lib/webrtc";
-import { $connectionState, $identity } from "#/stores/signaling";
 
 declare global {
 	interface Window {
@@ -18,8 +22,19 @@ declare global {
 	}
 }
 
+type Transaction<Type extends keyof typeof RequestResponseMap> = {
+	action: Type;
+	resolve: (value: Message) => void;
+	reject: (reason?: unknown) => void;
+};
+
+type PendingTransaction =
+	| Transaction<"join-session">
+	| Transaction<"leave-session">
+	| Transaction<"request-session">;
+
 export type ServerEventMap = {
-	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;
+	[M in IncomingMessageBody as M["type"]]: CustomEvent<M["payload"]>;
 } & {
 	close: CustomEvent;
 };
@@ -29,6 +44,9 @@ type ServerEvent = ServerEventMap[keyof ServerEventMap];
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#url: string;
 	#ws: WebSocket | undefined = undefined;
+	#currentID: number = 0;
+	#transactions: Map<string, PendingTransaction> = new Map();
+
 	constructor(url: string) {
 		super();
 		this.#url = url;
@@ -63,45 +81,64 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			});
 			this.#ws.addEventListener("message", async (e) => {
 				try {
-					const data = JSON.parse(e.data) as unknown;
-					const message = parseMessage(data);
-					switch (message.type) {
+					const message = parseMessage(e.data);
+					if (message.transaction) {
+						const tx = this.#transactions.get(message.transaction);
+						if (!tx) return;
+						const body = parseBody(message.body);
+						switch (body.type) {
+							case RequestResponseMap[tx.action]:
+							case "error":
+								tx.resolve(message);
+								break;
+							default:
+								tx.reject(
+									new Error(
+										`received unexpected response "${message.type}" to request "${tx.action}"`,
+									),
+								);
+								break;
+						}
+						return;
+					}
+
+					const body = parseBody(message.body);
+					switch (body.type) {
 						case "error":
-							console.error(message.payload.code);
+							console.error(body.payload.code);
 							break;
 						case "identity":
-							$identity.set(message.payload);
+							$identity.set(body.payload);
 							break;
 						case "offer":
-							await handleOffer(this, message);
+							await handleOffer(this, body);
 							break;
 						case "answer":
-							await handleAnswer(message);
+							await handleAnswer(body);
 							break;
 						case "ice-candidate":
-							await handleICECandidate(message);
+							await handleICECandidate(body);
 							break;
 					}
 				} catch (err) {
 					console.error(err);
 				}
 			});
-			this.#ws.addEventListener("message", this.#onMessage.bind(this));
+			this.#ws.addEventListener("message", (e) => {
+				try {
+					const message = parseMessage(e.data);
+					if (message.transaction || message.type !== "message") return;
+					const body = parseBody(message.body);
+					this.#dispatchMessageEvent(body);
+				} catch (err) {
+					console.error(err);
+				}
+			});
 
 			return this.#ws;
 		} catch (err) {
 			$connectionState.set("error");
 			throw err;
-		}
-	}
-
-	#onMessage(e: MessageEvent) {
-		try {
-			const data = JSON.parse(e.data) as unknown;
-			const msg = parseMessage(data);
-			this.#dispatchMessageEvent(msg);
-		} catch (err) {
-			console.error(err);
 		}
 	}
 
@@ -113,16 +150,66 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		$connectionState.set("closed");
 	}
 
-	async send(msg: OutgoingMessage) {
+	async sendRequest<
+		Body extends Extract<
+			OutgoingMessageBody,
+			{ type: keyof typeof RequestResponseMap }
+		>,
+	>(body: Body): Promise<Message> {
+		const ws = await this.connect();
+
+		this.#currentID++;
+		const id = this.#currentID.toString();
+		const msg: OutgoingMessage = {
+			transaction: id,
+			type: "request",
+			body,
+		};
+
+		const tx: PendingTransaction = {
+			action: body.type,
+			resolve: () => {},
+			reject: () => {},
+		};
+
+		const timeout = setTimeout(() => {
+			const tx = this.#transactions.get(id);
+			if (!tx) return;
+			tx.reject(new Error("action timed out"));
+			this.#transactions.delete(id);
+		}, 8000);
+
+		const promise = new Promise<Message>((resolve, reject) => {
+			tx.resolve = (v) => {
+				clearTimeout(timeout);
+				resolve(v);
+			};
+			tx.reject = (v) => {
+				clearTimeout(timeout);
+				reject(v);
+			};
+		});
+
+		this.#transactions.set(id, tx);
+		ws.send(JSON.stringify(msg));
+
+		return promise;
+	}
+
+	async send(body: OutgoingMessageBody) {
+		const msg: OutgoingMessage = {
+			type: "message",
+			body,
+		};
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
 	}
 
-	#dispatchMessageEvent(msg: IncomingMessage) {
-		const event: ServerEvent = new CustomEvent(msg.type, {
-			detail: msg.payload,
+	#dispatchMessageEvent(body: IncomingMessageBody) {
+		const event: ServerEvent = new CustomEvent(body.type, {
+			detail: body.payload,
 		});
-		this.dispatchTypedEvent(msg.type, event);
+		this.dispatchTypedEvent(body.type, event);
 	}
 }
 

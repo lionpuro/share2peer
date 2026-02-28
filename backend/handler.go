@@ -191,10 +191,10 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	sess, err := sh.sessions.Get(payload.SessionID)
@@ -278,10 +278,10 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 	var payload SessionIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return err
+		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	sess, err := sh.sessions.Get(payload.SessionID)

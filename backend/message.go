@@ -43,3 +43,17 @@ type RTCMessageInfo struct {
 	From      string `json:"from"`
 	To        string `json:"to"`
 }
+
+func createErrorResponse(req Message, code, message string) Message {
+	return Message{
+		Transaction: req.Transaction,
+		Type:        "response",
+		Body: MessageBody{
+			Type: SignalError,
+			Payload: ErrorPayload{
+				Code:    code,
+				Message: message,
+			},
+		},
+	}
+}

@@ -8,3 +8,7 @@ export const SessionSchema = z.object({
 });
 
 export type Session = z.infer<typeof SessionSchema>;
+
+export const SessionIDSchema = z.object({
+	session_id: z.string(),
+});

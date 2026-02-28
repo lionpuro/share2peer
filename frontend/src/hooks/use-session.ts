@@ -16,22 +16,18 @@ export function useSession(id?: string) {
 
 	useEffect(() => {
 		if (!id) return;
-		if (session && session.id === id) {
-			return;
-		}
+		if (session && session.id === id) return;
 		if (manager.state === "active" || manager.state === "joining") {
 			return;
 		}
-		manager
-			.join(id)
-			.then((s) => s)
-			.catch((err) => {
-				console.error(err);
-				if (err instanceof Error) {
-					setError(err.message);
-					return;
-				}
-			});
+
+		manager.join(id).catch((err) => {
+			console.error(err);
+			if (err instanceof Error) {
+				setError(err.message);
+				return;
+			}
+		});
 	}, [id, session]);
 
 	return {

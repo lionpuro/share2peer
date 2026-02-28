@@ -88,7 +88,6 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 						const body = parseBody(message.body);
 						switch (body.type) {
 							case RequestResponseMap[tx.action]:
-							case "session-not-found":
 							case "error":
 								tx.resolve(message);
 								break;

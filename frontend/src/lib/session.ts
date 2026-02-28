@@ -55,12 +55,13 @@ export class SessionManager {
 				this.state = "active";
 				$session.set(body.payload);
 				return body.payload;
-			case "session-not-found":
-				this.state = "failed";
-				throw new Error("Room not found");
 			case "error":
 				this.state = "failed";
-				throw new Error(body.payload.message);
+				throw new Error(
+					body.payload.code === "NOT_FOUND"
+						? "Room not found"
+						: body.payload.message,
+				);
 			default:
 				this.state = "failed";
 				throw new Error("Failed to join room");

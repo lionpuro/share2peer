@@ -37,7 +37,6 @@ function body<T extends string, P extends z.ZodMiniType>(type: T, payload: P) {
 const ERROR = "error";
 const IDENTITY = "identity";
 const SESSION_INFO = "session-info";
-const SESSION_NOT_FOUND = "session-not-found";
 const CLIENT_JOINED = "client-joined";
 const CLIENT_LEFT = "client-left";
 const OFFER = "offer";
@@ -120,7 +119,6 @@ export const incomingBodySchemas = {
 	[ERROR]: body(ERROR, ErrorPayloadSchema),
 	[IDENTITY]: body(IDENTITY, ClientSchema),
 	[SESSION_INFO]: body(SESSION_INFO, SessionSchema),
-	[SESSION_NOT_FOUND]: body(SESSION_NOT_FOUND, SessionIDSchema),
 	[CLIENT_JOINED]: body(CLIENT_JOINED, ClientSchema),
 	[CLIENT_LEFT]: body(CLIENT_LEFT, ClientSchema),
 	[SESSION_CREATED]: body(SESSION_CREATED, SessionSchema),

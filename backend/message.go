@@ -1,22 +1,21 @@
 package main
 
 const (
-	SignalError           = "error"
-	SignalIdentity        = "identity"
-	SignalSessionNotFound = "session-not-found"
-	SignalSessionClosed   = "session-closed"
-	SignalSessionInfo     = "session-info"
-	SignalJoinSession     = "join-session"
-	SignalLeaveSession    = "leave-session"
-	SignalRequestSession  = "request-session"
-	SignalSessionCreated  = "session-created"
-	SignalSessionJoined   = "session-joined"
-	SignalSessionLeft     = "session-left"
-	SignalClientJoined    = "client-joined"
-	SignalClientLeft      = "client-left"
-	SignalOffer           = "offer"
-	SignalAnswer          = "answer"
-	SignalICECandidate    = "ice-candidate"
+	SignalError          = "error"
+	SignalIdentity       = "identity"
+	SignalSessionClosed  = "session-closed"
+	SignalSessionInfo    = "session-info"
+	SignalJoinSession    = "join-session"
+	SignalLeaveSession   = "leave-session"
+	SignalRequestSession = "request-session"
+	SignalSessionCreated = "session-created"
+	SignalSessionJoined  = "session-joined"
+	SignalSessionLeft    = "session-left"
+	SignalClientJoined   = "client-joined"
+	SignalClientLeft     = "client-left"
+	SignalOffer          = "offer"
+	SignalAnswer         = "answer"
+	SignalICECandidate   = "ice-candidate"
 )
 
 type Message struct {

@@ -204,9 +204,10 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 				Transaction: msg.Transaction,
 				Type:        "response",
 				Body: MessageBody{
-					Type: SignalSessionNotFound,
-					Payload: SessionIDPayload{
-						SessionID: payload.SessionID,
+					Type: SignalError,
+					Payload: ErrorPayload{
+						Code:    ErrCodeNotFound,
+						Message: "Session not found",
 					},
 				},
 			})
@@ -290,9 +291,10 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 				Transaction: msg.Transaction,
 				Type:        "response",
 				Body: MessageBody{
-					Type: SignalSessionNotFound,
-					Payload: SessionIDPayload{
-						SessionID: payload.SessionID,
+					Type: SignalError,
+					Payload: ErrorPayload{
+						Code:    ErrCodeNotFound,
+						Message: "Session not found",
 					},
 				},
 			})

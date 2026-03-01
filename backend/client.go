@@ -13,7 +13,7 @@ type Client struct {
 	DisplayName string          `json:"display_name"`
 	DeviceType  string          `json:"device_type"`
 	DeviceName  string          `json:"device_name"`
-	sessionID   string          `json:"-"`
+	roomID      string          `json:"-"`
 	conn        *websocket.Conn `json:"-"`
 	mu          sync.Mutex      `json:"-"`
 }

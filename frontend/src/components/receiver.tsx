@@ -1,4 +1,4 @@
-import type { Session } from "#/lib/schemas";
+import type { Room } from "#/lib/schemas";
 import type { PeerState } from "#/stores/peer";
 import { useDownloads } from "#/hooks/transfer";
 import { Loader } from "#/components/ui/loader";
@@ -8,15 +8,15 @@ import { FileList, FileListItem } from "#/components/file-list";
 import { IconDownload, IconX } from "#/components/icons";
 
 export function Receiver({
-	session,
+	room,
 	peers,
 }: {
-	session: Session;
+	room: Room;
 	peers: Record<string, PeerState>;
 }) {
 	const { files, downloads, transfersByFile, stop, start, transferring } =
 		useDownloads();
-	const host = session.host ? peers[session.host] : undefined;
+	const host = room.host ? peers[room.host] : undefined;
 	const loading = !host || host.files === undefined;
 
 	if (loading) {

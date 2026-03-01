@@ -1,11 +1,11 @@
 import type { Client, IncomingMessageBody } from "#/lib/schemas";
 import type { SignalingServer } from "#/lib/server";
-import { $identity, $session } from "#/stores/signaling";
+import { $identity, $room } from "#/stores/signaling";
 import { createConnection, findConnection } from "./connection";
 
 export async function createPeerConnection(
 	server: SignalingServer,
-	sessionID: string,
+	roomID: string,
 	client: Client,
 ) {
 	const identity = $identity.get();
@@ -19,7 +19,7 @@ export async function createPeerConnection(
 				server.send({
 					type: "ice-candidate",
 					payload: {
-						session_id: sessionID,
+						room_id: roomID,
 						candidate: candidate.toJSON(),
 						from: identity.id,
 						to: conn.id,
@@ -35,7 +35,7 @@ export async function createPeerConnection(
 			payload: {
 				from: identity.id,
 				to: conn.id,
-				session_id: sessionID,
+				room_id: roomID,
 				offer: offer,
 			},
 		});
@@ -48,9 +48,7 @@ export async function handleOffer(
 	server: SignalingServer,
 	msg: Extract<IncomingMessageBody, { type: "offer" }>,
 ) {
-	const client = $session
-		.get()
-		?.clients?.find((c) => c.id === msg.payload.from);
+	const client = $room.get()?.clients?.find((c) => c.id === msg.payload.from);
 	if (!client) return;
 
 	const conn = createConnection(client, {
@@ -60,7 +58,7 @@ export async function handleOffer(
 				payload: {
 					from: msg.payload.to,
 					to: msg.payload.from,
-					session_id: msg.payload.session_id,
+					room_id: msg.payload.room_id,
 					candidate: candidate.toJSON(),
 				},
 			});
@@ -74,7 +72,7 @@ export async function handleOffer(
 		payload: {
 			from: msg.payload.to,
 			to: msg.payload.from,
-			session_id: msg.payload.session_id,
+			room_id: msg.payload.room_id,
 			answer: answer,
 		},
 	});

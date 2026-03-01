@@ -11,13 +11,13 @@ import (
 )
 
 type SignalHandler struct {
-	sessions *SessionStore
+	rooms    *RoomStore
 	upgrader websocket.Upgrader
 }
 
-func NewSignalHandler(ss *SessionStore) *SignalHandler {
+func NewSignalHandler(rs *RoomStore) *SignalHandler {
 	return &SignalHandler{
-		sessions: ss,
+		rooms: rs,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				return true
@@ -74,34 +74,34 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 		log.Printf("disconnect client: %s", c.ID)
 	}()
 
-	if c.sessionID == "" {
+	if c.roomID == "" {
 		return nil
 	}
 
-	sess, err := sh.sessions.Get(c.sessionID)
+	room, err := sh.rooms.Get(c.roomID)
 	if err != nil {
 		return err
 	}
-	sess.RemoveClient(c)
-	// close the session if hosting
-	if sess.Host == c.ID {
-		sess.ForEachClient(func(client *Client) {
-			client.sessionID = ""
+	room.RemoveClient(c)
+	// close the room if hosting
+	if room.Host == c.ID {
+		room.ForEachClient(func(client *Client) {
+			client.roomID = ""
 			err := client.send(Message{
 				Type: "message",
 				Body: MessageBody{
-					Type:    SignalSessionLeft,
-					Payload: sess,
+					Type:    SignalRoomLeft,
+					Payload: room,
 				}})
 			if err != nil {
 				log.Printf("write json: %v", err)
 			}
 		})
-		sh.sessions.Delete(sess.ID)
+		sh.rooms.Delete(room.ID)
 		return nil
 	}
 
-	if len(sess.Clients) == 0 {
+	if len(room.Clients) == 0 {
 		return nil
 	}
 
@@ -111,30 +111,30 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 			Type:    SignalClientLeft,
 			Payload: c,
 		},
-	}, sess.ID); err != nil {
+	}, room.ID); err != nil {
 		return fmt.Errorf("broadcast client-left: %v", err)
 	}
 
 	err = sh.broadcast(c.conn, Message{Type: "message",
 		Body: MessageBody{
-			Type:    SignalSessionInfo,
-			Payload: sess,
+			Type:    SignalRoomInfo,
+			Payload: room,
 		},
-	}, sess.ID)
+	}, room.ID)
 	if err != nil {
-		return fmt.Errorf("broadcast session-info: %v", err)
+		return fmt.Errorf("broadcast room-info: %v", err)
 	}
 
 	return nil
 }
 
-func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, sessionID string) error {
-	sess, err := sh.sessions.Get(sessionID)
+func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID string) error {
+	room, err := sh.rooms.Get(roomID)
 	if err != nil {
 		return err
 	}
 
-	sess.ForEachClient(func(client *Client) {
+	room.ForEachClient(func(client *Client) {
 		if client.conn == sender {
 			return
 		}
@@ -148,12 +148,12 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, session
 
 func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	switch msg.Body.Type {
-	case SignalRequestSession:
-		return sh.handleRequestSession(c, msg)
-	case SignalJoinSession:
-		return sh.handleJoinSession(c, msg)
-	case SignalLeaveSession:
-		return sh.handleLeaveSession(c, msg)
+	case SignalRequestRoom:
+		return sh.handleRequestRoom(c, msg)
+	case SignalJoinRoom:
+		return sh.handleJoinRoom(c, msg)
+	case SignalLeaveRoom:
+		return sh.handleLeaveRoom(c, msg)
 	case SignalAnswer, SignalOffer, SignalICECandidate:
 		return sh.handleWebRTCMessage(msg)
 	default:
@@ -161,8 +161,8 @@ func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	}
 }
 
-func (sh *SignalHandler) handleRequestSession(c *Client, msg Message) error {
-	sess, err := sh.sessions.Create(c.ID)
+func (sh *SignalHandler) handleRequestRoom(c *Client, msg Message) error {
+	room, err := sh.rooms.Create(c.ID)
 	if err != nil {
 		return c.send(Message{
 			Transaction: msg.Transaction,
@@ -181,14 +181,14 @@ func (sh *SignalHandler) handleRequestSession(c *Client, msg Message) error {
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
-			Type:    SignalSessionCreated,
-			Payload: sess,
+			Type:    SignalRoomCreated,
+			Payload: room,
 		},
 	})
 }
 
-func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
-	var payload SessionIDPayload
+func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
+	var payload RoomIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
 		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
@@ -197,9 +197,9 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
-	sess, err := sh.sessions.Get(payload.SessionID)
+	room, err := sh.rooms.Get(payload.RoomID)
 	if err != nil {
-		if errors.Is(err, ErrSessionNotFound) {
+		if errors.Is(err, ErrRoomNotFound) {
 			return c.send(Message{
 				Transaction: msg.Transaction,
 				Type:        "response",
@@ -207,7 +207,7 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 					Type: SignalError,
 					Payload: ErrorPayload{
 						Code:    ErrCodeNotFound,
-						Message: "Session not found",
+						Message: "Room not found",
 					},
 				},
 			})
@@ -215,24 +215,24 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 		return err
 	}
 
-	// leave previous session in case the client hasn't done it already
-	if c.sessionID != "" {
-		sess, err := sh.sessions.Get(c.sessionID)
-		sess.RemoveClient(c)
+	// leave previous room in case the client hasn't done it already
+	if c.roomID != "" {
+		room, err := sh.rooms.Get(c.roomID)
+		room.RemoveClient(c)
 		if err == nil {
 			err = sh.broadcast(c.conn, Message{
 				Type: "message",
 				Body: MessageBody{
 					Type:    SignalClientLeft,
 					Payload: c,
-				}}, sess.ID)
+				}}, room.ID)
 			if err != nil {
-				log.Printf("join session: failed to broadcast to previous session: %v", err)
+				log.Printf("join room: failed to broadcast to previous room: %v", err)
 			}
 		}
 	}
 
-	if err := sess.AddClient(c); err != nil {
+	if err := room.AddClient(c); err != nil {
 		return c.send(Message{
 			Transaction: msg.Transaction,
 			Type:        "response",
@@ -249,8 +249,8 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
-			Type:    SignalSessionJoined,
-			Payload: sess,
+			Type:    SignalRoomJoined,
+			Payload: room,
 		}}); err != nil {
 		return err
 	}
@@ -258,10 +258,10 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 	if err := sh.broadcast(c.conn, Message{
 		Type: "message",
 		Body: MessageBody{
-			Type:    SignalSessionInfo,
-			Payload: sess,
+			Type:    SignalRoomInfo,
+			Payload: room,
 		},
-	}, sess.ID); err != nil {
+	}, room.ID); err != nil {
 		return err
 	}
 
@@ -271,11 +271,11 @@ func (sh *SignalHandler) handleJoinSession(c *Client, msg Message) error {
 			Type:    SignalClientJoined,
 			Payload: c,
 		},
-	}, sess.ID)
+	}, room.ID)
 }
 
-func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
-	var payload SessionIDPayload
+func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
+	var payload RoomIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
 		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
@@ -284,9 +284,9 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
-	sess, err := sh.sessions.Get(payload.SessionID)
+	room, err := sh.rooms.Get(payload.RoomID)
 	if err != nil {
-		if errors.Is(err, ErrSessionNotFound) {
+		if errors.Is(err, ErrRoomNotFound) {
 			return c.send(Message{
 				Transaction: msg.Transaction,
 				Type:        "response",
@@ -294,7 +294,7 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 					Type: SignalError,
 					Payload: ErrorPayload{
 						Code:    ErrCodeNotFound,
-						Message: "Session not found",
+						Message: "Room not found",
 					},
 				},
 			})
@@ -302,43 +302,43 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 		return err
 	}
 
-	sess.RemoveClient(c)
+	room.RemoveClient(c)
 	if err := c.send(Message{
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
-			Type:    SignalSessionLeft,
-			Payload: sess,
+			Type:    SignalRoomLeft,
+			Payload: room,
 		},
 	}); err != nil {
 		return err
 	}
 
-	if sess.Host == c.ID {
-		sess.ForEachClient(func(client *Client) {
-			client.sessionID = ""
+	if room.Host == c.ID {
+		room.ForEachClient(func(client *Client) {
+			client.roomID = ""
 			err := client.send(Message{
 				Type: "message",
 				Body: MessageBody{
-					Type:    SignalSessionLeft,
-					Payload: sess,
+					Type:    SignalRoomLeft,
+					Payload: room,
 				},
 			})
 			if err != nil {
 				log.Printf("write json: %v", err)
 			}
 		})
-		sh.sessions.Delete(sess.ID)
+		sh.rooms.Delete(room.ID)
 		return nil
 	}
 
 	if err := sh.broadcast(c.conn, Message{
 		Type: "message",
 		Body: MessageBody{
-			Type:    SignalSessionInfo,
-			Payload: sess,
+			Type:    SignalRoomInfo,
+			Payload: room,
 		},
-	}, sess.ID); err != nil {
+	}, room.ID); err != nil {
 		return err
 	}
 
@@ -348,7 +348,7 @@ func (sh *SignalHandler) handleLeaveSession(c *Client, msg Message) error {
 			Type:    SignalClientLeft,
 			Payload: c,
 		},
-	}, sess.ID)
+	}, room.ID)
 }
 
 func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
@@ -361,13 +361,13 @@ func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 		return err
 	}
 
-	sess, err := sh.sessions.Get(info.SessionID)
+	room, err := sh.rooms.Get(info.RoomID)
 	if err != nil {
 		return err
 	}
 
 	var recipient *Client
-	for _, c := range sess.Clients {
+	for _, c := range room.Clients {
 		if c.ID.String() == info.To {
 			recipient = c
 		}

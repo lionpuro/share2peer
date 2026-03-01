@@ -1,6 +1,6 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSession } from "#/hooks/use-session";
+import { useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Heading } from "#/components/ui/heading";
@@ -20,16 +20,16 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const { session, createSession, leaveSession } = useSession();
+	const { room, createRoom, leaveRoom } = useRoom();
 	const [joinCode, setJoinCode] = useState("");
 
 	async function handleCreate() {
 		try {
-			const id = await createSession();
+			const id = await createRoom();
 			navigate({ to: "/s/$id", params: { id } });
 		} catch (err) {
-			console.error("create session:", err);
-			toast.error("Failed to create session");
+			console.error("create room:", err);
+			toast.error("Failed to create room");
 		}
 	}
 
@@ -41,10 +41,10 @@ function Component() {
 	}
 
 	useEffect(() => {
-		if (session) {
-			leaveSession();
+		if (room) {
+			leaveRoom();
 		}
-	}, [session, leaveSession]);
+	}, [room, leaveRoom]);
 
 	return (
 		<>

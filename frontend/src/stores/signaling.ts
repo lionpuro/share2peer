@@ -1,5 +1,5 @@
 import { atom } from "nanostores";
-import type { Client, Session } from "#/lib/schemas";
+import type { Client, Room } from "#/lib/schemas";
 
 type ConnectionState = "closed" | "connecting" | "open" | "error";
 
@@ -7,4 +7,4 @@ export const $connectionState = atom<ConnectionState>("closed");
 
 export const $identity = atom<Client | undefined>();
 
-export const $session = atom<Session | undefined>();
+export const $room = atom<Room | undefined>();

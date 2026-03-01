@@ -5,7 +5,7 @@ import "errors"
 var (
 	ErrUnknownMessageType = errors.New("unknown message type")
 	ErrServerError        = errors.New("internal server error")
-	ErrSessionNotFound    = errors.New("session not found")
+	ErrRoomNotFound       = errors.New("room not found")
 )
 
 const (

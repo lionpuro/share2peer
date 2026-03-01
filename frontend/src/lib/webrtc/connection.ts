@@ -18,7 +18,7 @@ import {
 	updatePeer,
 } from "#/stores/peer";
 import { $uploads } from "#/stores/file";
-import { $identity, $session } from "#/stores/signaling";
+import { $identity, $room } from "#/stores/signaling";
 
 export type ConnectionState =
 	| "disconnected"
@@ -87,8 +87,8 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 
 		this.channel.addEventListener("open", () => {
 			const identity = $identity.get();
-			const session = $session.get();
-			if (!identity || !session) return;
+			const room = $room.get();
+			if (!identity || !room) return;
 			const uploads = $uploads.get().length > 0;
 			if (uploads) {
 				return;
@@ -272,5 +272,5 @@ export function removeConnections() {
 }
 
 export function broadcast(msg: MessageChannelMessage) {
-	$session.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
+	$room.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
 }

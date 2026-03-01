@@ -29,9 +29,9 @@ type Transaction<Type extends keyof typeof RequestResponseMap> = {
 };
 
 type PendingTransaction =
-	| Transaction<"join-session">
-	| Transaction<"leave-session">
-	| Transaction<"request-session">;
+	| Transaction<"join-room">
+	| Transaction<"leave-room">
+	| Transaction<"request-room">;
 
 export type ServerEventMap = {
 	[M in IncomingMessageBody as M["type"]]: CustomEvent<M["payload"]>;

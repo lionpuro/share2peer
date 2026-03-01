@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { toTitleCase } from "#/lib/helper";
 import { $connectionState, $identity } from "#/stores/signaling";
 import { $peers } from "#/stores/peer";
-import { useSession } from "#/hooks/use-session";
+import { useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
@@ -26,7 +26,7 @@ function Component() {
 	const { id } = Route.useParams();
 	const connectionState = useStore($connectionState);
 	const identity = useStore($identity);
-	const { session, error } = useSession(id);
+	const { room, error } = useRoom(id);
 	const peers = useStore($peers);
 
 	const [copied, setCopied] = useState(false);
@@ -43,15 +43,15 @@ function Component() {
 			</ErrorComponent>
 		);
 	}
-	if (connectionState === "connecting" || !session || !identity) {
+	if (connectionState === "connecting" || !room || !identity) {
 		return <Loader />;
 	}
 
-	const sessionURL = `${window.location.protocol}//${window.location.host}/s/${session.id}`;
+	const roomURL = `${window.location.protocol}//${window.location.host}/s/${room.id}`;
 	function handleCopy() {
-		if (!session) return;
+		if (!room) return;
 		setCopied(true);
-		navigator.clipboard.writeText(sessionURL);
+		navigator.clipboard.writeText(roomURL);
 		setTimeout(() => {
 			setCopied(false);
 		}, 1000);
@@ -59,11 +59,11 @@ function Component() {
 
 	function handleShare() {
 		if (typeof navigator.share !== "function") return;
-		if (!session) return;
+		if (!room) return;
 		navigator.share({
 			title: "Share files",
-			text: `Join my room ${session.id} on WebSend to share files`,
-			url: sessionURL,
+			text: `Join my room ${room.id} on WebSend to share files`,
+			url: roomURL,
 		});
 	}
 
@@ -87,7 +87,7 @@ function Component() {
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="font-semibold text-muted-foreground">Room:</span>
-					<span className="font-bold">{session.id}</span>
+					<span className="font-bold">{room.id}</span>
 				</div>
 				<div className="flex">
 					{typeof navigator.share === "function" && (
@@ -104,7 +104,7 @@ function Component() {
 				<div className="mb-6 flex gap-3">
 					<input
 						readOnly={true}
-						value={sessionURL}
+						value={roomURL}
 						className="flex-1 overflow-x-scroll rounded-lg border border-secondary px-3 py-1.5 text-sm font-medium text-neutral-600 outline-none"
 					/>
 					<Button
@@ -148,10 +148,10 @@ function Component() {
 						</ul>
 					</div>
 
-					{identity.id === session.host ? (
+					{identity.id === room.host ? (
 						<Sender />
 					) : (
-						<Receiver session={session} peers={peers} />
+						<Receiver room={room} peers={peers} />
 					)}
 				</div>
 			</Main>

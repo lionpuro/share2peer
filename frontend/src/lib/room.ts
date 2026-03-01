@@ -1,5 +1,5 @@
-import { $session } from "#/stores/signaling";
-import { parseBody, type Session } from "./schemas";
+import { $room } from "#/stores/signaling";
+import { parseBody, type Room } from "./schemas";
 import type { SignalingServer } from "./server";
 import {
 	createPeerConnection,
@@ -8,52 +8,52 @@ import {
 	removeConnections,
 } from "./webrtc";
 
-type SessionState = "idle" | "joining" | "active" | "failed";
+type RoomState = "idle" | "joining" | "active" | "failed";
 
-export class SessionManager {
+export class RoomManager {
 	#server: SignalingServer;
-	state: SessionState = "idle";
+	state: RoomState = "idle";
 
 	constructor(server: SignalingServer) {
 		this.#server = server;
 		this.#server.addEventListener("close", () => {
-			$session.set(undefined);
+			$room.set(undefined);
 			this.state = "idle";
 		});
-		this.#server.addEventListener("session-info", (e) => {
-			$session.set(e.detail);
+		this.#server.addEventListener("room-info", (e) => {
+			$room.set(e.detail);
 		});
-		this.#server.addEventListener("session-left", () => {
-			$session.set(undefined);
+		this.#server.addEventListener("room-left", () => {
+			$room.set(undefined);
 			this.state = "idle";
 			removeConnections();
 		});
 		this.#server.addEventListener("client-joined", async (e) => {
 			const id = e.detail.id;
 			if (findConnection(id)) return;
-			const session = $session.get();
-			if (!session) return;
-			await createPeerConnection(this.#server, session.id, e.detail);
+			const room = $room.get();
+			if (!room) return;
+			await createPeerConnection(this.#server, room.id, e.detail);
 		});
 		this.#server.addEventListener("client-left", (e) => {
 			removeConnection(e.detail.id);
 		});
 	}
 
-	async join(id: string): Promise<Session> {
+	async join(id: string): Promise<Room> {
 		if (this.state === "joining" || this.state === "active") {
-			throw new Error("already joining a session");
+			throw new Error("already joining a room");
 		}
 		this.state = "joining";
 		const response = await this.#server.sendRequest({
-			type: "join-session",
-			payload: { session_id: id },
+			type: "join-room",
+			payload: { room_id: id },
 		});
 		const body = parseBody(response.body);
 		switch (body.type) {
-			case "session-joined":
+			case "room-joined":
 				this.state = "active";
-				$session.set(body.payload);
+				$room.set(body.payload);
 				return body.payload;
 			case "error":
 				this.state = "failed";
@@ -69,31 +69,31 @@ export class SessionManager {
 	}
 
 	async leave() {
-		const session = $session.get();
-		if (!session) return;
+		const room = $room.get();
+		if (!room) return;
 		await this.#server
 			.sendRequest({
-				type: "leave-session",
-				payload: { session_id: session.id },
+				type: "leave-room",
+				payload: { room_id: room.id },
 			})
 			.catch(console.error);
 		this.state = "idle";
-		$session.set(undefined);
+		$room.set(undefined);
 		removeConnections();
 	}
 
 	async create(): Promise<string> {
 		this.state = "idle";
-		const session = $session.get();
-		if (session) {
+		const room = $room.get();
+		if (room) {
 			await this.leave();
 		}
 		const response = await this.#server.sendRequest({
-			type: "request-session",
+			type: "request-room",
 		});
 		const body = parseBody(response.body);
 		switch (body.type) {
-			case "session-created":
+			case "room-created":
 				return body.payload.id;
 			case "error":
 				this.state = "failed";

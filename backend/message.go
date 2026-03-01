@@ -1,21 +1,21 @@
 package main
 
 const (
-	SignalError          = "error"
-	SignalIdentity       = "identity"
-	SignalSessionClosed  = "session-closed"
-	SignalSessionInfo    = "session-info"
-	SignalJoinSession    = "join-session"
-	SignalLeaveSession   = "leave-session"
-	SignalRequestSession = "request-session"
-	SignalSessionCreated = "session-created"
-	SignalSessionJoined  = "session-joined"
-	SignalSessionLeft    = "session-left"
-	SignalClientJoined   = "client-joined"
-	SignalClientLeft     = "client-left"
-	SignalOffer          = "offer"
-	SignalAnswer         = "answer"
-	SignalICECandidate   = "ice-candidate"
+	SignalError        = "error"
+	SignalIdentity     = "identity"
+	SignalRoomClosed   = "room-closed"
+	SignalRoomInfo     = "room-info"
+	SignalJoinRoom     = "join-room"
+	SignalLeaveRoom    = "leave-room"
+	SignalRequestRoom  = "request-room"
+	SignalRoomCreated  = "room-created"
+	SignalRoomJoined   = "room-joined"
+	SignalRoomLeft     = "room-left"
+	SignalClientJoined = "client-joined"
+	SignalClientLeft   = "client-left"
+	SignalOffer        = "offer"
+	SignalAnswer       = "answer"
+	SignalICECandidate = "ice-candidate"
 )
 
 type Message struct {
@@ -29,8 +29,8 @@ type MessageBody struct {
 	Payload interface{} `json:"payload"`
 }
 
-type SessionIDPayload struct {
-	SessionID string `json:"session_id"`
+type RoomIDPayload struct {
+	RoomID string `json:"room_id"`
 }
 
 type ErrorPayload struct {
@@ -39,9 +39,9 @@ type ErrorPayload struct {
 }
 
 type RTCMessageInfo struct {
-	SessionID string `json:"session_id"`
-	From      string `json:"from"`
-	To        string `json:"to"`
+	RoomID string `json:"room_id"`
+	From   string `json:"from"`
+	To     string `json:"to"`
 }
 
 func createErrorResponse(req Message, code, message string) Message {

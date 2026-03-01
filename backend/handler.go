@@ -148,8 +148,8 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID 
 
 func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	switch msg.Body.Type {
-	case SignalRequestRoom:
-		return sh.handleRequestRoom(c, msg)
+	case SignalCreateRoom:
+		return sh.handleCreateRoom(c, msg)
 	case SignalJoinRoom:
 		return sh.handleJoinRoom(c, msg)
 	case SignalLeaveRoom:
@@ -161,7 +161,7 @@ func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	}
 }
 
-func (sh *SignalHandler) handleRequestRoom(c *Client, msg Message) error {
+func (sh *SignalHandler) handleCreateRoom(c *Client, msg Message) error {
 	room, err := sh.rooms.Create(c.ID)
 	if err != nil {
 		return c.send(Message{

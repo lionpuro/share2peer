@@ -89,7 +89,7 @@ export class RoomManager {
 			await this.leave();
 		}
 		const response = await this.#server.sendRequest({
-			type: "request-room",
+			type: "create-room",
 		});
 		const body = parseBody(response.body);
 		switch (body.type) {

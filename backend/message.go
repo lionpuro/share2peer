@@ -7,7 +7,7 @@ const (
 	SignalRoomInfo     = "room-info"
 	SignalJoinRoom     = "join-room"
 	SignalLeaveRoom    = "leave-room"
-	SignalRequestRoom  = "request-room"
+	SignalCreateRoom   = "create-room"
 	SignalRoomCreated  = "room-created"
 	SignalRoomJoined   = "room-joined"
 	SignalRoomLeft     = "room-left"

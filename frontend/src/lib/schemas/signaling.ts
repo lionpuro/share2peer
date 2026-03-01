@@ -45,12 +45,12 @@ const ICE_CANDIDATE = "ice-candidate";
 const ROOM_CREATED = "room-created";
 const ROOM_JOINED = "room-joined";
 const ROOM_LEFT = "room-left";
-const REQUEST_ROOM = "request-room";
+const CREATE_ROOM = "create-room";
 const JOIN_ROOM = "join-room";
 const LEAVE_ROOM = "leave-room";
 
 export const RequestResponseMap = {
-	[REQUEST_ROOM]: ROOM_CREATED,
+	[CREATE_ROOM]: ROOM_CREATED,
 	[JOIN_ROOM]: ROOM_JOINED,
 	[LEAVE_ROOM]: ROOM_LEFT,
 } as const;
@@ -96,7 +96,7 @@ const CandidateSchema = z.object({
 });
 
 type OutgoingBodyMap = {
-	[REQUEST_ROOM]: { type: typeof REQUEST_ROOM };
+	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {
 		type: typeof JOIN_ROOM;
 		payload: z.infer<typeof RoomIDSchema>;

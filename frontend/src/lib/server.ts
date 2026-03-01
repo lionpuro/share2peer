@@ -31,7 +31,7 @@ type Transaction<Type extends keyof typeof RequestResponseMap> = {
 type PendingTransaction =
 	| Transaction<"join-room">
 	| Transaction<"leave-room">
-	| Transaction<"request-room">;
+	| Transaction<"create-room">;
 
 export type ServerEventMap = {
 	[M in IncomingMessageBody as M["type"]]: CustomEvent<M["payload"]>;

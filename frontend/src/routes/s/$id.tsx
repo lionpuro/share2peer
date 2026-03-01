@@ -69,7 +69,7 @@ function Component() {
 
 	const users = Object.values(peers);
 
-	if (connectionState !== "open") {
+	if (connectionState !== "connected") {
 		return "Failed to connect";
 	}
 

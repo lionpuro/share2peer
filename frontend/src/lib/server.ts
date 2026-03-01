@@ -60,19 +60,19 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			return this.#ws;
 		}
 
-		if ($connectionState.get() !== "open") {
+		if ($connectionState.get() !== "connected") {
 			$connectionState.set("connecting");
 		}
 		try {
 			this.#ws = await openSocket(this.#url);
-			$connectionState.set("open");
+			$connectionState.set("connected");
 
 			this.#ws.addEventListener("error", (e) => {
-				$connectionState.set("error");
+				$connectionState.set("failed");
 				console.error("WebSocket error: " + JSON.stringify(e));
 			});
 			this.#ws.addEventListener("close", async () => {
-				$connectionState.set("closed");
+				$connectionState.set("disconnected");
 				removeConnections();
 				this.dispatchTypedEvent("close", new CustomEvent("close"));
 				setTimeout(() => {
@@ -137,7 +137,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 			return this.#ws;
 		} catch (err) {
-			$connectionState.set("error");
+			$connectionState.set("failed");
 			throw err;
 		}
 	}
@@ -147,7 +147,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#ws.close();
 			this.#ws = undefined;
 		}
-		$connectionState.set("closed");
+		$connectionState.set("disconnected");
 	}
 
 	async sendRequest<

@@ -1,9 +1,9 @@
-import { atom } from "nanostores";
+import { atom, map } from "nanostores";
 import type { Client, Room } from "#/lib/schemas";
 
-type ConnectionState = "closed" | "connecting" | "open" | "error";
+type ConnectionState = "disconnected" | "connecting" | "connected" | "failed";
 
-export const $connectionState = atom<ConnectionState>("closed");
+export const $connectionState = atom<ConnectionState>("disconnected");
 
 export const $identity = atom<Client | undefined>();
 

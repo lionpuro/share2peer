@@ -1,10 +1,10 @@
 import * as z from "zod/mini";
-import { ClientSchema } from "./client";
+import { UserSchema } from "./user";
 
 export const RoomSchema = z.object({
 	id: z.string(),
 	host: z.optional(z.string()),
-	clients: z.optional(z.union([z.array(ClientSchema), z.null()])),
+	users: z.optional(z.union([z.array(UserSchema), z.null()])),
 });
 
 export type Room = z.infer<typeof RoomSchema>;

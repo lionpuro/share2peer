@@ -1,4 +1,4 @@
-import type { Client, IncomingMessageBody } from "#/lib/schemas";
+import type { User, IncomingMessageBody } from "#/lib/schemas";
 import type { SignalingServer } from "#/lib/server";
 import { $identity, $room } from "#/stores/signaling";
 import { createConnection, findConnection } from "./connection";
@@ -6,15 +6,15 @@ import { createConnection, findConnection } from "./connection";
 export async function createPeerConnection(
 	server: SignalingServer,
 	roomID: string,
-	client: Client,
+	user: User,
 ) {
 	const identity = $identity.get();
-	if (!identity || findConnection(client.id)) {
+	if (!identity || findConnection(user.id)) {
 		return;
 	}
 
 	try {
-		const conn = createConnection(client, {
+		const conn = createConnection(user, {
 			onIceCandidate: (candidate) => {
 				server.send({
 					type: "ice-candidate",
@@ -48,10 +48,10 @@ export async function handleOffer(
 	server: SignalingServer,
 	msg: Extract<IncomingMessageBody, { type: "offer" }>,
 ) {
-	const client = $room.get()?.clients?.find((c) => c.id === msg.payload.from);
-	if (!client) return;
+	const user = $room.get()?.users?.find((u) => u.id === msg.payload.from);
+	if (!user) return;
 
-	const conn = createConnection(client, {
+	const conn = createConnection(user, {
 		onIceCandidate: (candidate) => {
 			server.send({
 				type: "ice-candidate",

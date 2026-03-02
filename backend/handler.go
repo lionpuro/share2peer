@@ -28,19 +28,19 @@ func NewSignalHandler(rs *RoomStore) *SignalHandler {
 
 func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	ci := extractClientInfo(header.Get("User-Agent"))
-	c := createClient(conn, ci.deviceType, ci.deviceName)
-	log.Printf("connect client: %s", c.ID)
+	u := createUser(conn, ci.deviceType, ci.deviceName)
+	log.Printf("connect user: %s", u.ID)
 	defer func() {
-		if err := sh.disconnect(c); err != nil {
+		if err := sh.disconnect(u); err != nil {
 			log.Printf("disconnect: %v", err)
 		}
 	}()
 
-	if err := c.send(Message{
+	if err := u.send(Message{
 		Type: "message",
 		Body: MessageBody{
 			Type:    SignalIdentity,
-			Payload: c,
+			Payload: u,
 		}}); err != nil {
 		return err
 	}
@@ -60,34 +60,34 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 			continue
 		}
 
-		if err := sh.handleMessage(c, message); err != nil {
+		if err := sh.handleMessage(u, message); err != nil {
 			return err
 		}
 	}
 }
 
-func (sh *SignalHandler) disconnect(c *Client) error {
+func (sh *SignalHandler) disconnect(u *User) error {
 	defer func() {
-		if err := c.conn.Close(); err != nil {
+		if err := u.conn.Close(); err != nil {
 			log.Printf("close connection: %v", err)
 		}
-		log.Printf("disconnect client: %s", c.ID)
+		log.Printf("disconnect user: %s", u.ID)
 	}()
 
-	if c.roomID == "" {
+	if u.roomID == "" {
 		return nil
 	}
 
-	room, err := sh.rooms.Get(c.roomID)
+	room, err := sh.rooms.Get(u.roomID)
 	if err != nil {
 		return err
 	}
-	room.RemoveClient(c)
+	room.RemoveUser(u)
 	// close the room if hosting
-	if room.Host == c.ID {
-		room.ForEachClient(func(client *Client) {
-			client.roomID = ""
-			err := client.send(Message{
+	if room.Host == u.ID {
+		room.ForEachUser(func(user *User) {
+			user.roomID = ""
+			err := user.send(Message{
 				Type: "message",
 				Body: MessageBody{
 					Type:    SignalRoomLeft,
@@ -101,21 +101,21 @@ func (sh *SignalHandler) disconnect(c *Client) error {
 		return nil
 	}
 
-	if len(room.Clients) == 0 {
+	if len(room.Users) == 0 {
 		return nil
 	}
 
-	if err := sh.broadcast(c.conn, Message{
+	if err := sh.broadcast(u.conn, Message{
 		Type: "message",
 		Body: MessageBody{
-			Type:    SignalClientLeft,
-			Payload: c,
+			Type:    SignalUserLeft,
+			Payload: u,
 		},
 	}, room.ID); err != nil {
-		return fmt.Errorf("broadcast client-left: %v", err)
+		return fmt.Errorf("broadcast user-left: %v", err)
 	}
 
-	err = sh.broadcast(c.conn, Message{Type: "message",
+	err = sh.broadcast(u.conn, Message{Type: "message",
 		Body: MessageBody{
 			Type:    SignalRoomInfo,
 			Payload: room,
@@ -134,11 +134,11 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID 
 		return err
 	}
 
-	room.ForEachClient(func(client *Client) {
-		if client.conn == sender {
+	room.ForEachUser(func(user *User) {
+		if user.conn == sender {
 			return
 		}
-		if err := client.send(json); err != nil {
+		if err := user.send(json); err != nil {
 			log.Printf("write json: %s", err.Error())
 		}
 	})
@@ -146,14 +146,14 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID 
 	return nil
 }
 
-func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
+func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
 	switch msg.Body.Type {
 	case SignalCreateRoom:
-		return sh.handleCreateRoom(c, msg)
+		return sh.handleCreateRoom(u, msg)
 	case SignalJoinRoom:
-		return sh.handleJoinRoom(c, msg)
+		return sh.handleJoinRoom(u, msg)
 	case SignalLeaveRoom:
-		return sh.handleLeaveRoom(c, msg)
+		return sh.handleLeaveRoom(u, msg)
 	case SignalAnswer, SignalOffer, SignalICECandidate:
 		return sh.handleWebRTCMessage(msg)
 	default:
@@ -161,10 +161,10 @@ func (sh *SignalHandler) handleMessage(c *Client, msg Message) error {
 	}
 }
 
-func (sh *SignalHandler) handleCreateRoom(c *Client, msg Message) error {
-	room, err := sh.rooms.Create(c.ID)
+func (sh *SignalHandler) handleCreateRoom(u *User, msg Message) error {
+	room, err := sh.rooms.Create(u.ID)
 	if err != nil {
-		return c.send(Message{
+		return u.send(Message{
 			Transaction: msg.Transaction,
 			Type:        "response",
 			Body: MessageBody{
@@ -177,7 +177,7 @@ func (sh *SignalHandler) handleCreateRoom(c *Client, msg Message) error {
 		})
 	}
 
-	return c.send(Message{
+	return u.send(Message{
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
@@ -187,20 +187,20 @@ func (sh *SignalHandler) handleCreateRoom(c *Client, msg Message) error {
 	})
 }
 
-func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
+func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 	var payload RoomIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
+		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
+		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	room, err := sh.rooms.Get(payload.RoomID)
 	if err != nil {
 		if errors.Is(err, ErrRoomNotFound) {
-			return c.send(Message{
+			return u.send(Message{
 				Transaction: msg.Transaction,
 				Type:        "response",
 				Body: MessageBody{
@@ -215,16 +215,16 @@ func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	// leave previous room in case the client hasn't done it already
-	if c.roomID != "" {
-		room, err := sh.rooms.Get(c.roomID)
-		room.RemoveClient(c)
+	// leave previous room in case the user hasn't done it already
+	if u.roomID != "" {
+		room, err := sh.rooms.Get(u.roomID)
+		room.RemoveUser(u)
 		if err == nil {
-			err = sh.broadcast(c.conn, Message{
+			err = sh.broadcast(u.conn, Message{
 				Type: "message",
 				Body: MessageBody{
-					Type:    SignalClientLeft,
-					Payload: c,
+					Type:    SignalUserLeft,
+					Payload: u,
 				}}, room.ID)
 			if err != nil {
 				log.Printf("join room: failed to broadcast to previous room: %v", err)
@@ -232,8 +232,8 @@ func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
 		}
 	}
 
-	if err := room.AddClient(c); err != nil {
-		return c.send(Message{
+	if err := room.AddUser(u); err != nil {
+		return u.send(Message{
 			Transaction: msg.Transaction,
 			Type:        "response",
 			Body: MessageBody{
@@ -245,7 +245,7 @@ func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
 			}})
 	}
 
-	if err := c.send(Message{
+	if err := u.send(Message{
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
@@ -255,7 +255,7 @@ func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	if err := sh.broadcast(c.conn, Message{
+	if err := sh.broadcast(u.conn, Message{
 		Type: "message",
 		Body: MessageBody{
 			Type:    SignalRoomInfo,
@@ -265,29 +265,29 @@ func (sh *SignalHandler) handleJoinRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	return sh.broadcast(c.conn, Message{
+	return sh.broadcast(u.conn, Message{
 		Type: "message",
 		Body: MessageBody{
-			Type:    SignalClientJoined,
-			Payload: c,
+			Type:    SignalUserJoined,
+			Payload: u,
 		},
 	}, room.ID)
 }
 
-func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
+func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 	var payload RoomIDPayload
 	bytes, err := json.Marshal(msg.Body.Payload)
 	if err != nil {
-		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
+		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return c.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
+		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	room, err := sh.rooms.Get(payload.RoomID)
 	if err != nil {
 		if errors.Is(err, ErrRoomNotFound) {
-			return c.send(Message{
+			return u.send(Message{
 				Transaction: msg.Transaction,
 				Type:        "response",
 				Body: MessageBody{
@@ -302,8 +302,8 @@ func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	room.RemoveClient(c)
-	if err := c.send(Message{
+	room.RemoveUser(u)
+	if err := u.send(Message{
 		Transaction: msg.Transaction,
 		Type:        "response",
 		Body: MessageBody{
@@ -314,10 +314,10 @@ func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	if room.Host == c.ID {
-		room.ForEachClient(func(client *Client) {
-			client.roomID = ""
-			err := client.send(Message{
+	if room.Host == u.ID {
+		room.ForEachUser(func(user *User) {
+			user.roomID = ""
+			err := user.send(Message{
 				Type: "message",
 				Body: MessageBody{
 					Type:    SignalRoomLeft,
@@ -332,7 +332,7 @@ func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
 		return nil
 	}
 
-	if err := sh.broadcast(c.conn, Message{
+	if err := sh.broadcast(u.conn, Message{
 		Type: "message",
 		Body: MessageBody{
 			Type:    SignalRoomInfo,
@@ -342,11 +342,11 @@ func (sh *SignalHandler) handleLeaveRoom(c *Client, msg Message) error {
 		return err
 	}
 
-	return sh.broadcast(c.conn, Message{
+	return sh.broadcast(u.conn, Message{
 		Type: "message",
 		Body: MessageBody{
-			Type:    SignalClientLeft,
-			Payload: c,
+			Type:    SignalUserLeft,
+			Payload: u,
 		},
 	}, room.ID)
 }
@@ -366,10 +366,10 @@ func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 		return err
 	}
 
-	var recipient *Client
-	for _, c := range room.Clients {
-		if c.ID.String() == info.To {
-			recipient = c
+	var recipient *User
+	for _, u := range room.Users {
+		if u.ID.String() == info.To {
+			recipient = u
 		}
 	}
 	if recipient == nil {

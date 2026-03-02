@@ -9,11 +9,11 @@ const DeviceTypeSchema = z.union([
 
 export type DeviceType = z.infer<typeof DeviceTypeSchema>;
 
-export const ClientSchema = z.object({
+export const UserSchema = z.object({
 	id: z.string(),
 	display_name: z.string(),
 	device_type: DeviceTypeSchema,
 	device_name: z.string(),
 });
 
-export type Client = z.infer<typeof ClientSchema>;
+export type User = z.infer<typeof UserSchema>;

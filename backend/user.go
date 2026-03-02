@@ -8,7 +8,7 @@ import (
 	"github.com/mileusna/useragent"
 )
 
-type Client struct {
+type User struct {
 	ID          uuid.UUID       `json:"id"`
 	DisplayName string          `json:"display_name"`
 	DeviceType  string          `json:"device_type"`
@@ -18,8 +18,8 @@ type Client struct {
 	mu          sync.Mutex      `json:"-"`
 }
 
-func createClient(conn *websocket.Conn, deviceType string, deviceName string) *Client {
-	return &Client{
+func createUser(conn *websocket.Conn, deviceType string, deviceName string) *User {
+	return &User{
 		ID:          uuid.New(),
 		DisplayName: generateName(),
 		DeviceType:  deviceType,
@@ -28,10 +28,10 @@ func createClient(conn *websocket.Conn, deviceType string, deviceName string) *C
 	}
 }
 
-func (c *Client) send(v any) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.conn.WriteJSON(v)
+func (u *User) send(v any) error {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.conn.WriteJSON(v)
 }
 
 const (

@@ -10,41 +10,41 @@ import (
 )
 
 type Room struct {
-	ID      string       `json:"id"`
-	mu      sync.RWMutex `json:"-"`
-	Host    uuid.UUID    `json:"host"`
-	Clients []*Client    `json:"clients"`
+	ID    string       `json:"id"`
+	mu    sync.RWMutex `json:"-"`
+	Host  uuid.UUID    `json:"host"`
+	Users []*User      `json:"users"`
 }
 
-func (s *Room) AddClient(c *Client) error {
+func (s *Room) AddUser(u *User) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	c.roomID = s.ID
-	s.Clients = append(s.Clients, c)
+	u.roomID = s.ID
+	s.Users = append(s.Users, u)
 	return nil
 }
 
-func (r *Room) RemoveClient(c *Client) {
+func (r *Room) RemoveUser(u *User) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var clients []*Client
-	for _, cl := range r.Clients {
-		if cl.ID != c.ID {
-			clients = append(clients, cl)
+	var users []*User
+	for _, usr := range r.Users {
+		if usr.ID != u.ID {
+			users = append(users, usr)
 		}
 	}
-	c.roomID = ""
-	r.Clients = clients
+	u.roomID = ""
+	r.Users = users
 }
 
-func (r *Room) ForEachClient(fn func(client *Client)) {
+func (r *Room) ForEachUser(fn func(user *User)) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	for _, client := range r.Clients {
-		fn(client)
+	for _, user := range r.Users {
+		fn(user)
 	}
 }
 

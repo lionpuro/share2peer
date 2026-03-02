@@ -37,7 +37,7 @@ export type ShareFilesMessage = z.infer<typeof ShareFilesSchema>;
 
 export const ReadyToReceiveSchema = z.object({
 	type: z.literal(MessageChannelEvents.ReadyToReceive),
-	payload: z.object({ client_id: z.string() }),
+	payload: z.object({ user_id: z.string() }),
 });
 
 export type ReadyToReceiveMessage = z.infer<typeof ReadyToReceiveSchema>;

@@ -1,7 +1,7 @@
 import * as z from "zod/mini";
 import { ErrorPayloadSchema } from "./error";
 import { RoomIDSchema, RoomSchema } from "./room";
-import { ClientSchema } from "./client";
+import { UserSchema } from "./user";
 
 export const MessageSchema = z.object({
 	type: z.union([
@@ -37,8 +37,8 @@ function body<T extends string, P extends z.ZodMiniType>(type: T, payload: P) {
 const ERROR = "error";
 const IDENTITY = "identity";
 const ROOM_INFO = "room-info";
-const CLIENT_JOINED = "client-joined";
-const CLIENT_LEFT = "client-left";
+const USER_JOINED = "user-joined";
+const USER_LEFT = "user-left";
 const OFFER = "offer";
 const ANSWER = "answer";
 const ICE_CANDIDATE = "ice-candidate";
@@ -117,10 +117,10 @@ export type OutgoingMessageBody = OutgoingBodyMap[keyof OutgoingBodyMap];
 
 export const incomingBodySchemas = {
 	[ERROR]: body(ERROR, ErrorPayloadSchema),
-	[IDENTITY]: body(IDENTITY, ClientSchema),
+	[IDENTITY]: body(IDENTITY, UserSchema),
 	[ROOM_INFO]: body(ROOM_INFO, RoomSchema),
-	[CLIENT_JOINED]: body(CLIENT_JOINED, ClientSchema),
-	[CLIENT_LEFT]: body(CLIENT_LEFT, ClientSchema),
+	[USER_JOINED]: body(USER_JOINED, UserSchema),
+	[USER_LEFT]: body(USER_LEFT, UserSchema),
 	[ROOM_CREATED]: body(ROOM_CREATED, RoomSchema),
 	[ROOM_JOINED]: body(ROOM_JOINED, RoomSchema),
 	[ROOM_LEFT]: body(ROOM_LEFT, RoomSchema),

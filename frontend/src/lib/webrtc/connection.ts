@@ -1,5 +1,5 @@
 import { TypedEventTarget } from "typescript-event-target";
-import type { Client } from "#/lib/schemas";
+import type { User } from "#/lib/schemas";
 import {
 	createDataChannel,
 	ReadyToReceiveSchema,
@@ -96,7 +96,7 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 			this.send({
 				type: "ready-to-receive",
 				payload: {
-					client_id: identity.id,
+					user_id: identity.id,
 				},
 			});
 		});
@@ -220,15 +220,15 @@ export function findConnection(id: string): PeerConnection | undefined {
 }
 
 export function createConnection(
-	client: Client,
+	user: User,
 	opt?: PeerConnectionOptions,
 ): PeerConnection {
-	const existing = connections.get(client.id);
+	const existing = connections.get(user.id);
 	if (existing) {
 		return existing;
 	}
 
-	const conn = new PeerConnection(client.id, opt);
+	const conn = new PeerConnection(user.id, opt);
 
 	conn.addEventListener("ready-to-receive", () => {
 		const uploads = $uploads.get();
@@ -251,7 +251,7 @@ export function createConnection(
 	});
 
 	connections.set(conn.id, conn);
-	addPeer({ ...client, connectionState: conn.state() });
+	addPeer({ ...user, connectionState: conn.state() });
 
 	return conn;
 }
@@ -272,5 +272,5 @@ export function removeConnections() {
 }
 
 export function broadcast(msg: MessageChannelMessage) {
-	$room.get()?.clients?.forEach((c) => connections.get(c.id)?.send(msg));
+	$room.get()?.users?.forEach((u) => connections.get(u.id)?.send(msg));
 }

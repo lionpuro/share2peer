@@ -1,9 +1,9 @@
 import { map } from "nanostores";
 import type { FileMetadata } from "#/lib/file";
-import type { Client } from "#/lib/schemas";
+import type { User } from "#/lib/schemas";
 import type { ConnectionState } from "#/lib/webrtc";
 
-export type PeerState = Client & {
+export type PeerState = User & {
 	connectionState: ConnectionState;
 	files?: FileMetadata[];
 };

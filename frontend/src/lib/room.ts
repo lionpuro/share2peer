@@ -28,14 +28,14 @@ export class RoomManager {
 			this.state = "idle";
 			removeConnections();
 		});
-		this.#server.addEventListener("client-joined", async (e) => {
+		this.#server.addEventListener("user-joined", async (e) => {
 			const id = e.detail.id;
 			if (findConnection(id)) return;
 			const room = $room.get();
 			if (!room) return;
 			await createPeerConnection(this.#server, room.id, e.detail);
 		});
-		this.#server.addEventListener("client-left", (e) => {
+		this.#server.addEventListener("user-left", (e) => {
 			removeConnection(e.detail.id);
 		});
 	}

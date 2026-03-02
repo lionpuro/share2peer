@@ -22,14 +22,18 @@ function Component() {
 	const navigate = useNavigate();
 	const { createRoom } = useRoom();
 	const [joinCode, setJoinCode] = useState("");
+	const [creating, setCreating] = useState(false);
 
 	async function handleCreate() {
+		setCreating(true);
 		try {
 			const id = await createRoom();
 			navigate({ to: "/s/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);
 			toast.error("Failed to create room");
+		} finally {
+			setCreating(false);
 		}
 	}
 
@@ -67,7 +71,11 @@ function Component() {
 					</div>
 					<div className="flex w-full flex-col gap-4 rounded-xl border p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm">
 						<span className="text-sm">Create a room to send files</span>
-						<Button onClick={handleCreate} className="gap-1">
+						<Button
+							onClick={handleCreate}
+							className="gap-1"
+							disabled={creating}
+						>
 							<IconPlus />
 							New Room
 						</Button>

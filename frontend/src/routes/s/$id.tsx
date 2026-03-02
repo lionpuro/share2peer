@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { toTitleCase } from "#/lib/helper";
 import { $connectionState, $identity } from "#/stores/signaling";
 import { $peers } from "#/stores/peer";
-import { useRoom } from "#/hooks/use-room";
+import { useJoinRoom, useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
@@ -26,7 +26,8 @@ function Component() {
 	const { id } = Route.useParams();
 	const connectionState = useStore($connectionState);
 	const identity = useStore($identity);
-	const { room, error } = useRoom(id);
+	const { room } = useRoom();
+	const { error } = useJoinRoom(id);
 	const peers = useStore($peers);
 
 	const [copied, setCopied] = useState(false);

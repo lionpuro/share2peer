@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const { room, createRoom, leaveRoom } = useRoom();
+	const { createRoom } = useRoom();
 	const [joinCode, setJoinCode] = useState("");
 
 	async function handleCreate() {
@@ -39,12 +39,6 @@ function Component() {
 		if (joinCode.length < 6) return;
 		navigate({ to: "/s/$id", params: { id: joinCode } });
 	}
-
-	useEffect(() => {
-		if (room) {
-			leaveRoom();
-		}
-	}, [room, leaveRoom]);
 
 	return (
 		<>

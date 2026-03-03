@@ -90,14 +90,14 @@ export function Sender() {
 						Share files
 					</Heading>
 					<FileInput
-						className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 sm:py-16"
+						className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"
 						activeClassName="sm:border-primary/80 sm:bg-primary/10"
 						multiple={true}
 						onFileInput={handleDrop}
 					>
 						<IconUpload className="pointer-events-none size-9 text-neutral-400" />
 						<span className="pointer-events-none mt-1 text-center text-sm font-medium text-muted-foreground">
-							Click to browse or drop files here
+							Select one or more files to share in the room
 						</span>
 						<span className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker">
 							Browse files

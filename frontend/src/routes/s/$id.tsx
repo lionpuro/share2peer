@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
-import { toTitleCase } from "#/lib/helper";
+import { cn, toTitleCase } from "#/lib/helper";
 import { $connectionState, $identity } from "#/stores/signaling";
 import { $peers } from "#/stores/peer";
 import { useJoinRoom, useRoom } from "#/hooks/use-room";
@@ -14,6 +14,7 @@ import {
 	IconArrowLeft,
 	IconLink,
 	IconShare,
+	IconWifi,
 } from "#/components/icons";
 import { Sender } from "#/components/sender";
 import { Receiver } from "#/components/receiver";
@@ -128,7 +129,10 @@ function Component() {
 									width={16}
 									height={16}
 								/>
-								<p>{identity.display_name + " (me)"}</p>
+								<p>{identity.display_name}</p>
+								<span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+									ME
+								</span>
 							</li>
 							{users.map((u) => (
 								<li key={u.id} className="flex items-center gap-2">
@@ -137,12 +141,20 @@ function Component() {
 										width={16}
 										height={16}
 									/>
-									<p>
-										{u.display_name}{" "}
-										<span className="max-sm:hidden">({u.device_name})</span>
-									</p>
-									<span className="ml-auto text-sm font-medium text-muted-foreground">
-										{u.connectionState}
+									<p>{u.display_name}</p>
+									<span
+										title={u.connectionState}
+										className={cn(
+											"ml-auto cursor-pointer text-sm text-muted-foreground",
+											{
+												"text-green-600/80": u.connectionState === "connected",
+												"text-yellow-600/80":
+													u.connectionState === "connecting",
+												"text-red-600/80": u.connectionState === "failed",
+											},
+										)}
+									>
+										<IconWifi />
 									</span>
 								</li>
 							))}

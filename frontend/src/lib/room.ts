@@ -1,6 +1,6 @@
 import { $room } from "#/stores/signaling";
-import { parseBody, type Room } from "./schemas";
-import type { SignalingServer } from "./server";
+import { parseBody, type Room, type User } from "./schemas";
+import { SignalingServer } from "./server";
 import {
 	createPeerConnection,
 	findConnection,
@@ -10,97 +10,98 @@ import {
 
 type RoomState = "idle" | "joining" | "active" | "failed";
 
-export class RoomManager {
-	#server: SignalingServer;
-	state: RoomState = "idle";
+let state: RoomState = "idle";
 
-	constructor(server: SignalingServer) {
-		this.#server = server;
-		this.#server.addEventListener("close", () => {
-			$room.set(undefined);
-			this.state = "idle";
-		});
-		this.#server.addEventListener("room-info", (e) => {
-			$room.set(e.detail);
-		});
-		this.#server.addEventListener("room-left", () => {
-			$room.set(undefined);
-			this.state = "idle";
-			removeConnections();
-		});
-		this.#server.addEventListener("user-joined", async (e) => {
-			const id = e.detail.id;
-			if (findConnection(id)) return;
-			const room = $room.get();
-			if (!room) return;
-			await createPeerConnection(this.#server, room.id, e.detail);
-		});
-		this.#server.addEventListener("user-left", (e) => {
-			removeConnection(e.detail.id);
-		});
+export function roomState() {
+	return state;
+}
+
+export async function joinRoom(server: SignalingServer, id: string) {
+	if (state === "joining" || state === "active") {
+		throw new Error("already joining a room");
 	}
-
-	async join(id: string): Promise<Room> {
-		if (this.state === "joining" || this.state === "active") {
-			throw new Error("already joining a room");
-		}
-		this.state = "joining";
-		const response = await this.#server.sendRequest({
-			type: "join-room",
-			payload: { room_id: id },
-		});
-		const body = parseBody(response.body);
-		switch (body.type) {
-			case "room-joined":
-				this.state = "active";
-				$room.set(body.payload);
-				return body.payload;
-			case "error":
-				this.state = "failed";
-				throw new Error(
-					body.payload.code === "NOT_FOUND"
-						? "Room not found"
-						: body.payload.message,
-				);
-			default:
-				this.state = "failed";
-				throw new Error("Failed to join room");
-		}
+	state = "joining";
+	const response = await server.sendRequest({
+		type: "join-room",
+		payload: { room_id: id },
+	});
+	const body = parseBody(response.body);
+	switch (body.type) {
+		case "room-joined":
+			state = "active";
+			$room.set(body.payload);
+			return body.payload;
+		case "error":
+			state = "failed";
+			throw new Error(body.payload.message);
+		default:
+			state = "failed";
+			throw new Error("Failed to join room");
 	}
+}
 
-	async leave() {
-		const room = $room.get();
-		if (!room) return;
-		await this.#server
+export async function leaveRoom(server: SignalingServer) {
+	const room = $room.get();
+	if (!room) return;
+	try {
+		await server
 			.sendRequest({
 				type: "leave-room",
 				payload: { room_id: room.id },
 			})
 			.catch(console.error);
-		this.state = "idle";
+		state = "idle";
 		$room.set(undefined);
 		removeConnections();
+	} catch (err) {
+		console.error("leave room:", err);
 	}
+}
 
-	async create(): Promise<string> {
-		this.state = "idle";
-		const room = $room.get();
-		if (room) {
-			await this.leave();
-		}
-		const response = await this.#server.sendRequest({
-			type: "create-room",
-		});
-		const body = parseBody(response.body);
-		switch (body.type) {
-			case "room-created":
-				return body.payload.id;
-			case "error":
-				this.state = "failed";
-				throw new Error(body.payload.message);
-			default:
-				this.state = "failed";
-				throw new Error("Failed to create room");
-		}
+export async function createRoom(server: SignalingServer): Promise<Room> {
+	state = "idle";
+	const room = $room.get();
+	if (room) {
+		await leaveRoom(server);
 	}
+	const response = await server.sendRequest({
+		type: "create-room",
+	});
+	const body = parseBody(response.body);
+	switch (body.type) {
+		case "room-created":
+			return body.payload;
+		case "error":
+			state = "failed";
+			throw new Error(body.payload.message);
+		default:
+			state = "failed";
+			throw new Error("Failed to create room");
+	}
+}
+
+export function handleRoomInfo(room: Room) {
+	$room.set(room);
+}
+
+export function handleRoomLeft() {
+	$room.set(undefined);
+	state = "idle";
+	removeConnections();
+}
+
+export async function handleUserJoined(server: SignalingServer, user: User) {
+	if (findConnection(user.id)) return;
+	const room = $room.get();
+	if (!room) return;
+	await createPeerConnection(server, room.id, user);
+}
+
+export function handleUserLeft(user: User) {
+	removeConnection(user.id);
+}
+
+export function closeRoom() {
+	$room.set(undefined);
+	state = "idle";
 }

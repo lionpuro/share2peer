@@ -15,6 +15,13 @@ import {
 	handleOffer,
 	removeConnections,
 } from "#/lib/webrtc";
+import {
+	closeRoom,
+	handleRoomInfo,
+	handleRoomLeft,
+	handleUserJoined,
+	handleUserLeft,
+} from "./room";
 
 declare global {
 	interface Window {
@@ -74,6 +81,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#ws.addEventListener("close", async () => {
 				$connectionState.set("disconnected");
 				removeConnections();
+				closeRoom();
 				this.dispatchTypedEvent("close", new CustomEvent("close"));
 				setTimeout(() => {
 					this.connect();
@@ -118,6 +126,18 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 							break;
 						case "ice-candidate":
 							await handleICECandidate(body);
+							break;
+						case "room-info":
+							handleRoomInfo(body.payload);
+							break;
+						case "room-left":
+							handleRoomLeft();
+							break;
+						case "user-joined":
+							await handleUserJoined(this, body.payload);
+							break;
+						case "user-left":
+							handleUserLeft(body.payload);
 							break;
 					}
 				} catch (err) {

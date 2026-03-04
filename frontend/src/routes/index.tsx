@@ -1,6 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Heading } from "#/components/ui/heading";
@@ -13,6 +12,8 @@ import {
 	IconX,
 } from "#/components/icons";
 import { toast } from "react-toastify";
+import { createRoom } from "#/lib/room";
+import { server } from "#/lib/server";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -20,14 +21,13 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const { createRoom } = useRoom();
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
 
 	async function handleCreate() {
 		setCreating(true);
 		try {
-			const id = await createRoom();
+			const { id } = await createRoom(server);
 			navigate({ to: "/s/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);

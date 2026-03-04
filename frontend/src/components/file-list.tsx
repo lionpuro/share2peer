@@ -12,16 +12,7 @@ export function FileList({
 	className?: string;
 	children?: ReactNode;
 }) {
-	return (
-		<ul
-			className={cn(
-				"flex flex-col gap-px overflow-hidden rounded-xl border bg-neutral-200",
-				className,
-			)}
-		>
-			{children}
-		</ul>
-	);
+	return <ul className={cn("flex flex-col gap-2", className)}>{children}</ul>;
 }
 
 interface TransferState {
@@ -39,32 +30,26 @@ export function FileListItem({
 	transfer?: TransferState;
 } & LiHTMLAttributes<HTMLLIElement>) {
 	return (
-		<li
-			{...props}
-			className={cn(
-				"flex min-h-17 items-center gap-2 bg-background px-4 py-3",
-				className,
-			)}
-		>
-			<FileIcon mime={file.mime} className="size-8" />
-			<div className="flex min-w-0 flex-1 flex-wrap gap-1 self-stretch font-medium">
-				<div className="flex w-full gap-2">
-					<p
-						title={file.name}
-						className="overflow-x-scroll text-sm font-medium text-ellipsis whitespace-nowrap"
-						style={{ scrollbarWidth: "none" }}
-					>
-						{file.name}
-					</p>
-					<span className="ml-auto text-sm whitespace-nowrap text-neutral-500">
+		<li {...props} className={cn(className, "flex gap-2")}>
+			<span className="flex size-10 items-center justify-center rounded-lg bg-primary/20 text-xl text-[#45a568]">
+				<FileIcon mime={file.mime} />
+			</span>
+			<div className="flex flex-1 flex-col justify-between py-1">
+				<p className="flex text-sm leading-none font-medium">
+					{file.name}
+					<span className="ml-auto text-muted-foreground">
 						{formatFileSize(file.size)}
 					</span>
-				</div>
-				{transfer ? (
+				</p>
+				{transfer && (
 					<div className="flex w-full items-center gap-2 text-sm">
 						{transfer.status === "active" || transfer.status === "waiting" ? (
 							<>
-								<Progress value={transfer.progress} max={100} />
+								<Progress
+									value={transfer.progress}
+									max={100}
+									className="flex-1"
+								/>
 								<span className="font-medium text-muted-foreground">
 									{transfer.progress}%
 								</span>
@@ -75,7 +60,7 @@ export function FileListItem({
 							</p>
 						)}
 					</div>
-				) : null}
+				)}
 			</div>
 		</li>
 	);

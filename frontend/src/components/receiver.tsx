@@ -24,15 +24,13 @@ export function Receiver({
 	}
 	return (
 		<div className="flex flex-col gap-4">
+			<Heading order={2}>Receive files</Heading>
 			{files.length === 0 ? (
-				<span className="text-center text-muted-foreground">
-					Waiting for files
+				<span className="text-muted-foreground">
+					Waiting for incoming files
 				</span>
 			) : (
 				<>
-					<Heading order={2} size="sm">
-						Files
-					</Heading>
 					<FileList>
 						{files.map((f) => (
 							<FileListItem

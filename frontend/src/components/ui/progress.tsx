@@ -8,7 +8,7 @@ export function Progress({ value, max, className, ...props }: ProgressProps) {
 		<progress
 			value={value}
 			max={max}
-			className={cn("progress h-2 flex-1", className)}
+			className={cn("progress h-2", className)}
 			{...props}
 		></progress>
 	);

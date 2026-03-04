@@ -41,26 +41,14 @@ export function FileListItem({
 						{formatFileSize(file.size)}
 					</span>
 				</p>
-				{transfer && (
-					<div className="flex w-full items-center gap-2 text-sm">
-						{transfer.status === "active" || transfer.status === "waiting" ? (
-							<>
-								<Progress
-									value={transfer.progress}
-									max={100}
-									className="flex-1"
-								/>
-								<span className="font-medium text-muted-foreground">
-									{transfer.progress}%
-								</span>
-							</>
-						) : (
-							<p className="ml-auto text-muted-foreground">
-								{toTitleCase(transfer.status)}
-							</p>
-						)}
-					</div>
-				)}
+				{transfer &&
+					(transfer.status === "active" || transfer.status === "waiting" ? (
+						<Progress value={transfer.progress} max={100} className="w-full" />
+					) : (
+						<p className="text-sm leading-none font-medium text-muted-foreground">
+							{toTitleCase(transfer.status)}
+						</p>
+					))}
 			</div>
 		</li>
 	);

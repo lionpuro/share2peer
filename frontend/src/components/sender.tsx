@@ -46,7 +46,7 @@ export function Sender() {
 							<span className="w-full text-sm font-medium text-muted-foreground">
 								Transfer progress
 							</span>
-							<Progress value={progress} max={100} />
+							<Progress value={progress} max={100} className="flex-1" />
 							<span className="text-sm font-medium text-muted-foreground">
 								{progress}%
 							</span>

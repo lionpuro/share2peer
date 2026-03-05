@@ -23,11 +23,13 @@ interface TransferState {
 export function FileListItem({
 	file,
 	transfer,
+	sender,
 	className,
 	...props
 }: {
 	file: FileMetadata;
 	transfer?: TransferState;
+	sender?: string;
 } & LiHTMLAttributes<HTMLLIElement>) {
 	return (
 		<li {...props} className={cn(className, "flex gap-2")}>
@@ -49,6 +51,11 @@ export function FileListItem({
 							{toTitleCase(transfer.status)}
 						</p>
 					))}
+				{!transfer && sender && (
+					<p className="text-sm leading-none font-medium text-muted-foreground">
+						Shared by {sender}
+					</p>
+				)}
 			</div>
 		</li>
 	);

@@ -6,7 +6,7 @@ import { FileInput } from "#/components/ui/file-input";
 import { Heading } from "#/components/ui/heading";
 import { Progress } from "#/components/ui/progress";
 import { FileList, FileListItem } from "#/components/file-list";
-import { IconUpload } from "#/components/icons";
+import { IconStop, IconUpload } from "#/components/icons";
 
 export function Sender() {
 	const { files, start, stop, transferring, totalSize, currentSize } =
@@ -23,7 +23,9 @@ export function Sender() {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<Heading order={2}>Send files</Heading>
+			<Heading order={2} className="mb-1">
+				Send
+			</Heading>
 			{files.length > 0 ? (
 				<>
 					<FileList>
@@ -31,27 +33,24 @@ export function Sender() {
 							<FileListItem key={"up" + f.id} file={f} />
 						))}
 					</FileList>
-					<div className="flex gap-2 max-sm:flex-col">
-						<Button
-							variant="secondary"
-							size="sm"
-							className="max-sm:mt-4 sm:ml-auto"
+					<div className="flex items-center gap-4">
+						{transferring && (
+							<div className="flex flex-1 flex-wrap gap-2">
+								<p className="flex w-full text-sm leading-none font-medium text-muted-foreground">
+									Sending
+									<span className="ml-auto">{progress}%</span>
+								</p>
+								<Progress value={progress} max={100} className="flex-1" />
+							</div>
+						)}
+						<button
+							className="ml-auto flex items-center gap-1 py-2 text-sm font-medium text-red-600/80 hover:text-red-600"
 							onClick={stop}
 						>
-							Stop sharing
-						</Button>
+							<IconStop />
+							Stop
+						</button>
 					</div>
-					{transferring ? (
-						<div className="flex flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-							<span className="w-full text-sm font-medium text-muted-foreground">
-								Transfer progress
-							</span>
-							<Progress value={progress} max={100} className="flex-1" />
-							<span className="text-sm font-medium text-muted-foreground">
-								{progress}%
-							</span>
-						</div>
-					) : null}
 				</>
 			) : selectedFiles.length > 0 ? (
 				<>

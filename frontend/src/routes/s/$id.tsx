@@ -120,8 +120,8 @@ function Component() {
 						Copy
 					</Button>
 				</div>
-				<div className="flex flex-col gap-6">
-					<div className="mb-4 flex flex-col gap-2">
+				<div className="flex flex-col gap-10">
+					<div className="flex flex-col gap-2">
 						<ul>
 							<li key={identity.id} className="flex items-center gap-2">
 								<DeviceIcon
@@ -160,12 +160,8 @@ function Component() {
 							))}
 						</ul>
 					</div>
-
-					{identity.id === room.host ? (
-						<Sender />
-					) : (
-						<Receiver room={room} peers={peers} />
-					)}
+					<Sender />
+					<Receiver peers={peers} />
 				</div>
 			</Main>
 		</>

@@ -1,32 +1,20 @@
-import type { Room } from "#/lib/schemas";
 import type { PeerState } from "#/stores/peer";
 import { useDownloads } from "#/hooks/transfer";
-import { Loader } from "#/components/ui/loader";
 import { Button } from "#/components/ui/button";
 import { Heading } from "#/components/ui/heading";
 import { FileList, FileListItem } from "#/components/file-list";
 import { IconDownload, IconX } from "#/components/icons";
 
-export function Receiver({
-	room,
-	peers,
-}: {
-	room: Room;
-	peers: Record<string, PeerState>;
-}) {
+export function Receiver({ peers }: { peers: Record<string, PeerState> }) {
 	const { files, downloads, transfersByFile, stop, start, transferring } =
 		useDownloads();
-	const host = room.host ? peers[room.host] : undefined;
-	const loading = !host || host.files === undefined;
-
-	if (loading) {
-		return <Loader />;
-	}
 	return (
 		<div className="flex flex-col gap-4">
-			<Heading order={2}>Receive files</Heading>
+			<Heading order={2} className="mb-1">
+				Receive
+			</Heading>
 			{files.length === 0 ? (
-				<span className="text-muted-foreground">
+				<span className="leading-none text-muted-foreground">
 					Waiting for incoming files
 				</span>
 			) : (
@@ -37,6 +25,7 @@ export function Receiver({
 								key={"file" + f.id}
 								file={f}
 								transfer={transfersByFile[f.id]?.[0]}
+								sender={peers[f.peerID]?.display_name}
 							/>
 						))}
 					</FileList>

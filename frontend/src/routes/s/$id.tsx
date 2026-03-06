@@ -16,8 +16,7 @@ import {
 	IconShare,
 	IconWifi,
 } from "#/components/icons";
-import { Sender } from "#/components/sender";
-import { Receiver } from "#/components/receiver";
+import { FileArea } from "#/components/filearea";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -160,8 +159,7 @@ function Component() {
 							))}
 						</ul>
 					</div>
-					<Sender />
-					<Receiver peers={peers} />
+					<FileArea />
 				</div>
 			</Main>
 		</>

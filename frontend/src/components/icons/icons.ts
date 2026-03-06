@@ -21,6 +21,8 @@ export { default as IconPlus } from "~icons/mdi/plus";
 export { default as IconLink } from "~icons/mdi/link-variant";
 export { default as IconShare } from "~icons/mdi/share-variant";
 export { default as IconStop } from "~icons/mdi/stop";
+export { default as IconTrash } from "~icons/mdi/trash-can";
+export { default as IconReload } from "~icons/mdi/reload";
 
 export { default as IconWifi } from "~icons/material-symbols/wifi-sharp";
 export { default as IconDevices } from "~icons/material-symbols/devices";

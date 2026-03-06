@@ -8,6 +8,7 @@ const options = {
 	variants: {
 		primary: "bg-primary text-white hover:bg-primary-darker",
 		secondary: "bg-secondary hover:bg-secondary-darker/80",
+		ghost: "",
 	},
 	sizes: {
 		sm: "px-4 py-2 text-sm font-medium",

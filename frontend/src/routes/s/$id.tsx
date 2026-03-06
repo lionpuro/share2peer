@@ -16,8 +16,7 @@ import {
 	IconShare,
 	IconWifi,
 } from "#/components/icons";
-import { Sender } from "#/components/sender";
-import { Receiver } from "#/components/receiver";
+import { FileArea } from "#/components/filearea";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -120,8 +119,8 @@ function Component() {
 						Copy
 					</Button>
 				</div>
-				<div className="flex flex-col gap-6">
-					<div className="mb-4 flex flex-col gap-2">
+				<div className="flex flex-col gap-10">
+					<div className="flex flex-col gap-2">
 						<ul>
 							<li key={identity.id} className="flex items-center gap-2">
 								<DeviceIcon
@@ -160,12 +159,7 @@ function Component() {
 							))}
 						</ul>
 					</div>
-
-					{identity.id === room.host ? (
-						<Sender />
-					) : (
-						<Receiver room={room} peers={peers} />
-					)}
+					<FileArea />
 				</div>
 			</Main>
 		</>

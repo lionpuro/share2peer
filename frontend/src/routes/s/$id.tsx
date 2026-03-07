@@ -130,7 +130,7 @@ function Component() {
 								/>
 								<p>{identity.display_name}</p>
 								<span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
-									ME
+									YOU
 								</span>
 							</li>
 							{users.map((u) => (

@@ -68,7 +68,12 @@ function Component() {
 		});
 	}
 
-	const users = Object.values(peers);
+	const users =
+		room.users
+			?.filter((u) => u.id !== identity.id)
+			.map((u) => {
+				return peers[u.id] || { ...u, connectionState: "disconnected" };
+			}) || [];
 
 	if (connectionState !== "connected") {
 		return "Failed to connect";

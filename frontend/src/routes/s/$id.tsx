@@ -15,7 +15,6 @@ import {
 	IconCopy,
 	IconExit,
 	IconShare,
-	IconWifi,
 } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
@@ -167,39 +166,60 @@ function RoomInfo({
 					Users
 				</Heading>
 				<ul className="flex flex-col gap-2">
-					<li key={identity.id} className="flex items-center gap-2">
-						<DeviceIcon
-							deviceType={identity.device_type}
-							width={16}
-							height={16}
-						/>
-						<p className="py-0.5 leading-none">{identity.display_name}</p>
-						<span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
-							YOU
-						</span>
+					<li key={identity.id} className="flex items-center gap-3">
+						<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">
+							<DeviceIcon
+								deviceType={identity.device_type}
+								width={24}
+								height={24}
+							/>
+						</div>
+						<div className="flex flex-1 flex-col justify-between py-0.5">
+							<div className="flex items-center leading-none">
+								{identity.display_name}
+								<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+									YOU
+								</span>
+							</div>
+							<span className="text-sm leading-none font-medium text-muted-foreground">
+								{identity.device_name}
+							</span>
+						</div>
 					</li>
 					{users.length === 0 && (
-						<p className="py-0.75 text-sm leading-none text-muted-foreground">
-							No other users yet
-						</p>
+						<p className="text-muted-foreground">No other users yet</p>
 					)}
 					{users.map((u) => (
-						<li key={"user-" + u.id} className="flex items-center gap-2">
-							<DeviceIcon deviceType={u.device_type} width={16} height={16} />
-							<p className="py-0.5 leading-none">{u.display_name}</p>
-							<span
-								title={u.connectionState}
-								className={cn(
-									"ml-auto cursor-pointer text-sm text-muted-foreground",
-									{
-										"text-green-600/80": u.connectionState === "connected",
-										"text-yellow-600/80": u.connectionState === "connecting",
-										"text-red-600/80": u.connectionState === "failed",
-									},
-								)}
-							>
-								<IconWifi />
-							</span>
+						<li key={"user-" + u.id} className="flex items-center gap-3">
+							<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">
+								<DeviceIcon deviceType={u.device_type} width={24} height={24} />
+							</div>
+							<div className="flex flex-1 flex-col justify-between py-0.5">
+								<div className="flex items-center leading-none">
+									{u.display_name}
+									<span
+										title={u.connectionState}
+										className={cn(
+											"ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold before:text-[8px] before:leading-none before:content-['●']",
+											{
+												"bg-neutral-200/80 text-neutral-700/80":
+													u.connectionState === "disconnected",
+												"bg-green-100 text-green-700/80":
+													u.connectionState === "connected",
+												"bg-yellow-100 text-yellow-700/80":
+													u.connectionState === "connecting",
+												"bg-red-100 text-red-700/80":
+													u.connectionState === "failed",
+											},
+										)}
+									>
+										{u.connectionState}
+									</span>
+								</div>
+								<span className="text-sm leading-none font-medium text-muted-foreground">
+									{u.device_name}
+								</span>
+							</div>
 						</li>
 					))}
 				</ul>

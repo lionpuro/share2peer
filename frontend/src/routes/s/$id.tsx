@@ -22,6 +22,9 @@ import type { Room, User } from "#/lib/schemas";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
+	head: (ctx) => ({
+		meta: [{ title: `Room ${ctx.params.id} | WebSend` }],
+	}),
 });
 
 function Component() {

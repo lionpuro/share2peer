@@ -48,7 +48,7 @@ export function FileArea() {
 				{files.length > 0 ? "Shared files" : "Share files"}
 			</Heading>
 			{files.length > 0 ? (
-				<ul className="mb-2 flex flex-col gap-2">
+				<ul className="-mr-2 mb-2 flex flex-col gap-2">
 					{files.map((file) => {
 						const transfer = file.uploader
 							? transfersByFile[file.id]?.[0]

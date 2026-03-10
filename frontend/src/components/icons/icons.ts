@@ -2,6 +2,8 @@ import type { SVGProps } from "react";
 
 export type IconProps = SVGProps<SVGSVGElement>;
 
+export { default as Logo } from "~icons/mingcute/send-plane-fill";
+
 export { default as IconUpload } from "~icons/mdi/upload";
 export { default as IconDownload } from "~icons/mdi/download";
 export { default as IconCopy } from "~icons/mdi/content-copy";

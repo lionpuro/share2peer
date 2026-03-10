@@ -9,13 +9,7 @@ import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
 import { ErrorComponent } from "#/components/error";
-import {
-	DeviceIcon,
-	IconCheck,
-	IconCopy,
-	IconExit,
-	IconShare,
-} from "#/components/icons";
+import { DeviceIcon, IconCheck, IconCopy, IconShare } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { Room, User } from "#/lib/schemas";
@@ -126,43 +120,34 @@ function RoomInfo({
 						<IconCheck className="text-sm" />
 					)}
 				</Button>
-				<Link
-					to="/"
-					replace={users.length === 0}
-					className="ml-auto flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium text-red-600/80 hover:bg-secondary/25"
-				>
-					<IconExit className="text-xs" />
-					Leave
-				</Link>
-			</div>
-			<div className="flex flex-wrap gap-2">
-				<div className="flex flex-1 rounded-lg border">
-					<input
-						id="room-url"
-						readOnly={true}
-						value={roomURL}
-						className="flex-1 overflow-x-scroll py-1.5 pl-3 text-sm font-medium outline-none"
-					/>
-					<Button
-						disabled={copiedURL}
-						onClick={copyURL}
-						variant="ghost"
-						title="Copy"
-						className="size-8 p-0 text-muted-foreground/75 hover:text-muted-foreground disabled:bg-transparent"
-					>
-						{!copiedURL ? (
-							<IconCopy className="text-xs" />
-						) : (
-							<IconCheck className="text-sm" />
-						)}
-					</Button>
-				</div>
 				{typeof navigator.share === "function" && (
-					<Button onClick={shareURL} className="gap-2 py-1 pl-3">
+					<Button
+						variant="ghost"
+						onClick={shareURL}
+						className="ml-auto gap-2 max-sm:size-9 max-sm:p-0 max-sm:text-base max-sm:text-neutral-400 sm:border sm:py-1.5 sm:pl-3"
+					>
 						<IconShare />
-						Share
+						<span className="max-sm:hidden">Share</span>
 					</Button>
 				)}
+			</div>
+			<div className="flex flex-wrap gap-2">
+				<input
+					id="room-url"
+					readOnly={true}
+					value={roomURL}
+					className="flex-1 overflow-x-scroll rounded-lg border px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
+				/>
+				<Button
+					disabled={copiedURL}
+					onClick={copyURL}
+					variant="primary"
+					title="Copy"
+					className="gap-2 max-sm:size-9 max-sm:p-0 sm:py-1.5 sm:pl-3"
+				>
+					{!copiedURL ? <IconCopy /> : <IconCheck />}
+					<span className="max-sm:hidden">Copy</span>
+				</Button>
 			</div>
 			<div className="mt-4 flex flex-col gap-3">
 				<Heading order={2}>Users</Heading>

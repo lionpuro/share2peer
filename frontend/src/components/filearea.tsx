@@ -43,10 +43,12 @@ export function FileArea() {
 	};
 
 	return (
-		<div className="flex flex-col gap-6">
-			<Heading order={2}>Shared files</Heading>
+		<div className="flex flex-col gap-4">
+			<Heading order={2}>
+				{files.length > 0 ? "Shared files" : "Share files"}
+			</Heading>
 			{files.length > 0 ? (
-				<ul className="flex flex-col gap-2">
+				<ul className="mb-2 flex flex-col gap-2">
 					{files.map((file) => {
 						const transfer = file.uploader
 							? transfersByFile[file.id]?.[0]
@@ -130,16 +132,16 @@ export function FileArea() {
 			)}
 			<FileInput
 				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"
-				activeClassName="sm:border-primary/80 sm:bg-primary/10"
+				activeClassName="border-primary/80 bg-primary/10"
 				multiple={true}
 				onFileInput={handleDrop}
 			>
-				<IconUpload className="pointer-events-none size-12 text-neutral-400" />
-				<span className="pointer-events-none mt-1 text-center text-sm font-medium text-muted-foreground">
+				<IconUpload className="pointer-events-none mb-1 size-12 text-neutral-400" />
+				<span className="pointer-events-none text-center font-medium">
 					Select files to share
 				</span>
-				<span className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker">
-					Browse
+				<span className="pointer-events-none text-center text-sm font-medium text-muted-foreground">
+					Drag and drop or click to browse
 				</span>
 			</FileInput>
 		</div>

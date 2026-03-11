@@ -10,8 +10,6 @@ export { default as IconCopy } from "~icons/mdi/content-copy";
 export { default as IconCheck } from "~icons/mdi/check";
 export { default as IconExit } from "~icons/mdi/exit-to-app";
 export { default as IconX } from "~icons/mdi/close";
-export { default as IconAlert } from "~icons/mdi/alert";
-export { default as IconAccessPoint } from "~icons/mdi/access-point";
 export { default as IconDesktop } from "~icons/mdi/desktop-windows";
 export { default as IconTablet } from "~icons/mdi/tablet";
 export { default as IconMobile } from "~icons/mdi/mobile-phone";
@@ -23,10 +21,8 @@ export { default as IconPlus } from "~icons/mdi/plus";
 export { default as IconLink } from "~icons/mdi/link-variant";
 export { default as IconShare } from "~icons/mdi/share-variant";
 export { default as IconStop } from "~icons/mdi/stop";
-export { default as IconTrash } from "~icons/mdi/trash-can";
 export { default as IconReload } from "~icons/mdi/reload";
 
-export { default as IconWifi } from "~icons/material-symbols/wifi-sharp";
 export { default as IconDevices } from "~icons/material-symbols/devices";
 
 export { default as IconFileDefault } from "~icons/fa-solid/file-alt";

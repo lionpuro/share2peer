@@ -8,8 +8,8 @@ import {
 	IconDownload,
 	IconReload,
 	IconStop,
-	IconTrash,
 	IconUpload,
+	IconX,
 } from "#/components/icons";
 import { Button } from "#/components/ui/button";
 import { FileInput } from "#/components/ui/file-input";
@@ -91,7 +91,7 @@ export function FileArea() {
 										onClick={() => removeFile(file.id)}
 										title="Remove"
 									>
-										<IconTrash />
+										<IconX />
 									</Button>
 								) : !transfer || transfer.status !== "active" ? (
 									<Button

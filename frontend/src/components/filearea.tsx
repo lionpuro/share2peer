@@ -16,23 +16,17 @@ import { FileInput } from "#/components/ui/file-input";
 import { Heading } from "#/components/ui/heading";
 import { Progress } from "#/components/ui/progress";
 import { formatFileSize, toTitleCase } from "#/lib/helper";
+import type { Transfer } from "#/stores/transfer";
 
 export function FileArea() {
 	const peers = useStore($peers);
-	const {
-		transfersByFile,
-		stopTransfer,
-		transferring,
-		currentSize,
-		totalSize,
-	} = useTransfers();
+	const { transfersByFile, stopTransfer } = useTransfers();
 	const { uploadedFiles, peerFiles, addFiles, removeFile, downloadFile } =
 		useFiles();
 	const files: (FileMetadata & { uploader?: string })[] = [
 		...uploadedFiles,
 		...peerFiles,
 	];
-	const progress = Math.round(currentSize / totalSize);
 
 	const handleDrop = (files: File[]) => {
 		const uploads = files.map((file) => {
@@ -50,9 +44,9 @@ export function FileArea() {
 			{files.length > 0 ? (
 				<ul className="-mr-2 mb-2 flex flex-col gap-2">
 					{files.map((file) => {
-						const transfer = file.uploader
-							? transfersByFile[file.id]?.[0]
-							: undefined;
+						const transfers = transfersByFile[file.id] || [];
+						const transfer =
+							transfers.length > 0 ? getTransferState(transfers) : undefined;
 						const sender = file.uploader
 							? peers[file.uploader]?.display_name
 							: undefined;
@@ -62,32 +56,39 @@ export function FileArea() {
 									<FileIcon mime={file.mime} />
 								</span>
 								<div className="flex flex-1 flex-col justify-between py-1">
-									<p className="flex leading-none font-medium">{file.name}</p>
+									<div className="flex">
+										<p className="leading-none font-medium">{file.name}</p>
+										{transfer && transfer.status === "active" && (
+											<span className="ml-auto text-sm font-medium text-muted-foreground">
+												{transfer.progress}%
+											</span>
+										)}
+									</div>
 									{transfer &&
-										(transfer.status === "active" ||
-										transfer.status === "waiting" ? (
+										(transfer.status === "active" ? (
 											<Progress
 												value={transfer.progress}
 												max={100}
 												className="w-full"
 											/>
-										) : (
+										) : file.uploader ? (
 											<p className="text-sm leading-none font-medium text-muted-foreground">
 												{toTitleCase(transfer.status)}
 											</p>
-										))}
-									{!transfer && (
+										) : null)}
+									{!transfer ||
+									(!file.uploader && transfer.status !== "active") ? (
 										<p className="text-sm leading-none font-medium text-muted-foreground">
 											{formatFileSize(file.size)}
 											<span className="mx-2">•</span>
 											{sender || "You"}
 										</p>
-									)}
+									) : null}
 								</div>
 								{!sender ? (
 									<Button
 										variant="ghost"
-										className="aspect-square p-2 text-lg text-red-600/80 hover:text-red-600"
+										className="aspect-square p-2 text-lg text-muted-foreground/80 hover:text-red-600"
 										onClick={() => removeFile(file.id)}
 										title="Remove"
 									>
@@ -109,8 +110,12 @@ export function FileArea() {
 								) : (
 									<Button
 										variant="ghost"
-										className="aspect-square p-2 text-lg text-red-600/80 hover:text-red-600"
-										onClick={() => stopTransfer(transfer.id)}
+										className="aspect-square p-2 text-lg text-muted-foreground/80 hover:text-red-600"
+										onClick={() =>
+											transfersByFile[file.id]?.forEach((t) =>
+												stopTransfer(t.id),
+											)
+										}
 										title="Stop"
 									>
 										<IconStop />
@@ -121,15 +126,6 @@ export function FileArea() {
 					})}
 				</ul>
 			) : null}
-			{transferring && (
-				<div className="flex flex-1 flex-wrap gap-2">
-					<p className="flex w-full text-sm leading-none font-medium text-muted-foreground">
-						Total progress
-						<span className="ml-auto">{progress}%</span>
-					</p>
-					<Progress value={progress} max={100} className="flex-1" />
-				</div>
-			)}
 			<FileInput
 				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"
 				activeClassName="border-primary/80 bg-primary/10"
@@ -146,4 +142,26 @@ export function FileArea() {
 			</FileInput>
 		</div>
 	);
+}
+
+function getTransferState(transfers: Transfer[]) {
+	const transfer = transfers[0];
+	if (transfers.length === 1 && transfer) {
+		return { status: transfer.status, progress: transfer.progress };
+	}
+
+	const { status, current, total } = transfers.reduce(
+		(acc, cur) => {
+			const active = cur.status === "active";
+			return {
+				status: acc.status === "active" ? "active" : cur.status,
+				current: !active ? acc.current : acc.current + cur.progress * cur.size,
+				total: !active ? acc.total : acc.total + cur.size,
+			};
+		},
+		{ status: "waiting" as Transfer["status"], current: 0, total: 0 },
+	);
+
+	const progress = total === 0 ? 0 : Math.round(current / total);
+	return { status, progress };
 }

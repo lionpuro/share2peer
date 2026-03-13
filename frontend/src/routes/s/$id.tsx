@@ -150,7 +150,9 @@ function RoomInfo({
 				</Button>
 			</div>
 			<div className="mt-4 flex flex-col gap-3">
-				<Heading order={2}>Users</Heading>
+				<Heading order={2} size="sm">
+					Users
+				</Heading>
 				<ul className="flex flex-col gap-2">
 					<li key={identity.id} className="flex items-center gap-3">
 						<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">

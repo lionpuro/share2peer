@@ -38,7 +38,7 @@ export function FileArea() {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<Heading order={2}>
+			<Heading order={2} size="sm">
 				{files.length > 0 ? "Shared files" : "Share files"}
 			</Heading>
 			{files.length > 0 ? (

@@ -70,3 +70,40 @@ func extractClientInfo(userag string) clientInfo {
 
 	return clientInfo{deviceType: t, deviceName: n}
 }
+
+type UserService struct {
+	usersByID map[uuid.UUID]*User
+	mu        sync.RWMutex
+}
+
+func NewUserService() *UserService {
+	return &UserService{
+		usersByID: make(map[uuid.UUID]*User),
+	}
+}
+
+func (s *UserService) Register(user *User) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.usersByID[user.ID] = user
+}
+
+func (s *UserService) Delete(id uuid.UUID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, ok := s.usersByID[id]
+	if !ok {
+		return
+	}
+	delete(s.usersByID, id)
+}
+
+func (s *UserService) FindByID(id uuid.UUID) (*User, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	user, ok := s.usersByID[id]
+	return user, ok
+}

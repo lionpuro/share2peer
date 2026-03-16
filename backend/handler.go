@@ -11,12 +11,14 @@ import (
 )
 
 type SignalHandler struct {
+	users    *UserService
 	rooms    *RoomStore
 	upgrader websocket.Upgrader
 }
 
-func NewSignalHandler(rs *RoomStore) *SignalHandler {
+func NewSignalHandler(us *UserService, rs *RoomStore) *SignalHandler {
 	return &SignalHandler{
+		users: us,
 		rooms: rs,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
@@ -29,6 +31,7 @@ func NewSignalHandler(rs *RoomStore) *SignalHandler {
 func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	ci := extractClientInfo(header.Get("User-Agent"))
 	u := createUser(conn, ci.deviceType, ci.deviceName)
+	sh.users.Register(u)
 	log.Printf("connect user: %s", u.ID)
 	defer func() {
 		if err := sh.disconnect(u); err != nil {
@@ -71,6 +74,7 @@ func (sh *SignalHandler) disconnect(u *User) error {
 		if err := u.conn.Close(); err != nil {
 			log.Printf("close connection: %v", err)
 		}
+		sh.users.Delete(u.ID)
 		log.Printf("disconnect user: %s", u.ID)
 	}()
 

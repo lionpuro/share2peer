@@ -30,7 +30,8 @@ func NewSignalHandler(us *UserService, rs *RoomStore) *SignalHandler {
 
 func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	ci := extractClientInfo(header.Get("User-Agent"))
-	u := createUser(conn, ci.deviceType, ci.deviceName)
+	ip := extractIP(header)
+	u := createUser(conn, ip, ci.deviceType, ci.deviceName)
 	sh.users.Register(u)
 	log.Printf("connect user: %s", u.ID)
 	defer func() {

@@ -13,17 +13,19 @@ type User struct {
 	DisplayName string          `json:"display_name"`
 	DeviceType  string          `json:"device_type"`
 	DeviceName  string          `json:"device_name"`
+	networkKey  string          `json:"-"`
 	roomID      string          `json:"-"`
 	conn        *websocket.Conn `json:"-"`
 	mu          sync.Mutex      `json:"-"`
 }
 
-func createUser(conn *websocket.Conn, deviceType string, deviceName string) *User {
+func createUser(conn *websocket.Conn, ip, deviceType, deviceName string) *User {
 	return &User{
 		ID:          uuid.New(),
 		DisplayName: generateName(),
 		DeviceType:  deviceType,
 		DeviceName:  deviceName,
+		networkKey:  getNetworkKey(ip),
 		conn:        conn,
 	}
 }
@@ -72,13 +74,15 @@ func extractClientInfo(userag string) clientInfo {
 }
 
 type UserService struct {
-	usersByID map[uuid.UUID]*User
-	mu        sync.RWMutex
+	usersByID      map[uuid.UUID]*User
+	usersByNetwork map[string]map[uuid.UUID]*User
+	mu             sync.RWMutex
 }
 
 func NewUserService() *UserService {
 	return &UserService{
-		usersByID: make(map[uuid.UUID]*User),
+		usersByID:      make(map[uuid.UUID]*User),
+		usersByNetwork: make(map[string]map[uuid.UUID]*User),
 	}
 }
 
@@ -87,6 +91,12 @@ func (s *UserService) Register(user *User) {
 	defer s.mu.Unlock()
 
 	s.usersByID[user.ID] = user
+	if user.networkKey != "" {
+		if _, ok := s.usersByNetwork[user.networkKey]; !ok {
+			s.usersByNetwork[user.networkKey] = make(map[uuid.UUID]*User)
+		}
+		s.usersByNetwork[user.networkKey][user.ID] = user
+	}
 }
 
 func (s *UserService) Delete(id uuid.UUID) {
@@ -98,6 +108,9 @@ func (s *UserService) Delete(id uuid.UUID) {
 		return
 	}
 	delete(s.usersByID, id)
+	if user.networkKey != "" {
+		delete(s.usersByNetwork[user.networkKey], user.ID)
+	}
 }
 
 func (s *UserService) FindByID(id uuid.UUID) (*User, bool) {
@@ -106,4 +119,19 @@ func (s *UserService) FindByID(id uuid.UUID) (*User, bool) {
 
 	user, ok := s.usersByID[id]
 	return user, ok
+}
+
+func (s *UserService) FindByNetwork(key string) []*User {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	usermap, ok := s.usersByNetwork[key]
+	if !ok {
+		return nil
+	}
+	var users []*User
+	for _, u := range usermap {
+		users = append(users, u)
+	}
+	return users
 }

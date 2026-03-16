@@ -77,6 +77,7 @@ export default defineConfig(({ mode }) => {
 					target: `${process.env.VITE_DEV_WS_SERVER}`,
 					ws: true,
 					changeOrigin: true,
+					xfwd: true,
 					rewrite: (path) => path.replace(/^\/signals/, ""),
 				},
 			},

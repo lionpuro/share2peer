@@ -70,7 +70,9 @@ function Component() {
 						</span>
 					</div>
 					<div className="flex w-full flex-col gap-4 rounded-xl border p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm">
-						<span className="text-sm">Create a room to start sharing</span>
+						<span className="text-sm">
+							Create a private room to start sharing
+						</span>
 						<Button
 							onClick={handleCreate}
 							className="gap-1"

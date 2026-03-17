@@ -29,7 +29,6 @@ function Component() {
 	const { error } = useJoinRoom(id);
 	const peers = useStore($peers);
 
-
 	if (error) {
 		return (
 			<ErrorComponent error={toTitleCase(error)}>
@@ -96,23 +95,25 @@ function RoomInfo({
 		}, 1000);
 	}
 
+	const supportsShare = typeof navigator.share === "function";
+
 	function shareURL() {
-		if (typeof navigator.share === "function") {
+		if (supportsShare) {
 			navigator.share({ url: roomURL });
 		}
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex items-center">
+		<div className="flex flex-col gap-4 rounded-xl border p-4">
+			<div className="flex flex-wrap items-center">
 				<span className="mr-2 font-bold">Room:</span>
-				<p className="overflow-x-scroll font-medium outline-none">{room.id}</p>
+				<p className="mr-1 font-medium outline-none">{room.id}</p>
 				<Button
 					disabled={copiedID}
 					onClick={copyID}
 					variant="ghost"
 					title="Copy"
-					className="size-8 p-0 text-muted-foreground/75 hover:text-muted-foreground disabled:bg-transparent"
+					className="size-7 p-0 text-muted-foreground/75 hover:text-muted-foreground disabled:bg-transparent"
 				>
 					{!copiedID ? (
 						<IconCopy className="text-xs" />
@@ -120,14 +121,13 @@ function RoomInfo({
 						<IconCheck className="text-sm" />
 					)}
 				</Button>
-				{typeof navigator.share === "function" && (
+				{supportsShare && (
 					<Button
 						variant="ghost"
 						onClick={shareURL}
-						className="ml-auto gap-2 max-sm:size-9 max-sm:p-0 max-sm:text-base max-sm:text-neutral-400 sm:border sm:py-1.5 sm:pl-3"
+						className="ml-auto size-7 justify-end p-0 text-base text-neutral-400"
 					>
 						<IconShare />
-						<span className="max-sm:hidden">Share</span>
 					</Button>
 				)}
 			</div>
@@ -136,20 +136,25 @@ function RoomInfo({
 					id="room-url"
 					readOnly={true}
 					value={roomURL}
-					className="flex-1 overflow-x-scroll rounded-lg border px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
+					className="flex-1 overflow-x-scroll rounded-lg border bg-card px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
 				/>
 				<Button
 					disabled={copiedURL}
 					onClick={copyURL}
-					variant="primary"
 					title="Copy"
-					className="gap-2 max-sm:size-9 max-sm:p-0 sm:py-1.5 sm:pl-3"
+					className="gap-1.5 px-3 py-1.5"
 				>
-					{!copiedURL ? <IconCopy /> : <IconCheck />}
-					<span className="max-sm:hidden">Copy</span>
+					<span className="flex justify-end">
+						{!copiedURL ? (
+							<IconCopy className="text-xs" />
+						) : (
+							<IconCheck className="text-xs" />
+						)}
+					</span>
+					Copy
 				</Button>
 			</div>
-			<div className="mt-4 flex flex-col gap-3">
+			<div className="mt-2 flex flex-col gap-2">
 				<Heading order={2} size="sm">
 					Users
 				</Heading>
@@ -162,7 +167,7 @@ function RoomInfo({
 								height={24}
 							/>
 						</div>
-						<div className="flex flex-1 flex-col justify-between py-0.5">
+						<div className="flex flex-1 flex-col justify-between">
 							<div className="flex items-center leading-none">
 								{identity.display_name}
 								<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
@@ -174,15 +179,12 @@ function RoomInfo({
 							</span>
 						</div>
 					</li>
-					{users.length === 0 && (
-						<p className="text-muted-foreground">No other users yet</p>
-					)}
 					{users.map((u) => (
 						<li key={"user-" + u.id} className="flex items-center gap-3">
 							<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">
 								<DeviceIcon deviceType={u.device_type} width={24} height={24} />
 							</div>
-							<div className="flex flex-1 flex-col justify-between py-0.5">
+							<div className="flex flex-1 flex-col justify-between">
 								<div className="flex items-center leading-none">
 									{u.display_name}
 									<span

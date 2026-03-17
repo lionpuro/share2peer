@@ -38,8 +38,8 @@ export function FileArea() {
 
 	return (
 		<div className="flex flex-col gap-4">
-			<Heading order={2} size="sm">
-				{files.length > 0 ? "Shared files" : "Share files"}
+			<Heading order={2} size="md">
+				Shared files
 			</Heading>
 			{files.length > 0 ? (
 				<ul className="-mr-2 mb-2 flex flex-col gap-2">
@@ -55,7 +55,7 @@ export function FileArea() {
 								<span className="flex size-10 items-center justify-center rounded-lg bg-primary/20 text-xl text-[#45a568]">
 									<FileIcon mime={file.mime} />
 								</span>
-								<div className="flex flex-1 flex-col justify-between py-1">
+								<div className="flex flex-1 flex-col justify-between py-0.75">
 									<div className="flex">
 										<p className="leading-none font-medium">{file.name}</p>
 										{transfer && transfer.status === "active" && (
@@ -125,7 +125,9 @@ export function FileArea() {
 						);
 					})}
 				</ul>
-			) : null}
+			) : (
+				<p className="text-muted-foreground leading-none">No files</p>
+			)}
 			<FileInput
 				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"
 				activeClassName="border-primary/80 bg-primary/10"

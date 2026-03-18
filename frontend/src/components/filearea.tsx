@@ -51,13 +51,23 @@ export function FileArea() {
 							? peers[file.uploader]?.display_name
 							: undefined;
 						return (
-							<li key={"file-" + file.id} className="flex gap-2">
+							<li
+								key={"file-" + file.id}
+								className="grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 gap-2"
+							>
 								<span className="flex size-10 items-center justify-center rounded-lg bg-primary/20 text-xl text-[#45a568]">
 									<FileIcon mime={file.mime} />
 								</span>
-								<div className="flex flex-1 flex-col justify-between py-0.75">
+								<div className="flex flex-col justify-between pb-0.5">
 									<div className="flex">
-										<p className="leading-none font-medium">{file.name}</p>
+										<div className="flex overflow-x-scroll">
+											<p
+												title={file.name}
+												className="inline-block font-medium whitespace-nowrap max-sm:text-sm"
+											>
+												{file.name}
+											</p>
+										</div>
 										{transfer && transfer.status === "active" && (
 											<span className="ml-auto text-sm font-medium text-muted-foreground">
 												{transfer.progress}%
@@ -88,7 +98,7 @@ export function FileArea() {
 								{!sender ? (
 									<Button
 										variant="ghost"
-										className="aspect-square p-2 text-lg text-muted-foreground/80 hover:text-red-600"
+										className="size-9 self-center p-0 text-lg text-muted-foreground/80 hover:text-red-600"
 										onClick={() => removeFile(file.id)}
 										title="Remove"
 									>
@@ -97,7 +107,7 @@ export function FileArea() {
 								) : !transfer || transfer.status !== "active" ? (
 									<Button
 										variant="ghost"
-										className="aspect-square p-2 text-lg text-muted-foreground/80 hover:text-primary"
+										className="size-9 self-center p-0 text-lg text-muted-foreground/80 hover:text-primary"
 										onClick={() => downloadFile(file.id)}
 										title="Download"
 									>
@@ -110,7 +120,7 @@ export function FileArea() {
 								) : (
 									<Button
 										variant="ghost"
-										className="aspect-square p-2 text-lg text-muted-foreground/80 hover:text-red-600"
+										className="size-9 self-center p-0 text-lg text-muted-foreground/80 hover:text-red-600"
 										onClick={() =>
 											transfersByFile[file.id]?.forEach((t) =>
 												stopTransfer(t.id),
@@ -126,7 +136,7 @@ export function FileArea() {
 					})}
 				</ul>
 			) : (
-				<p className="text-muted-foreground leading-none">No files</p>
+				<p className="leading-none text-muted-foreground">No files</p>
 			)}
 			<FileInput
 				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"

@@ -9,7 +9,7 @@ import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
 import { ErrorComponent } from "#/components/error";
-import { DeviceIcon, IconCheck, IconCopy, IconShare } from "#/components/icons";
+import { IconCheck, IconCopy, IconShare } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { Room, User } from "#/lib/schemas";
@@ -104,7 +104,7 @@ function RoomInfo({
 	}
 
 	return (
-		<div className="flex flex-col gap-4 rounded-xl border p-4">
+		<div className="flex flex-col gap-2 rounded-xl border p-4">
 			<div className="flex flex-wrap items-center">
 				<span className="mr-2 font-bold">Room:</span>
 				<p className="mr-1 font-medium outline-none">{room.id}</p>
@@ -160,13 +160,6 @@ function RoomInfo({
 				</Heading>
 				<ul className="flex flex-col gap-2">
 					<li key={identity.id} className="flex items-center gap-3">
-						<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">
-							<DeviceIcon
-								deviceType={identity.device_type}
-								width={24}
-								height={24}
-							/>
-						</div>
 						<div className="flex flex-1 flex-col justify-between">
 							<div className="flex items-center leading-none">
 								{identity.display_name}
@@ -181,9 +174,6 @@ function RoomInfo({
 					</li>
 					{users.map((u) => (
 						<li key={"user-" + u.id} className="flex items-center gap-3">
-							<div className="flex h-10 items-center justify-start rounded-lg text-xl text-neutral-400">
-								<DeviceIcon deviceType={u.device_type} width={24} height={24} />
-							</div>
 							<div className="flex flex-1 flex-col justify-between">
 								<div className="flex items-center leading-none">
 									{u.display_name}

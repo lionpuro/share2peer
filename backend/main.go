@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	sh := NewSignalHandler(NewRoomStore())
+	sh := NewSignalHandler(NewUserService(), NewRoomStore())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {

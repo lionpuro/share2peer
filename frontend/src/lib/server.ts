@@ -8,7 +8,7 @@ import {
 	type OutgoingMessage,
 	type OutgoingMessageBody,
 } from "#/lib/schemas/signaling";
-import { $connectionState, $identity } from "#/stores/signaling";
+import { $connectionState, $identity, $networkUsers } from "#/stores/signaling";
 import {
 	handleAnswer,
 	handleICECandidate,
@@ -117,6 +117,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 							break;
 						case "identity":
 							$identity.set(body.payload);
+							break;
+						case "network-users":
+							$networkUsers.set(body.payload.users);
 							break;
 						case "offer":
 							await handleOffer(this, body);

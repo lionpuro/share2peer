@@ -2,17 +2,25 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
-import { $connectionState, $identity } from "#/stores/signaling";
+import { $connectionState, $identity, $networkUsers } from "#/stores/signaling";
 import { $peers, type PeerState } from "#/stores/peer";
 import { useJoinRoom, useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
 import { ErrorComponent } from "#/components/error";
-import { IconCheck, IconCopy, IconShare } from "#/components/icons";
+import {
+	IconCheck,
+	IconCopy,
+	IconInvite,
+	IconShare,
+	IconX,
+} from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { Room, User } from "#/lib/schemas";
+import { Dialog, DialogContent } from "#/components/ui/dialog";
+import { server } from "#/lib/server";
 
 export const Route = createFileRoute("/s/$id")({
 	component: Component,
@@ -75,9 +83,11 @@ function RoomInfo({
 				return peers[u.id] || { ...u, connectionState: "disconnected" };
 			}) || [];
 
+	const [dialogOpen, setDialogOpen] = useState(false);
 	const [copiedURL, setCopiedURL] = useState(false);
 	const [copiedID, setCopiedID] = useState(false);
 	const roomURL = `${window.location.protocol}//${window.location.host}/s/${room.id}`;
+	const networkUsers = useStore($networkUsers);
 
 	function copyURL() {
 		setCopiedURL(true);
@@ -103,9 +113,16 @@ function RoomInfo({
 		}
 	}
 
+	function inviteUser(id: string) {
+		server.send({
+			type: "invite-to-room",
+			payload: { user_id: id, room_id: room.id },
+		});
+	}
+
 	return (
 		<div className="flex flex-col gap-2 rounded-xl border p-4">
-			<div className="flex flex-wrap items-center">
+			<div className="flex flex-wrap items-start">
 				<span className="mr-2 font-bold">Room:</span>
 				<p className="mr-1 font-medium outline-none">{room.id}</p>
 				<Button
@@ -121,37 +138,12 @@ function RoomInfo({
 						<IconCheck className="text-sm" />
 					)}
 				</Button>
-				{supportsShare && (
-					<Button
-						variant="ghost"
-						onClick={shareURL}
-						className="ml-auto size-7 justify-end p-0 text-base text-neutral-400"
-					>
-						<IconShare />
-					</Button>
-				)}
-			</div>
-			<div className="flex flex-wrap gap-2">
-				<input
-					id="room-url"
-					readOnly={true}
-					value={roomURL}
-					className="flex-1 overflow-x-scroll rounded-lg border bg-card px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
-				/>
 				<Button
-					disabled={copiedURL}
-					onClick={copyURL}
-					title="Copy"
-					className="gap-1.5 px-3 py-1.5"
+					onClick={() => setDialogOpen(true)}
+					className="ml-auto gap-1.5 py-1.75"
 				>
-					<span className="flex justify-end">
-						{!copiedURL ? (
-							<IconCopy className="text-xs" />
-						) : (
-							<IconCheck className="text-xs" />
-						)}
-					</span>
-					Copy
+					<IconInvite />
+					Invite
 				</Button>
 			</div>
 			<div className="mt-2 flex flex-col gap-2">
@@ -204,6 +196,115 @@ function RoomInfo({
 					))}
 				</ul>
 			</div>
+			<Dialog
+				open={dialogOpen}
+				onClose={() => setDialogOpen(false)}
+				className="w-full max-w-md max-sm:p-4"
+			>
+				<DialogContent className="relative w-full gap-2">
+					<Heading order={2} className="mb-4">
+						Invite
+					</Heading>
+					<button
+						title="Close"
+						onClick={() => setDialogOpen(false)}
+						className="absolute top-0 right-0 p-4 text-muted-foreground hover:text-foreground"
+					>
+						<IconX />
+					</button>
+					<label
+						htmlFor="room-url"
+						className="text-sm font-semibold text-muted-foreground"
+					>
+						Room URL
+					</label>
+					<div className="mb-1 flex flex-wrap gap-2">
+						<input
+							id="room-url"
+							readOnly={true}
+							value={roomURL}
+							className="flex-1 overflow-x-scroll rounded-lg border bg-card px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
+						/>
+						{!supportsShare && (
+							<Button
+								disabled={copiedURL}
+								onClick={copyURL}
+								title="Copy"
+								className="gap-1.5 px-3 py-1.5"
+							>
+								<span className="flex justify-end">
+									{!copiedURL ? (
+										<IconCopy className="text-xs" />
+									) : (
+										<IconCheck className="text-xs" />
+									)}
+								</span>
+								Copy
+							</Button>
+						)}
+					</div>
+					{supportsShare && (
+						<div className="flex gap-2">
+							<Button
+								variant="ghost"
+								onClick={shareURL}
+								className="basis-1/2 gap-1.5 border border-primary py-1.75 text-primary"
+							>
+								<IconShare />
+								Share
+							</Button>
+							<Button
+								disabled={copiedURL}
+								onClick={copyURL}
+								title="Copy"
+								className="basis-1/2 gap-1.5 px-3 py-1.75"
+							>
+								<span className="flex justify-end">
+									{!copiedURL ? (
+										<IconCopy className="text-xs" />
+									) : (
+										<IconCheck className="text-xs" />
+									)}
+								</span>
+								Copy
+							</Button>
+						</div>
+					)}
+					<Heading order={3} className="mt-4">
+						Users on your network
+					</Heading>
+					<ul className="flex flex-col gap-2">
+						{networkUsers.length === 0 && (
+							<p className="text-muted-foreground">No other users</p>
+						)}
+						{networkUsers.map((u) => (
+							<li key={"nw-" + u.id} className="flex items-center gap-3">
+								<div className="flex flex-1 flex-col justify-between">
+									<div className="flex items-center leading-none">
+										{u.display_name}
+									</div>
+									<span className="text-sm leading-none font-medium text-muted-foreground">
+										{u.device_name}
+									</span>
+								</div>
+								{users.find((user) => user.id === u.id) === undefined ? (
+									<Button
+										variant="ghost"
+										className="border border-primary py-1.75 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker"
+										onClick={() => inviteUser(u.id)}
+									>
+										Invite
+									</Button>
+								) : (
+									<p className="py-2 text-sm font-medium text-muted-foreground">
+										Connected
+									</p>
+								)}
+							</li>
+						))}
+					</ul>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

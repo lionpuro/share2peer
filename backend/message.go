@@ -1,21 +1,26 @@
 package main
 
+import "github.com/google/uuid"
+
 const (
-	SignalError        = "error"
-	SignalIdentity     = "identity"
-	SignalRoomClosed   = "room-closed"
-	SignalRoomInfo     = "room-info"
-	SignalJoinRoom     = "join-room"
-	SignalLeaveRoom    = "leave-room"
-	SignalCreateRoom   = "create-room"
-	SignalRoomCreated  = "room-created"
-	SignalRoomJoined   = "room-joined"
-	SignalRoomLeft     = "room-left"
-	SignalUserJoined   = "user-joined"
-	SignalUserLeft     = "user-left"
-	SignalOffer        = "offer"
-	SignalAnswer       = "answer"
-	SignalICECandidate = "ice-candidate"
+	SignalError          = "error"
+	SignalIdentity       = "identity"
+	SignalRoomClosed     = "room-closed"
+	SignalRoomInfo       = "room-info"
+	SignalJoinRoom       = "join-room"
+	SignalLeaveRoom      = "leave-room"
+	SignalCreateRoom     = "create-room"
+	SignalRoomCreated    = "room-created"
+	SignalRoomJoined     = "room-joined"
+	SignalRoomLeft       = "room-left"
+	SignalUserJoined     = "user-joined"
+	SignalUserLeft       = "user-left"
+	SignalOffer          = "offer"
+	SignalAnswer         = "answer"
+	SignalICECandidate   = "ice-candidate"
+	SignalNetworkUsers   = "network-users"
+	SignalInviteToRoom   = "invite-to-room"
+	SignalRoomInvitation = "room-invitation"
 )
 
 type Message struct {
@@ -42,6 +47,11 @@ type RTCMessageInfo struct {
 	RoomID string `json:"room_id"`
 	From   string `json:"from"`
 	To     string `json:"to"`
+}
+
+type InviteToRoomPayload struct {
+	UserID uuid.UUID `json:"user_id"`
+	RoomID string    `json:"room_id"`
 }
 
 func createErrorResponse(req Message, code, message string) Message {

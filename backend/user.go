@@ -110,6 +110,9 @@ func (s *UserService) Delete(id uuid.UUID) {
 	delete(s.usersByID, id)
 	if user.networkKey != "" {
 		delete(s.usersByNetwork[user.networkKey], user.ID)
+		if len(s.usersByNetwork[user.networkKey]) == 0 {
+			delete(s.usersByNetwork, user.networkKey)
+		}
 	}
 }
 

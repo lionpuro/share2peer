@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
@@ -11,9 +11,9 @@ import {
 	IconPlus,
 	IconX,
 } from "#/components/icons";
-import { toast } from "react-toastify";
+import { toast, type ToastContentProps } from "react-toastify";
 import { createRoom } from "#/lib/room";
-import { server } from "#/lib/server";
+import { server, type ServerEventMap } from "#/lib/server";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -23,6 +23,7 @@ function Component() {
 	const navigate = useNavigate();
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
+	useInvitationListener();
 
 	async function handleCreate() {
 		setCreating(true);
@@ -121,4 +122,57 @@ function Component() {
 			<Footer />
 		</>
 	);
+}
+
+type InvitationProps = Partial<ToastContentProps> & {
+	invitation: ServerEventMap["room-invitation"]["detail"];
+};
+
+function Invitation({ invitation, closeToast }: InvitationProps) {
+	const user = invitation.from;
+	return (
+		<div className="flex flex-col gap-2">
+			<p className="w-full leading-none font-bold text-foreground">
+				Room invitation
+			</p>
+			<p className="w-full text-sm font-medium">{`${user.display_name} (${user.device_name}) has invited you to a room.`}</p>
+			<div className="flex gap-2">
+				<Button
+					variant="ghost"
+					onClick={() => closeToast?.("decline")}
+					className="basis-1/2 border py-1.5 text-destructive hover:bg-secondary/40"
+				>
+					Decline
+				</Button>
+				<Button
+					onClick={() => closeToast?.("accept")}
+					className="basis-1/2 py-1.75"
+				>
+					Join
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function useInvitationListener() {
+	const navigate = useNavigate();
+	useEffect(() => {
+		const handler = (e: ServerEventMap["room-invitation"]) => {
+			toast(<Invitation invitation={e.detail} />, {
+				autoClose: false,
+				closeButton: false,
+				className: "p-0 border shadow-none !rounded-xl",
+				onClose: (reason) => {
+					if (reason === "accept") {
+						navigate({ to: "/s/$id", params: { id: e.detail.room_id } });
+					}
+				},
+			});
+		};
+		server.addEventListener("room-invitation", handler);
+		return () => {
+			server.removeEventListener("room-invitation", handler);
+		};
+	}, [navigate]);
 }

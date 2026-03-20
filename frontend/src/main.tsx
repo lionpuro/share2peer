@@ -21,7 +21,6 @@ const toastOptions: ToastOptions = {
 	pauseOnHover: true,
 	pauseOnFocusLoss: false,
 	theme: "light",
-	className: "",
 	transition: Slide,
 };
 

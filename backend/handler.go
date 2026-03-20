@@ -45,7 +45,12 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 		Body: MessageBody{
 			Type:    SignalIdentity,
 			Payload: u,
-		}}); err != nil {
+		},
+	}); err != nil {
+		return err
+	}
+
+	if err := broadcastNetworkUsers(nil, sh.users.FindByNetwork(u.networkKey)); err != nil {
 		return err
 	}
 
@@ -76,6 +81,10 @@ func (sh *SignalHandler) disconnect(u *User) error {
 			log.Printf("close connection: %v", err)
 		}
 		sh.users.Delete(u.ID)
+		users := sh.users.FindByNetwork(u.networkKey)
+		if err := broadcastNetworkUsers(nil, users); err != nil {
+			log.Printf("broadcast network users: %v", err)
+		}
 		log.Printf("disconnect user: %s", u.ID)
 	}()
 
@@ -153,6 +162,8 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID 
 
 func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
 	switch msg.Body.Type {
+	case SignalInviteToRoom:
+		return sh.handleInviteToRoom(u, msg)
 	case SignalCreateRoom:
 		return sh.handleCreateRoom(u, msg)
 	case SignalJoinRoom:
@@ -164,6 +175,36 @@ func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
 	default:
 		return ErrUnknownMessageType
 	}
+}
+
+func (sh *SignalHandler) handleInviteToRoom(u *User, msg Message) error {
+	var payload InviteToRoomPayload
+	bytes, err := json.Marshal(msg.Body.Payload)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(bytes, &payload); err != nil {
+		return err
+	}
+
+	to, ok := sh.users.FindByID(payload.UserID)
+	if !ok {
+		return nil
+	}
+	if to.networkKey != u.networkKey {
+		return nil
+	}
+
+	return to.send(Message{
+		Type: "message",
+		Body: MessageBody{
+			Type: SignalRoomInvitation,
+			Payload: map[string]any{
+				"from":    u,
+				"room_id": payload.RoomID,
+			},
+		},
+	})
 }
 
 func (sh *SignalHandler) handleCreateRoom(u *User, msg Message) error {
@@ -383,4 +424,46 @@ func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 	}
 
 	return recipient.send(msg)
+}
+
+func broadcastNetworkUsers(to *User, users []*User) error {
+	if to != nil {
+		var peers = []*User{}
+		for _, user := range users {
+			if user.ID != to.ID {
+				peers = append(peers, user)
+			}
+		}
+		return to.send(Message{
+			Type: "message",
+			Body: MessageBody{
+				Type: SignalNetworkUsers,
+				Payload: map[string]any{
+					"users": peers,
+				},
+			},
+		})
+	}
+
+	for _, recipient := range users {
+		var peers = []*User{}
+		for _, user := range users {
+			if user.ID != recipient.ID {
+				peers = append(peers, user)
+			}
+		}
+		err := recipient.send(Message{
+			Type: "message",
+			Body: MessageBody{
+				Type: SignalNetworkUsers,
+				Payload: map[string]any{
+					"users": peers,
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

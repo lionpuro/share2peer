@@ -48,6 +48,9 @@ const ROOM_LEFT = "room-left";
 const CREATE_ROOM = "create-room";
 const JOIN_ROOM = "join-room";
 const LEAVE_ROOM = "leave-room";
+const NETWORK_USERS = "network-users";
+const INVITE_TO_ROOM = "invite-to-room";
+const ROOM_INVITATION = "room-invitation";
 
 export const RequestResponseMap = {
 	[CREATE_ROOM]: ROOM_CREATED,
@@ -95,6 +98,15 @@ const CandidateSchema = z.object({
 	to: z.string(),
 });
 
+const NetworkUsersSchema = z.object({
+	users: z.array(UserSchema),
+});
+
+const RoomInvitationSchema = z.object({
+	from: UserSchema,
+	room_id: z.string(),
+});
+
 type OutgoingBodyMap = {
 	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {
@@ -110,6 +122,10 @@ type OutgoingBodyMap = {
 	[ICE_CANDIDATE]: {
 		type: typeof ICE_CANDIDATE;
 		payload: z.infer<typeof CandidateSchema>;
+	};
+	[INVITE_TO_ROOM]: {
+		type: typeof INVITE_TO_ROOM;
+		payload: { user_id: string; room_id: string };
 	};
 };
 
@@ -127,6 +143,8 @@ export const incomingBodySchemas = {
 	[OFFER]: body(OFFER, OfferSchema),
 	[ANSWER]: body(ANSWER, AnswerSchema),
 	[ICE_CANDIDATE]: body(ICE_CANDIDATE, CandidateSchema),
+	[NETWORK_USERS]: body(NETWORK_USERS, NetworkUsersSchema),
+	[ROOM_INVITATION]: body(ROOM_INVITATION, RoomInvitationSchema),
 } as const;
 
 export type IncomingMessageBody = z.infer<

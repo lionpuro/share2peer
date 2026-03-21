@@ -201,81 +201,110 @@ function RoomInfo({
 				onClose={() => setDialogOpen(false)}
 				className="w-full max-w-md text-foreground max-sm:p-4"
 			>
-				<DialogContent className="relative w-full gap-2 bg-card">
-					<Heading order={2} className="mb-4">
+				<DialogContent className="relative w-full bg-card">
+					<Heading order={2} className="mb-6">
 						Invite
 					</Heading>
 					<button
 						title="Close"
 						onClick={() => setDialogOpen(false)}
-						className="absolute top-0 right-0 p-4 text-muted-foreground hover:text-foreground"
+						className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
 					>
 						<IconX />
 					</button>
-					<label
-						htmlFor="room-url"
-						className="text-sm font-semibold text-muted-foreground"
-					>
-						Room URL
-					</label>
-					<div className="mb-1 flex flex-wrap gap-2">
-						<input
-							id="room-url"
-							readOnly={true}
-							value={roomURL}
-							className="flex-1 overflow-x-scroll rounded-lg border bg-background px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
-						/>
-						{!supportsShare && (
-							<Button
-								disabled={copiedURL}
-								onClick={copyURL}
-								title="Copy"
-								className="gap-1.5 px-3 py-1.5"
-							>
-								<span className="flex justify-end">
+					<div className="mb-6 flex hidden flex-col items-center gap-1">
+						<span className="text-sm font-semibold text-muted-foreground">
+							Room ID
+						</span>
+						<p className="w-fit rounded-lg border px-3 py-1.5 text-xl font-bold">
+							{room.id}
+						</p>
+					</div>
+
+					<div className="mb-4 flex flex-col gap-1 border-b pb-4">
+						<label
+							htmlFor="room-id"
+							className="text-sm font-semibold text-muted-foreground"
+						>
+							Room ID
+						</label>
+						<span
+							id="room-id"
+							className="mb-3 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium"
+						>
+							{room.id}
+						</span>
+						<label
+							htmlFor="room-url"
+							className="text-sm font-semibold text-muted-foreground"
+						>
+							Room URL
+						</label>
+						<div className="flex flex-wrap gap-2">
+							<input
+								id="room-url"
+								readOnly={true}
+								value={roomURL}
+								className="flex-1 overflow-x-scroll rounded-lg border bg-background px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
+							/>
+							{!supportsShare && (
+								<Button
+									disabled={copiedURL}
+									onClick={copyURL}
+									title="Copy"
+									className="gap-1.5 px-3 py-1.5"
+								>
+									<span className="flex justify-end">
+										{!copiedURL ? (
+											<IconCopy className="text-xs" />
+										) : (
+											<IconCheck className="text-xs" />
+										)}
+									</span>
+									Copy
+								</Button>
+							)}
+						</div>
+						{supportsShare && (
+							<div className="mt-2 flex gap-3">
+								<Button
+									variant="ghost"
+									onClick={shareURL}
+									className="basis-1/2 gap-1.5 border border-primary py-1.75 text-primary"
+								>
+									<IconShare />
+									Share
+								</Button>
+								<Button
+									disabled={copiedURL}
+									onClick={copyURL}
+									title="Copy"
+									className="basis-1/2 gap-1.5 px-3 py-1.75"
+								>
 									{!copiedURL ? (
-										<IconCopy className="text-xs" />
+										<>
+											<IconCopy className="text-xs" />
+											Copy
+										</>
 									) : (
-										<IconCheck className="text-xs" />
+										<>
+											<IconCheck className="text-xs" />
+											Copied
+										</>
 									)}
-								</span>
-								Copy
-							</Button>
+								</Button>
+							</div>
 						)}
 					</div>
-					{supportsShare && (
-						<div className="flex gap-2">
-							<Button
-								variant="ghost"
-								onClick={shareURL}
-								className="basis-1/2 gap-1.5 border border-primary py-1.75 text-primary"
-							>
-								<IconShare />
-								Share
-							</Button>
-							<Button
-								disabled={copiedURL}
-								onClick={copyURL}
-								title="Copy"
-								className="basis-1/2 gap-1.5 px-3 py-1.75"
-							>
-								<span className="flex justify-end">
-									{!copiedURL ? (
-										<IconCopy className="text-xs" />
-									) : (
-										<IconCheck className="text-xs" />
-									)}
-								</span>
-								Copy
-							</Button>
-						</div>
-					)}
-					<Heading order={3} className="mt-4">
-						Users on your network
+					<Heading order={3} className="mb-1">
+						Network users
 					</Heading>
+					<p className="mb-3 text-sm font-medium text-muted-foreground">
+						Other devices on the same network will appear here.
+					</p>
 					<ul className="flex flex-col gap-2">
 						{networkUsers.length === 0 && (
-							<p className="text-muted-foreground">No other users</p>
+							<p className="text-muted-foreground">No users</p>
 						)}
 						{networkUsers.map((u) => (
 							<li key={"nw-" + u.id} className="flex items-center gap-3">
@@ -290,13 +319,13 @@ function RoomInfo({
 								{users.find((user) => user.id === u.id) === undefined ? (
 									<Button
 										variant="ghost"
-										className="border border-primary py-1.75 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker"
+										className="border border-primary py-1.5 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker"
 										onClick={() => inviteUser(u.id)}
 									>
 										Invite
 									</Button>
 								) : (
-									<p className="py-2 text-sm font-medium text-muted-foreground">
+									<p className="py-1.75 text-sm font-medium text-muted-foreground">
 										Connected
 									</p>
 								)}

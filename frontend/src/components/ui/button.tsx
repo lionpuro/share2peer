@@ -7,12 +7,16 @@ const baseStyles =
 const options = {
 	variants: {
 		primary: "bg-primary text-white hover:bg-primary-darker",
-		secondary: "bg-secondary hover:bg-secondary-darker/80",
+		secondary: "bg-secondary/60 hover:bg-secondary-darker/80",
 		ghost: "",
+		outline: "border hover:bg-secondary/30",
+		destructive: "bg-destructive hover:bg-destructive-darker text-white",
 	},
 	sizes: {
 		sm: "px-4 py-2 text-sm font-medium",
 		md: "px-4 py-2",
+		"icon-sm": "size-8",
+		"icon-md": "size-9",
 	},
 };
 
@@ -36,8 +40,9 @@ export function Button({
 		baseStyles,
 		variant === "none" ? "" : options.variants[variant],
 		variant === "none" ? "" : options.sizes[size],
+		variant === "outline" ? "py-1.75" : "",
 		className,
-	].filter((s) => !!s);
+	];
 	return (
 		<button className={cn(...styles)} {...props}>
 			{children}

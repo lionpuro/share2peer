@@ -121,7 +121,7 @@ function RoomInfo({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border p-4">
+		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
 			<div className="flex flex-wrap items-start">
 				<span className="mr-2 font-bold">Room:</span>
 				<p className="mr-1 font-medium outline-none">{room.id}</p>
@@ -199,9 +199,9 @@ function RoomInfo({
 			<Dialog
 				open={dialogOpen}
 				onClose={() => setDialogOpen(false)}
-				className="w-full max-w-md max-sm:p-4"
+				className="w-full max-w-md text-foreground max-sm:p-4"
 			>
-				<DialogContent className="relative w-full gap-2">
+				<DialogContent className="relative w-full gap-2 bg-card">
 					<Heading order={2} className="mb-4">
 						Invite
 					</Heading>
@@ -223,7 +223,7 @@ function RoomInfo({
 							id="room-url"
 							readOnly={true}
 							value={roomURL}
-							className="flex-1 overflow-x-scroll rounded-lg border bg-card px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
+							className="flex-1 overflow-x-scroll rounded-lg border bg-background px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
 						/>
 						{!supportsShare && (
 							<Button

@@ -70,7 +70,7 @@ function Component() {
 							No size limits
 						</span>
 					</div>
-					<div className="flex w-full flex-col gap-4 rounded-xl border p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm">
+					<div className="flex w-full flex-col gap-4 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm md:min-w-2xs">
 						<span className="text-sm">
 							Create a private room to start sharing
 						</span>

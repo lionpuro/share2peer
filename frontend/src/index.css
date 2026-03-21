@@ -17,9 +17,9 @@
 	--color-white: #fcfcfc;
 	--color-black: #272727;
 
-	--color-background: var(--color-white);
+	--color-background: #f8f8fa;
 	--color-foreground: var(--color-black);
-	--color-card: #f5f5f5;
+	--color-card: var(--color-white);
 	--color-primary: var(--color-brand-500);
 	--color-primary-darker: var(--color-brand-600);
 	--color-primary-foreground: var(--color-brand-50);

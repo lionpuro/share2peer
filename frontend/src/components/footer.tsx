@@ -4,7 +4,7 @@ import { Logo, IconGithub } from "./icons";
 export function Footer() {
 	return (
 		<footer className="mt-8 flex border-t border-secondary bg-card py-6">
-			<div className="mx-auto flex w-full max-w-screen-xl px-6 sm:px-8">
+			<div className="mx-auto flex w-full max-w-screen-lg px-6 sm:px-8">
 				<Link to="/" className="flex items-center gap-1 font-medium">
 					<Logo className="size-6 text-primary" />
 					WebSend

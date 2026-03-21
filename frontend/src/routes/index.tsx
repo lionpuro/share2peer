@@ -48,7 +48,7 @@ function Component() {
 	return (
 		<>
 			<Main className="min-h-[calc(100vh-3.75rem)] max-w-screen-lg">
-				<div className="my-12 flex gap-8 max-md:mx-auto max-md:max-w-md max-md:flex-col md:my-auto md:pb-16">
+				<div className="my-12 flex gap-8 max-md:mx-auto max-md:flex-col sm:max-md:max-w-md md:my-auto md:pb-16">
 					<div className="flex flex-wrap gap-x-4 gap-y-3 md:my-auto">
 						<Heading order={1} className="mb-1 w-full md:mb-2 lg:text-5xl">
 							Seamless file sharing in your browser

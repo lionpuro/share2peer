@@ -48,14 +48,17 @@ function Component() {
 	return (
 		<>
 			<Main className="min-h-[calc(100vh-3.75rem)] max-w-screen-lg">
-				<div className="my-12 flex gap-8 max-md:mx-auto max-md:flex-col sm:max-md:max-w-md md:my-auto md:pb-16">
+				<div className="my-12 flex gap-8 max-md:mx-auto max-md:flex-col md:my-auto md:pb-16">
 					<div className="flex flex-wrap gap-x-4 gap-y-3 md:my-auto">
 						<Heading order={1} className="mb-1 w-full md:mb-2 lg:text-5xl">
 							Seamless file sharing in your browser
 						</Heading>
 						<div className="w-full text-secondary-foreground/80 md:mt-auto">
-							<p>Send files to any device with only a web browser.</p>
-							<p>No registration, no install, no cloud.</p>
+							<p>
+								Send files to any device with only a web browser. No
+								registration, no installation. To get started, create a room and
+								invite another person or device.
+							</p>
 						</div>
 						<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
 							<IconConnect />
@@ -70,7 +73,7 @@ function Component() {
 							No size limits
 						</span>
 					</div>
-					<div className="flex w-full flex-col gap-4 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:max-w-sm md:min-w-2xs">
+					<div className="flex w-full flex-col gap-4 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 sm:max-w-sm md:ml-auto md:min-w-xs">
 						<span className="text-sm">
 							Create a private room to start sharing
 						</span>

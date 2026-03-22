@@ -13,7 +13,7 @@ func main() {
 	sh := NewSignalHandler(NewUserService(), NewRoomStore())
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		(w).Header().Set("Access-Control-Allow-Origin", "*")
 		conn, err := sh.upgrader.Upgrade(w, r, nil)
 		if err != nil {

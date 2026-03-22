@@ -30,5 +30,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build image and push it to registry
         run: |
-          docker build -t ghcr.io/lionpuro/websend-backend:${{ github.sha }} backend
+          docker build \
+            -t ghcr.io/lionpuro/websend-backend:${{ github.sha }} \
+            -t ghcr.io/lionpuro/websend-backend:latest \
+            backend
           docker push ghcr.io/lionpuro/websend-backend:${{ github.sha }}
+          docker push ghcr.io/lionpuro/websend-backend:latest

@@ -58,7 +58,7 @@ function Component() {
 	}
 
 	return (
-		<Main className="max-w-screen-sm">
+		<Main className="max-w-screen-sm pt-3 sm:pt-3">
 			<div className="flex flex-col gap-10">
 				<RoomInfo identity={identity} room={room} peers={peers} />
 				<FileArea />
@@ -124,7 +124,7 @@ function RoomInfo({
 		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
 			<div className="flex flex-wrap items-start">
 				<span className="mr-2 font-bold">Room:</span>
-				<p className="mr-1 font-medium outline-none">{room.id}</p>
+				<p className="mr-1 font-medium">{room.id}</p>
 				<Button
 					disabled={copiedID}
 					onClick={copyID}
@@ -217,65 +217,62 @@ function RoomInfo({
 					>
 						<IconX />
 					</button>
-					<div className="mb-6 flex hidden flex-col items-center gap-1">
-						<span className="text-sm font-semibold text-muted-foreground">
-							Room ID
-						</span>
-						<p className="w-fit rounded-lg border px-3 py-1.5 text-xl font-bold">
-							{room.id}
-						</p>
-					</div>
-
-					<div className="mb-4 flex flex-col gap-1 border-b pb-4">
+					<div className="mb-8 flex flex-col">
 						<label
 							htmlFor="room-id"
-							className="text-sm font-semibold text-muted-foreground"
+							className="mb-1 text-sm font-semibold text-muted-foreground"
 						>
 							Room ID
 						</label>
-						<span
-							id="room-id"
-							className="mb-3 rounded-lg border bg-background px-3 py-1.5 text-sm font-medium"
-						>
-							{room.id}
+						<span className="mb-4 flex items-center rounded-lg border bg-background text-sm font-medium">
+							<span id="room-id" className="px-3 py-1.5">
+								{room.id}
+							</span>
+							<Button
+								title="Copy"
+								variant="ghost"
+								size="icon-sm"
+								className="ml-auto text-muted-foreground/80 hover:text-muted-foreground disabled:bg-transparent"
+								onClick={copyID}
+								disabled={copiedID}
+							>
+								{!copiedID ? <IconCopy /> : <IconCheck />}
+							</Button>
 						</span>
 						<label
 							htmlFor="room-url"
-							className="text-sm font-semibold text-muted-foreground"
+							className="mb-1 text-sm font-semibold text-muted-foreground"
 						>
 							Room URL
 						</label>
 						<div className="flex flex-wrap gap-2">
-							<input
-								id="room-url"
-								readOnly={true}
-								value={roomURL}
-								className="flex-1 overflow-x-scroll rounded-lg border bg-background px-3 py-1.5 text-sm font-medium text-ellipsis outline-none"
-							/>
-							{!supportsShare && (
-								<Button
-									disabled={copiedURL}
-									onClick={copyURL}
-									title="Copy"
-									className="gap-1.5 px-3 py-1.5"
-								>
-									<span className="flex justify-end">
-										{!copiedURL ? (
-											<IconCopy className="text-xs" />
-										) : (
-											<IconCheck className="text-xs" />
-										)}
-									</span>
-									Copy
-								</Button>
-							)}
+							<div className="flex flex-1 rounded-lg border bg-background">
+								<input
+									id="room-url"
+									readOnly={true}
+									value={roomURL}
+									className="flex-1 overflow-x-scroll px-3 py-1.5 text-sm font-medium text-ellipsis"
+								/>
+								{!supportsShare && (
+									<Button
+										title="Copy"
+										variant="ghost"
+										size="icon-sm"
+										className="ml-auto text-sm text-muted-foreground/80 hover:text-muted-foreground disabled:bg-transparent"
+										onClick={copyURL}
+										disabled={copiedURL}
+									>
+										{!copiedURL ? <IconCopy /> : <IconCheck />}
+									</Button>
+								)}
+							</div>
 						</div>
 						{supportsShare && (
-							<div className="mt-2 flex gap-3">
+							<div className="mt-3 flex gap-3">
 								<Button
 									variant="ghost"
 									onClick={shareURL}
-									className="basis-1/2 gap-1.5 border border-primary py-1.75 text-primary"
+									className="basis-1/2 gap-1.5 border border-primary py-1.5 text-primary"
 								>
 									<IconShare />
 									Share
@@ -307,16 +304,14 @@ function RoomInfo({
 					<p className="mb-3 text-sm font-medium text-muted-foreground">
 						Other devices on the same network will appear here.
 					</p>
-					<ul className="flex flex-col gap-2">
+					<ul className="flex flex-col gap-3">
 						{networkUsers.length === 0 && (
 							<p className="text-muted-foreground">No users</p>
 						)}
 						{networkUsers.map((u) => (
-							<li key={"nw-" + u.id} className="flex items-center gap-3">
+							<li key={"nw-" + u.id} className="flex gap-3">
 								<div className="flex flex-1 flex-col justify-between">
-									<div className="flex items-center leading-none">
-										{u.display_name}
-									</div>
+									<p className="leading-none">{u.display_name}</p>
 									<span className="text-sm leading-none font-medium text-muted-foreground">
 										{u.device_name}
 									</span>

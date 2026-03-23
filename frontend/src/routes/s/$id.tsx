@@ -202,7 +202,12 @@ function RoomInfo({
 				className="w-full max-w-md text-foreground max-sm:p-4"
 			>
 				<DialogContent className="relative w-full bg-card">
-					<Heading order={2} className="mb-6">
+					<Heading
+						order={2}
+						className="mb-6 focus:outline-none"
+						autoFocus
+						tabIndex={0}
+					>
 						Invite
 					</Heading>
 					<button

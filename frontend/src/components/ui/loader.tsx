@@ -20,7 +20,7 @@ export function Loader({ size = 36, className, text }: Props) {
 				strokeWidth="2"
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				className={`animate-spin text-neutral-400 ${className ? className : ""}`}
+				className={`animate-spin text-muted-foreground ${className ? className : ""}`}
 			>
 				<path d="M21 12a9 9 0 1 1-6.219-8.56" />
 			</svg>

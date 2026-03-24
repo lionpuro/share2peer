@@ -7,9 +7,9 @@ const baseStyles =
 const options = {
 	variants: {
 		primary: "bg-primary text-white hover:bg-primary-darker",
-		secondary: "bg-secondary/60 hover:bg-secondary-darker/80",
+		secondary: "bg-secondary/60 hover:bg-secondary",
 		ghost: "",
-		outline: "bg-card border hover:bg-secondary/30",
+		outline: "bg-card border hover:bg-muted",
 		destructive: "bg-destructive hover:bg-destructive-darker text-white",
 	},
 	sizes: {

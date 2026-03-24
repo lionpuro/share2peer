@@ -139,12 +139,12 @@ export function FileArea() {
 				<p className="leading-none text-muted-foreground">No files</p>
 			)}
 			<FileInput
-				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16"
+				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16 dark:border-secondary"
 				activeClassName="border-primary/80 bg-primary/10"
 				multiple={true}
 				onFileInput={handleDrop}
 			>
-				<IconUpload className="pointer-events-none mb-1 size-12 text-neutral-400" />
+				<IconUpload className="pointer-events-none mb-1 size-12 text-primary" />
 				<span className="pointer-events-none text-center font-medium">
 					Select files to share
 				</span>

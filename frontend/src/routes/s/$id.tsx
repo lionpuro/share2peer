@@ -174,15 +174,16 @@ function RoomInfo({
 										className={cn(
 											"ml-auto flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold before:text-[8px] before:leading-none before:content-['●']",
 											{
-												"bg-neutral-200/80 text-neutral-700/80":
+												"bg-neutral-200/80 text-neutral-700/80 dark:text-muted-foreground":
 													u.connectionState === "disconnected",
-												"bg-green-100 text-green-700/80":
+												"bg-green-100 text-green-700/80 dark:text-green-500":
 													u.connectionState === "connected",
-												"bg-yellow-100 text-yellow-700/80":
+												"bg-yellow-100 text-yellow-700/80 dark:text-yellow-500":
 													u.connectionState === "connecting",
-												"bg-red-100 text-red-700/80":
+												"bg-red-100 text-red-700/80 dark:text-red-500":
 													u.connectionState === "failed",
 											},
+											"dark:border dark:bg-muted dark:py-0.25",
 										)}
 									>
 										{u.connectionState}
@@ -201,7 +202,7 @@ function RoomInfo({
 				onClose={() => setDialogOpen(false)}
 				className="w-full max-w-md text-foreground max-sm:p-4"
 			>
-				<DialogContent className="relative w-full bg-card">
+				<DialogContent className="relative w-full bg-background dark:bg-card">
 					<Heading
 						order={2}
 						className="mb-6 focus:outline-none"
@@ -224,7 +225,7 @@ function RoomInfo({
 						>
 							Room ID
 						</label>
-						<span className="mb-4 flex items-center rounded-lg border bg-background text-sm font-medium">
+						<span className="mb-4 flex items-center rounded-lg border bg-card text-sm font-medium dark:bg-muted">
 							<span id="room-id" className="px-3 py-1.5">
 								{room.id}
 							</span>
@@ -232,7 +233,7 @@ function RoomInfo({
 								title="Copy"
 								variant="ghost"
 								size="icon-sm"
-								className="ml-auto text-muted-foreground/80 hover:text-muted-foreground disabled:bg-transparent"
+								className="ml-auto text-muted-foreground hover:text-foreground disabled:bg-transparent"
 								onClick={copyID}
 								disabled={copiedID}
 							>
@@ -246,7 +247,7 @@ function RoomInfo({
 							Room URL
 						</label>
 						<div className="flex flex-wrap gap-2">
-							<div className="flex flex-1 rounded-lg border bg-background">
+							<div className="flex flex-1 rounded-lg border bg-card dark:bg-muted">
 								<input
 									id="room-url"
 									readOnly={true}
@@ -258,7 +259,7 @@ function RoomInfo({
 										title="Copy"
 										variant="ghost"
 										size="icon-sm"
-										className="ml-auto text-sm text-muted-foreground/80 hover:text-muted-foreground disabled:bg-transparent"
+										className="ml-auto text-sm text-muted-foreground hover:text-foreground disabled:bg-transparent"
 										onClick={copyURL}
 										disabled={copiedURL}
 									>

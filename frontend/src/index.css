@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "@fontsource-variable/open-sans";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
 	--color-brand-50: #f2fbf5;
 	--color-brand-100: #e0f8e8;
@@ -15,23 +17,38 @@
 	--color-brand-950: #0b2817;
 
 	--color-white: #fcfcfc;
-	--color-black: #272727;
+	--color-black: #191919;
 
+	--color-focus: #3b82f6;
+	--color-destructive: #e91923;
+	--color-destructive-darker: #d7141e;
+
+	/* light theme */
 	--color-background: #f8f8fa;
 	--color-foreground: var(--color-black);
 	--color-card: var(--color-white);
 	--color-primary: var(--color-brand-500);
 	--color-primary-darker: var(--color-brand-600);
-	--color-primary-foreground: var(--color-brand-50);
 	--color-secondary: var(--color-neutral-200);
 	--color-secondary-darker: var(--color-neutral-300);
 	--color-secondary-foreground: var(--color-foreground);
-	--color-muted: var(--color-neutral-200);
+	--color-muted: #f0f0f0;
 	--color-muted-foreground: var(--color-neutral-500);
+	--color-border: var(--color-neutral-200);
+}
 
-	--color-focus: #3b82f6;
-	--color-destructive: #e91923;
-	--color-destructive-darker: #d7141e;
+.dark {
+	--color-background: var(--color-black);
+	--color-foreground: var(--color-white);
+	--color-card: #1f1f1f;
+	--color-primary: var(--color-brand-500);
+	--color-primary-darker: var(--color-brand-600);
+	--color-secondary: var(--color-neutral-700);
+	--color-secondary-darker: var(--color-neutral-800);
+	--color-secondary-foreground: var(--color-foreground);
+	--color-muted: var(--color-neutral-800);
+	--color-muted-foreground: var(--color-neutral-400);
+	--color-border: #2e2e2e;
 }
 
 :root {
@@ -39,6 +56,8 @@
 		"Open Sans Variable", system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;
 	font-weight: 400;
+
+	color-scheme: light dark;
 
 	color: var(--color-foreground);
 	background-color: var(--color-background);
@@ -70,7 +89,7 @@ body {
 		@apply cursor-pointer;
 	}
 	* {
-		@apply border-neutral-200;
+		@apply border-border;
 	}
 }
 
@@ -90,12 +109,12 @@ body {
 	appearance: none;
 	border: none;
 	color: var(--color-brand-400);
-	background-color: var(--color-neutral-200);
+	background-color: var(--color-border);
 	border-radius: var(--radius-lg);
 }
 
 .progress::-webkit-progress-bar {
-	background-color: var(--color-neutral-200);
+	background-color: var(--color-border);
 	border-radius: var(--radius-lg);
 }
 
@@ -107,4 +126,8 @@ body {
 .progress::-moz-progress-bar {
 	background-color: var(--color-brand-400);
 	border-radius: var(--radius-lg);
+}
+
+.Toastify__toast {
+	background-color: var(--color-card);
 }

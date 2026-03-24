@@ -53,22 +53,22 @@ function Component() {
 						<Heading order={1} className="mb-1 w-full md:mb-2 lg:text-5xl">
 							Seamless file sharing in your browser
 						</Heading>
-						<div className="w-full text-secondary-foreground/80 md:mt-auto">
+						<div className="w-full text-foreground/80 md:mt-auto">
 							<p>
 								Send files to any device with only a web browser. No
 								registration, no installation. To get started, create a room and
 								invite another person or device.
 							</p>
 						</div>
-						<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 							<IconConnect />
 							Peer-to-peer
 						</span>
-						<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 							<IconDevices />
 							Cross-platform
 						</span>
-						<span className="flex items-center gap-2 text-sm font-medium text-secondary-foreground/80">
+						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
 							<IconInfinity />
 							No size limits
 						</span>
@@ -85,7 +85,7 @@ function Component() {
 							<IconPlus />
 							New Room
 						</Button>
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground/70 before:h-0.5 before:flex-1 before:bg-neutral-200 before:content-['_'] after:h-0.5 after:flex-1 after:bg-neutral-200 after:content-['_']">
+						<span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground before:h-0.5 before:flex-1 before:bg-border before:content-['_'] after:h-0.5 after:flex-1 after:bg-border after:content-['_']">
 							OR
 						</span>
 						<span className="text-sm">Enter a code to join a room</span>
@@ -99,7 +99,7 @@ function Component() {
 									value={joinCode}
 									onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
 									onKeyUp={handleCodeKeyUp}
-									className="w-full rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-neutral-400"
+									className="w-full rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-muted-foreground"
 								/>
 								{joinCode.length > 0 && (
 									<button

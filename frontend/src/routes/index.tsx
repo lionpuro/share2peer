@@ -165,7 +165,7 @@ function useInvitationListener() {
 			toast(<Invitation invitation={e.detail} />, {
 				autoClose: false,
 				closeButton: false,
-				className: "p-0 border shadow-none !rounded-xl",
+				className: "p-0",
 				onClose: (reason) => {
 					if (reason === "accept") {
 						navigate({ to: "/s/$id", params: { id: e.detail.room_id } });

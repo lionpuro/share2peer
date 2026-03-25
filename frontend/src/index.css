@@ -130,4 +130,5 @@ body {
 
 .Toastify__toast {
 	background-color: var(--color-card);
+	@apply rounded-xl border;
 }

@@ -146,7 +146,7 @@ export function FileArea() {
 			>
 				<IconUpload className="pointer-events-none mb-1 size-12 text-primary" />
 				<span className="pointer-events-none text-center font-medium">
-					Select files to share
+					Add files
 				</span>
 				<span className="pointer-events-none text-center text-sm font-medium text-muted-foreground">
 					Drag and drop or click to browse

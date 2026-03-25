@@ -300,14 +300,14 @@ function RoomInfo({
 						)}
 					</div>
 					<Heading order={3} className="mb-1">
-						Network users
+						Nearby devices
 					</Heading>
 					<p className="mb-3 text-sm font-medium text-muted-foreground">
 						Other devices on the same network will appear here.
 					</p>
 					<ul className="flex flex-col gap-3">
 						{networkUsers.length === 0 && (
-							<p className="text-muted-foreground">No users</p>
+							<p className="text-muted-foreground">No devices</p>
 						)}
 						{networkUsers.map((u) => (
 							<li key={"nw-" + u.id} className="flex gap-3">

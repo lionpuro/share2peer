@@ -134,7 +134,7 @@ type InvitationProps = Partial<ToastContentProps> & {
 function Invitation({ invitation, closeToast }: InvitationProps) {
 	const user = invitation.from;
 	return (
-		<div className="flex flex-col gap-2">
+		<div className="flex w-full flex-col gap-2">
 			<p className="w-full leading-none font-bold text-foreground">
 				Room invitation
 			</p>

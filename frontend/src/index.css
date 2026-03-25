@@ -132,3 +132,16 @@ body {
 	background-color: var(--color-card);
 	@apply rounded-xl border;
 }
+
+@media only screen and (max-width: 480px) {
+	.Toastify__toast {
+		--toastify-toast-width: 100%;
+	}
+	.Toastify__toast:first-child {
+		border-top: none;
+		border-left: none;
+		border-right: none;
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+}

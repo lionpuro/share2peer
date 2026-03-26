@@ -38,11 +38,11 @@ export function FileArea() {
 
 	return (
 		<div className="flex flex-col">
-			<Heading order={2} size="md" className="mb-3">
+			<Heading order={2} size="md">
 				Shared files
 			</Heading>
 			{files.length > 0 ? (
-				<ul className="-mr-2 mb-4 flex flex-col gap-2">
+				<ul className="my-3 -mr-2 flex flex-col gap-2">
 					{files.map((file) => {
 						const transfers = transfersByFile[file.id] || [];
 						const transfer =
@@ -69,7 +69,7 @@ export function FileArea() {
 											</p>
 										</div>
 										{transfer && transfer.status === "active" && (
-											<span className="ml-auto text-sm font-medium text-muted-foreground">
+											<span className="ml-auto text-sm text-muted-foreground">
 												{transfer.progress}%
 											</span>
 										)}
@@ -82,13 +82,13 @@ export function FileArea() {
 												className="w-full"
 											/>
 										) : file.uploader ? (
-											<p className="text-sm leading-none font-medium text-muted-foreground">
+											<p className="text-sm leading-none text-muted-foreground">
 												{toTitleCase(transfer.status)}
 											</p>
 										) : null)}
 									{!transfer ||
 									(!file.uploader && transfer.status !== "active") ? (
-										<p className="text-sm leading-none font-medium text-muted-foreground">
+										<p className="text-sm leading-none text-muted-foreground">
 											{formatFileSize(file.size)}
 											<span className="mx-2">•</span>
 											{sender || "You"}
@@ -136,19 +136,17 @@ export function FileArea() {
 					})}
 				</ul>
 			) : (
-				<p className="mb-4 leading-none text-muted-foreground">No files</p>
+				<p className="my-3 mt-2 text-muted-foreground">No files</p>
 			)}
 			<FileInput
-				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16 dark:border-secondary"
+				className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16 dark:border-secondary"
 				activeClassName="border-primary/80 bg-primary/10"
 				multiple={true}
 				onFileInput={handleDrop}
 			>
 				<IconUpload className="pointer-events-none mb-1 size-12 text-primary" />
-				<span className="pointer-events-none text-center font-medium">
-					Add files
-				</span>
-				<span className="pointer-events-none text-center text-sm font-medium text-muted-foreground">
+				<span className="pointer-events-none text-center">Add files</span>
+				<span className="pointer-events-none text-center text-sm text-muted-foreground">
 					Drag and drop or click to browse
 				</span>
 			</FileInput>

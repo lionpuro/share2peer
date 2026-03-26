@@ -123,21 +123,8 @@ function RoomInfo({
 	return (
 		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
 			<div className="flex flex-wrap items-start">
-				<span className="mr-2 font-bold">Room:</span>
-				<p className="mr-1 font-medium">{room.id}</p>
-				<Button
-					disabled={copiedID}
-					onClick={copyID}
-					variant="ghost"
-					title="Copy"
-					className="size-7 p-0 text-muted-foreground/75 hover:text-muted-foreground disabled:bg-transparent"
-				>
-					{!copiedID ? (
-						<IconCopy className="text-xs" />
-					) : (
-						<IconCheck className="text-sm" />
-					)}
-				</Button>
+				<span className="mr-2 leading-none font-bold">Room:</span>
+				<span className="mr-1 leading-none font-medium">{room.id}</span>
 				<Button
 					onClick={() => setDialogOpen(true)}
 					className="ml-auto gap-1.5 py-1.75"

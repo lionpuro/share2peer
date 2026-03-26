@@ -37,12 +37,12 @@ export function FileArea() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
-			<Heading order={2} size="md">
+		<div className="flex flex-col">
+			<Heading order={2} size="md" className="mb-3">
 				Shared files
 			</Heading>
 			{files.length > 0 ? (
-				<ul className="-mr-2 mb-2 flex flex-col gap-2">
+				<ul className="-mr-2 mb-4 flex flex-col gap-2">
 					{files.map((file) => {
 						const transfers = transfersByFile[file.id] || [];
 						const transfer =
@@ -136,7 +136,7 @@ export function FileArea() {
 					})}
 				</ul>
 			) : (
-				<p className="leading-none text-muted-foreground">No files</p>
+				<p className="mb-4 leading-none text-muted-foreground">No files</p>
 			)}
 			<FileInput
 				className="flex flex-col items-center justify-center rounded-lg rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16 dark:border-secondary"

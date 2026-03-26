@@ -47,7 +47,7 @@ function Component() {
 
 	return (
 		<>
-			<Main className="min-h-[calc(100vh-3.75rem)] max-w-screen-lg">
+			<Main className="min-h-[calc(100vh-3.25rem)] max-w-screen-lg">
 				<div className="my-12 flex gap-8 max-md:mx-auto max-md:flex-col md:my-auto md:pb-16">
 					<div className="flex flex-wrap gap-x-4 gap-y-3 md:my-auto">
 						<Heading order={1} className="mb-1 w-full md:mb-2 lg:text-5xl">
@@ -73,7 +73,7 @@ function Component() {
 							No size limits
 						</span>
 					</div>
-					<div className="flex w-full flex-col gap-4 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 sm:max-w-sm md:ml-auto md:min-w-xs">
+					<div className="flex w-full flex-col gap-2 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 sm:max-w-sm md:ml-auto md:min-w-xs">
 						<span className="text-sm">
 							Create a private room to start sharing
 						</span>
@@ -85,7 +85,7 @@ function Component() {
 							<IconPlus />
 							New Room
 						</Button>
-						<span className="flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground before:h-0.5 before:flex-1 before:bg-border before:content-['_'] after:h-0.5 after:flex-1 after:bg-border after:content-['_']">
+						<span className="my-1 flex items-center justify-between gap-2 text-sm font-medium text-muted-foreground before:h-0.5 before:flex-1 before:bg-border before:content-['_'] after:h-0.5 after:flex-1 after:bg-border after:content-['_']">
 							OR
 						</span>
 						<span className="text-sm">Enter a code to join a room</span>
@@ -99,7 +99,7 @@ function Component() {
 									value={joinCode}
 									onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
 									onKeyUp={handleCodeKeyUp}
-									className="w-full rounded-lg border border-secondary px-2 py-1.25 font-mono placeholder:text-muted-foreground"
+									className="w-full rounded-lg border bg-muted/50 px-2 py-1.25 font-mono placeholder:text-muted-foreground"
 								/>
 								{joinCode.length > 0 && (
 									<button

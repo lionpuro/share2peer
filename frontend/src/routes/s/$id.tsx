@@ -289,7 +289,7 @@ function RoomInfo({
 					<Heading order={3} className="mb-1">
 						Nearby devices
 					</Heading>
-					<p className="mb-3 text-sm font-medium text-muted-foreground">
+					<p className="mb-3 text-sm text-muted-foreground">
 						Other devices on the same network will appear here.
 					</p>
 					<ul className="flex flex-col gap-3">

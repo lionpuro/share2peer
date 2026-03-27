@@ -48,35 +48,35 @@ function Component() {
 	return (
 		<>
 			<Main className="min-h-[calc(100vh-3.25rem)] max-w-screen-lg">
-				<div className="my-12 flex gap-8 max-md:mx-auto max-md:flex-col md:my-auto md:pb-16">
-					<div className="flex flex-wrap gap-x-4 gap-y-3 md:my-auto">
-						<Heading order={1} className="mb-1 w-full md:mb-2 lg:text-5xl">
-							Seamless file sharing in your browser
+				<div className="my-12 flex items-center gap-8 max-md:mx-auto max-md:flex-col md:my-auto md:pb-16">
+					<div className="flex flex-col max-md:items-center max-md:text-center md:my-auto">
+						<Heading
+							order={1}
+							className="mb-2 w-full tracking-tight text-balance md:mb-2"
+						>
+							Quick file sharing for every device
 						</Heading>
-						<div className="w-full text-foreground/80 md:mt-auto">
-							<p>
-								Send files to any device with only a web browser. No
-								registration, no installation. To get started, create a room and
-								invite another person or device.
-							</p>
+						<p className="mb-2 text-balance text-foreground/80 md:mt-auto">
+							Private file transfers without size limits. No setup, no accounts.
+							Completely free.
+						</p>
+						<div className="flex flex-wrap gap-x-4 gap-y-2 text-sm font-medium text-muted-foreground max-md:justify-center">
+							<span className="flex items-center gap-2">
+								<IconConnect />
+								Peer-to-peer
+							</span>
+							<span className="flex items-center gap-2">
+								<IconDevices />
+								Cross-platform
+							</span>
+							<span className="flex items-center gap-2">
+								<IconInfinity />
+								No size limits
+							</span>
 						</div>
-						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-							<IconConnect />
-							Peer-to-peer
-						</span>
-						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-							<IconDevices />
-							Cross-platform
-						</span>
-						<span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-							<IconInfinity />
-							No size limits
-						</span>
 					</div>
-					<div className="flex w-full flex-col gap-2 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 sm:max-w-sm md:ml-auto md:min-w-xs">
-						<span className="text-sm">
-							Create a private room to start sharing
-						</span>
+					<div className="flex w-full max-w-xs flex-col gap-2 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:min-w-xs">
+						<span className="text-sm">Create a room to start sharing</span>
 						<Button
 							onClick={handleCreate}
 							className="gap-1"

@@ -4,7 +4,7 @@ import { cn } from "#/lib/helper";
 const sizes = {
 	sm: "font-bold",
 	md: "text-lg font-bold",
-	lg: "text-3xl md:text-4xl font-bold",
+	lg: "text-2xl font-bold",
 };
 
 type Props = HTMLAttributes<HTMLHeadingElement> & {

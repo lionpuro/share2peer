@@ -2,7 +2,6 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
-import { Heading } from "#/components/ui/heading";
 import { Footer } from "#/components/footer";
 import {
 	IconConnect,
@@ -50,12 +49,9 @@ function Component() {
 			<Main className="min-h-[calc(100vh-3.25rem)] max-w-screen-lg">
 				<div className="my-12 flex items-center gap-8 max-md:mx-auto max-md:flex-col md:my-auto md:pb-16">
 					<div className="flex flex-col max-md:items-center max-md:text-center md:my-auto">
-						<Heading
-							order={1}
-							className="mb-2 w-full tracking-tight text-balance md:mb-2"
-						>
+						<h1 className="mb-2 w-full text-3xl leading-none font-bold tracking-tight text-balance md:mb-2 md:text-4xl">
 							Quick file sharing for every device
-						</Heading>
+						</h1>
 						<p className="mb-2 text-balance text-foreground/80 md:mt-auto">
 							Private file transfers without size limits. No setup, no accounts.
 							Completely free.

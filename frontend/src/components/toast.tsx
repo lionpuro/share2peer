@@ -1,4 +1,4 @@
-import { ThemeContext } from "#/context/theme/context";
+import { getSystemTheme, ThemeContext } from "#/context/theme/context";
 import { useContext } from "react";
 import { Slide, ToastContainer, type ToastOptions } from "react-toastify";
 
@@ -14,5 +14,10 @@ const options: ToastOptions = {
 
 export function Toast() {
 	const { theme } = useContext(ThemeContext);
-	return <ToastContainer {...options} theme={theme} />;
+	return (
+		<ToastContainer
+			{...options}
+			theme={theme === "system" ? getSystemTheme() : theme}
+		/>
+	);
 }

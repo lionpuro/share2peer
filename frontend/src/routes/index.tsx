@@ -29,7 +29,7 @@ function Component() {
 		setCreating(true);
 		try {
 			const { id } = await createRoom(server);
-			navigate({ to: "/s/$id", params: { id } });
+			navigate({ to: "/r/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);
 			toast.error("Failed to create room");
@@ -42,7 +42,7 @@ function Component() {
 		e.preventDefault();
 		if (e.key !== "Enter") return;
 		if (joinCode.length < 6) return;
-		navigate({ to: "/s/$id", params: { id: joinCode } });
+		navigate({ to: "/r/$id", params: { id: joinCode } });
 	}
 
 	return (
@@ -111,7 +111,7 @@ function Component() {
 								)}
 							</div>
 							<Link
-								to="/s/$id"
+								to="/r/$id"
 								params={{ id: joinCode }}
 								className={`rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "bg-muted text-muted-foreground" : "bg-primary text-white hover:bg-primary-darker"}`}
 								disabled={joinCode.length !== 6}
@@ -168,7 +168,7 @@ function useInvitationListener() {
 				className: "p-0",
 				onClose: (reason) => {
 					if (reason === "accept") {
-						navigate({ to: "/s/$id", params: { id: e.detail.room_id } });
+						navigate({ to: "/r/$id", params: { id: e.detail.room_id } });
 					}
 				},
 			});

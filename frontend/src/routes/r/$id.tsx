@@ -22,7 +22,7 @@ import type { Room, User } from "#/lib/schemas";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { server } from "#/lib/server";
 
-export const Route = createFileRoute("/s/$id")({
+export const Route = createFileRoute("/r/$id")({
 	component: Component,
 	head: (ctx) => ({
 		meta: [{ title: `Room ${ctx.params.id} | WebSend` }],
@@ -86,7 +86,7 @@ function RoomInfo({
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [copiedURL, setCopiedURL] = useState(false);
 	const [copiedID, setCopiedID] = useState(false);
-	const roomURL = `${window.location.protocol}//${window.location.host}/s/${room.id}`;
+	const roomURL = `${window.location.protocol}//${window.location.host}/r/${room.id}`;
 	const networkUsers = useStore($networkUsers);
 
 	function copyURL() {

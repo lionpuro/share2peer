@@ -10,9 +10,10 @@ import {
 	IconPlus,
 	IconX,
 } from "#/components/icons";
-import { toast, type ToastContentProps } from "react-toastify";
+import { toast } from "react-toastify";
 import { createRoom } from "#/lib/room";
 import { server, type ServerEventMap } from "#/lib/server";
+import { InviteNotification } from "#/components/toast";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -123,42 +124,11 @@ function Component() {
 	);
 }
 
-type InvitationProps = Partial<ToastContentProps> & {
-	invitation: ServerEventMap["room-invitation"]["detail"];
-};
-
-function Invitation({ invitation, closeToast }: InvitationProps) {
-	const user = invitation.from;
-	return (
-		<div className="flex w-full flex-col gap-2">
-			<p className="w-full leading-none font-bold text-foreground">
-				Room invitation
-			</p>
-			<p className="w-full text-sm font-medium">{`${user.display_name} (${user.device_name}) has invited you to a room.`}</p>
-			<div className="flex gap-2">
-				<Button
-					variant="ghost"
-					onClick={() => closeToast?.("decline")}
-					className="basis-1/2 border py-1.5 text-destructive hover:bg-secondary/40"
-				>
-					Decline
-				</Button>
-				<Button
-					onClick={() => closeToast?.("accept")}
-					className="basis-1/2 py-1.75"
-				>
-					Join
-				</Button>
-			</div>
-		</div>
-	);
-}
-
 function useInvitationListener() {
 	const navigate = useNavigate();
 	useEffect(() => {
 		const handler = (e: ServerEventMap["room-invitation"]) => {
-			toast(<Invitation invitation={e.detail} />, {
+			toast(<InviteNotification invitation={e.detail} />, {
 				autoClose: false,
 				closeButton: false,
 				className: "p-0",

@@ -143,15 +143,6 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 							handleUserLeft(body.payload);
 							break;
 					}
-				} catch (err) {
-					console.error(err);
-				}
-			});
-			this.#ws.addEventListener("message", (e) => {
-				try {
-					const message = parseMessage(e.data);
-					if (message.transaction || message.type !== "message") return;
-					const body = parseBody(message.body);
 					this.#dispatchMessageEvent(body);
 				} catch (err) {
 					console.error(err);

@@ -25,7 +25,7 @@ import { server } from "#/lib/server";
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
 	head: (ctx) => ({
-		meta: [{ title: `Room ${ctx.params.id} | WebSend` }],
+		meta: [{ title: `Room ${ctx.params.id} | Websend` }],
 	}),
 });
 

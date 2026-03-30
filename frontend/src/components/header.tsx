@@ -9,7 +9,7 @@ export function Header() {
 		<header className="mx-auto flex w-full max-w-screen-2xl items-center px-6 py-3 sm:px-8">
 			<Link to="/" className="flex items-center gap-1 text-xl font-semibold">
 				<Logo className="size-6.5 text-primary" />
-				WebSend
+				Websend
 			</Link>
 			<ThemeSwitch />
 		</header>

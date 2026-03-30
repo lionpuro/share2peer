@@ -7,7 +7,7 @@ export function Footer() {
 			<div className="mx-auto flex w-full max-w-screen-2xl px-6 sm:px-8">
 				<Link to="/" className="flex items-center gap-1 font-medium">
 					<Logo className="size-6 text-primary" />
-					WebSend
+					Websend
 				</Link>
 				<a
 					href="https://github.com/lionpuro/websend"

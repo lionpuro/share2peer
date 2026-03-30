@@ -1,3 +1,4 @@
+import { setUploads } from "#/stores/file";
 import { $room } from "#/stores/signaling";
 import { parseBody, type Room, type User } from "./schemas";
 import { SignalingServer } from "./server";
@@ -50,9 +51,7 @@ export async function leaveRoom(server: SignalingServer) {
 				payload: { room_id: room.id },
 			})
 			.catch(console.error);
-		state = "idle";
-		$room.set(undefined);
-		removeConnections();
+		handleRoomLeft();
 	} catch (err) {
 		console.error("leave room:", err);
 	}
@@ -88,6 +87,7 @@ export function handleRoomLeft() {
 	$room.set(undefined);
 	state = "idle";
 	removeConnections();
+	setUploads([]);
 }
 
 export async function handleUserJoined(server: SignalingServer, user: User) {

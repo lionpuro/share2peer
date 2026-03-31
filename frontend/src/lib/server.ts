@@ -29,6 +29,9 @@ declare global {
 	}
 }
 
+const MIN_RECONNECT_DELAY = 1000;
+const MAX_RECONNECT_DELAY = 15000;
+
 type Transaction<Type extends keyof typeof RequestResponseMap> = {
 	action: Type;
 	resolve: (value: Message) => void;
@@ -53,101 +56,34 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#ws: WebSocket | undefined = undefined;
 	#currentID: number = 0;
 	#transactions: Map<string, PendingTransaction> = new Map();
+	#reconnectAttempts: number = 0;
+	#reconnectTimeout: number | undefined = undefined;
+	#clientDisconnect: boolean = false;
 
 	constructor(url: string) {
 		super();
 		this.#url = url;
-		window.__SignalingServer?.close();
+		window.__SignalingServer?.disconnect();
 		window.__SignalingServer = this;
 		this.connect().catch((err) => console.error(err));
 	}
 
 	async connect(): Promise<WebSocket> {
-		if (this.#ws && this.#ws.readyState === 1) {
+		if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
 			return this.#ws;
 		}
 
-		if ($connectionState.get() !== "connected") {
-			$connectionState.set("connecting");
-		}
 		try {
+			$connectionState.set("connecting");
 			this.#ws = await openSocket(this.#url);
+			this.#reconnectAttempts = 0;
+			this.#clientDisconnect = false;
+			clearTimeout(this.#reconnectTimeout);
 			$connectionState.set("connected");
 
-			this.#ws.addEventListener("error", (e) => {
-				$connectionState.set("failed");
-				console.error("WebSocket error: " + JSON.stringify(e));
-			});
-			this.#ws.addEventListener("close", async () => {
-				$connectionState.set("disconnected");
-				removeConnections();
-				closeRoom();
-				this.dispatchTypedEvent("close", new CustomEvent("close"));
-				setTimeout(() => {
-					this.connect();
-				}, 1000);
-			});
-			this.#ws.addEventListener("message", async (e) => {
-				try {
-					const message = parseMessage(e.data);
-					if (message.transaction) {
-						const tx = this.#transactions.get(message.transaction);
-						if (!tx) return;
-						const body = parseBody(message.body);
-						switch (body.type) {
-							case RequestResponseMap[tx.action]:
-							case "error":
-								tx.resolve(message);
-								break;
-							default:
-								tx.reject(
-									new Error(
-										`received unexpected response "${message.type}" to request "${tx.action}"`,
-									),
-								);
-								break;
-						}
-						return;
-					}
-
-					const body = parseBody(message.body);
-					switch (body.type) {
-						case "error":
-							console.error(body.payload.code);
-							break;
-						case "identity":
-							$identity.set(body.payload);
-							break;
-						case "network-users":
-							$networkUsers.set(body.payload.users);
-							break;
-						case "offer":
-							await handleOffer(this, body);
-							break;
-						case "answer":
-							await handleAnswer(body);
-							break;
-						case "ice-candidate":
-							await handleICECandidate(body);
-							break;
-						case "room-info":
-							handleRoomInfo(body.payload);
-							break;
-						case "room-left":
-							handleRoomLeft();
-							break;
-						case "user-joined":
-							await handleUserJoined(this, body.payload);
-							break;
-						case "user-left":
-							handleUserLeft(body.payload);
-							break;
-					}
-					this.#dispatchMessageEvent(body);
-				} catch (err) {
-					console.error(err);
-				}
-			});
+			this.#ws.addEventListener("error", (e) => this.#onError(e));
+			this.#ws.addEventListener("close", () => this.#onClose());
+			this.#ws.addEventListener("message", (e) => this.#onMessage(e));
 
 			return this.#ws;
 		} catch (err) {
@@ -156,7 +92,30 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		}
 	}
 
-	close() {
+	#reconnect() {
+		if (this.#reconnectTimeout) {
+			return;
+		}
+
+		this.#reconnectAttempts += 1;
+		const delay = Math.min(
+			MIN_RECONNECT_DELAY * 2 ** (this.#reconnectAttempts - 1),
+			MAX_RECONNECT_DELAY,
+		);
+		this.#reconnectTimeout = setTimeout(() => {
+			this.#reconnectTimeout = undefined;
+			this.connect().catch(() => {
+				if (!this.#clientDisconnect) {
+					this.#reconnect();
+				}
+			});
+		}, delay);
+	}
+
+	disconnect() {
+		this.#clientDisconnect = true;
+		clearTimeout(this.#reconnectTimeout);
+		this.#reconnectTimeout = undefined;
 		if (this.#ws) {
 			this.#ws.close();
 			this.#ws = undefined;
@@ -217,6 +176,83 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		};
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
+	}
+
+	#onError(e: Event) {
+		$connectionState.set("failed");
+		console.error("WebSocket error: " + JSON.stringify(e));
+	}
+
+	#onClose() {
+		$connectionState.set("disconnected");
+		removeConnections();
+		closeRoom();
+		this.dispatchTypedEvent("close", new CustomEvent("close"));
+		if (!this.#clientDisconnect) {
+			this.#reconnect();
+		}
+	}
+
+	async #onMessage(e: MessageEvent) {
+		try {
+			const message = parseMessage(e.data);
+			if (message.transaction) {
+				const tx = this.#transactions.get(message.transaction);
+				if (!tx) return;
+				const body = parseBody(message.body);
+				switch (body.type) {
+					case RequestResponseMap[tx.action]:
+					case "error":
+						tx.resolve(message);
+						break;
+					default:
+						tx.reject(
+							new Error(
+								`received unexpected response "${message.type}" to request "${tx.action}"`,
+							),
+						);
+						break;
+				}
+				return;
+			}
+
+			const body = parseBody(message.body);
+			switch (body.type) {
+				case "error":
+					console.error(body.payload.code);
+					break;
+				case "identity":
+					$identity.set(body.payload);
+					break;
+				case "network-users":
+					$networkUsers.set(body.payload.users);
+					break;
+				case "offer":
+					await handleOffer(this, body);
+					break;
+				case "answer":
+					await handleAnswer(body);
+					break;
+				case "ice-candidate":
+					await handleICECandidate(body);
+					break;
+				case "room-info":
+					handleRoomInfo(body.payload);
+					break;
+				case "room-left":
+					handleRoomLeft();
+					break;
+				case "user-joined":
+					await handleUserJoined(this, body.payload);
+					break;
+				case "user-left":
+					handleUserLeft(body.payload);
+					break;
+			}
+			this.#dispatchMessageEvent(body);
+		} catch (err) {
+			console.error(err);
+		}
 	}
 
 	#dispatchMessageEvent(body: IncomingMessageBody) {

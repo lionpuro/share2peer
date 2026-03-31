@@ -289,20 +289,13 @@ function openSocket(url: string): Promise<WebSocket> {
 	});
 }
 
-function resolveSocketURL() {
+function resolveSocketURL(): string {
 	const { VITE_WS_PROTOCOL, VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
-	if (!import.meta.env.DEV || !VITE_WS_HOST.startsWith("localhost")) {
-		return new URL(
-			VITE_WS_ENDPOINT,
-			`${VITE_WS_PROTOCOL}://${VITE_WS_HOST}`,
-		).toString();
-	}
+	const host = VITE_WS_HOST.startsWith("localhost:")
+		? new URL(import.meta.url).host
+		: VITE_WS_HOST;
 
-	const url = new URL(
-		VITE_WS_ENDPOINT,
-		`${VITE_WS_PROTOCOL}://${new URL(import.meta.url).host}`,
-	);
-	return url.toString();
+	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
 }
 
 export const server = new SignalingServer(resolveSocketURL());

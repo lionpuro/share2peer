@@ -57,10 +57,10 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				return fmt.Errorf("read message: %v", err)
+			if !isUnexpectedCloseError(err) {
+				return nil
 			}
-			return nil
+			return fmt.Errorf("read message: %v", err)
 		}
 
 		var message Message
@@ -70,6 +70,9 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 		}
 
 		if err := sh.handleMessage(u, message); err != nil {
+			if !isUnexpectedCloseError(err) {
+				return nil
+			}
 			return err
 		}
 	}
@@ -466,4 +469,12 @@ func broadcastNetworkUsers(to *User, users []*User) error {
 		}
 	}
 	return nil
+}
+
+func isUnexpectedCloseError(err error) bool {
+	return websocket.IsUnexpectedCloseError(err,
+		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived,
+		websocket.CloseAbnormalClosure,
+	)
 }

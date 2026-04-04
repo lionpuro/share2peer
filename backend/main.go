@@ -23,9 +23,10 @@ func main() {
 			return
 		}
 		if err := sh.serve(conn, r.Header); err != nil {
-			if !errors.Is(err, ErrUnknownMessageType) {
-				log.Printf("websocket handler: %s", err.Error())
+			if errors.Is(err, ErrUnknownMessageType) {
+				return
 			}
+			log.Printf("websocket handler: %s", err.Error())
 			return
 		}
 	})

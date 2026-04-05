@@ -79,6 +79,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#reconnectAttempts = 0;
 			this.#clientDisconnect = false;
 			clearTimeout(this.#reconnectTimeout);
+			this.#reconnectTimeout = undefined;
 			$connectionState.set("connected");
 
 			this.#ws.addEventListener("error", (e) => this.#onError(e));

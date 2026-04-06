@@ -10,13 +10,17 @@ import (
 )
 
 func main() {
-	sh := NewSignalHandler(NewUserService(), NewRoomStore())
+	origins := os.Getenv("ALLOWED_ORIGINS")
+	sh := NewSignalHandler(origins, NewUserService(), NewRoomStore())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		(w).Header().Set("Access-Control-Allow-Origin", "*")
 		conn, err := sh.upgrader.Upgrade(w, r, nil)
 		if err != nil {
+			if strings.Contains(err.Error(), "websocket: request origin not allowed by Upgrader.CheckOrigin") {
+				return
+			}
 			if !strings.Contains(err.Error(), "the client is not using the websocket protocol") {
 				log.Printf("upgrade request: %v", err)
 			}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,13 +17,22 @@ type SignalHandler struct {
 	upgrader websocket.Upgrader
 }
 
-func NewSignalHandler(us *UserService, rs *RoomStore) *SignalHandler {
+func NewSignalHandler(origins string, us *UserService, rs *RoomStore) *SignalHandler {
 	return &SignalHandler{
 		users: us,
 		rooms: rs,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true
+				if origins == "*" {
+					return true
+				}
+				origin := r.Header.Get("Origin")
+				for _, o := range strings.Split(origins, ",") {
+					if origin == o {
+						return true
+					}
+				}
+				return false
 			},
 		},
 	}

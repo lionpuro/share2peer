@@ -36,7 +36,7 @@ func main() {
 	})
 
 	s := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")),
+		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),
 		Handler: mux,
 	}
 

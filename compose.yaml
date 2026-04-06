@@ -8,7 +8,5 @@ services:
     stdin_open: true
     tty: true
     network_mode: "host"
-    environment:
-      SERVER_PORT: 3000
     volumes:
       - .:/app

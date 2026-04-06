@@ -10,7 +10,7 @@
 }
 
 backend.websend.org {
-	reverse_proxy app:{env.SERVER_PORT} {
+	reverse_proxy app:{env.PORT} {
 		header_up X-Forwarded-For {client_ip}
 	}
 }

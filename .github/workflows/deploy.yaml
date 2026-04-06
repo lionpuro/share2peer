@@ -11,7 +11,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: "Deploy"
+      - name: Deploy
+        env:
+          PORT: ${{ secrets.PORT }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -21,7 +24,7 @@ jobs:
           script: |
             cd /opt/websend/infra
             git pull
-            touch .env
+            rm -f .env && touch .env
             echo PORT=$PORT >> .env
             echo ALLOWED_ORIGINS=$ALLOWED_ORIGINS >> .env
             docker compose pull --no-parallel && docker compose up -d

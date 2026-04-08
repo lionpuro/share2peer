@@ -277,15 +277,24 @@ func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 	// leave previous room in case the user hasn't done it already
 	if u.roomID != "" {
 		room, err := sh.rooms.Get(u.roomID)
-		room.RemoveUser(u)
 		if err == nil {
-			err = sh.broadcast(u.conn, Message{
+			room.RemoveUser(u)
+			if err := sh.broadcast(u.conn, Message{
 				Type: "message",
 				Body: MessageBody{
 					Type:    SignalUserLeft,
 					Payload: u,
-				}}, room.ID)
-			if err != nil {
+				},
+			}, room.ID); err != nil {
+				log.Printf("join room: failed to broadcast to previous room: %v", err)
+			}
+			if err := sh.broadcast(u.conn, Message{
+				Type: "message",
+				Body: MessageBody{
+					Type:    SignalRoomInfo,
+					Payload: room,
+				},
+			}, room.ID); err != nil {
 				log.Printf("join room: failed to broadcast to previous room: %v", err)
 			}
 		}

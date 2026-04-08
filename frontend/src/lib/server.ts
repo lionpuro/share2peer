@@ -82,9 +82,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#reconnectTimeout = undefined;
 			$connectionState.set("connected");
 
-			this.#ws.addEventListener("error", (e) => this.#onError(e));
-			this.#ws.addEventListener("close", () => this.#onClose());
-			this.#ws.addEventListener("message", (e) => this.#onMessage(e));
+			this.#ws.addEventListener("error", this.#onerror);
+			this.#ws.addEventListener("close", this.#onclose);
+			this.#ws.addEventListener("message", this.#onmessage);
 
 			return this.#ws;
 		} catch (err) {
@@ -179,12 +179,12 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		ws.send(JSON.stringify(msg));
 	}
 
-	#onError(e: Event) {
+	#onerror = (e: Event) => {
 		$connectionState.set("failed");
 		console.error("WebSocket error: " + JSON.stringify(e));
-	}
+	};
 
-	#onClose() {
+	#onclose = () => {
 		$connectionState.set("disconnected");
 		removeConnections();
 		closeRoom();
@@ -192,9 +192,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		if (!this.#clientDisconnect) {
 			this.#reconnect();
 		}
-	}
+	};
 
-	async #onMessage(e: MessageEvent) {
+	#onmessage = async (e: MessageEvent) => {
 		try {
 			const message = parseMessage(e.data);
 			if (message.transaction) {
@@ -254,7 +254,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		} catch (err) {
 			console.error(err);
 		}
-	}
+	};
 
 	#dispatchMessageEvent(body: IncomingMessageBody) {
 		const event: ServerEvent = new CustomEvent(body.type, {

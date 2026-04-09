@@ -27,6 +27,7 @@ import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { server } from "#/lib/server";
 import { joinRoom, leaveRoom, roomState } from "#/lib/room";
 import { useResult } from "#/hooks/hooks";
+import { useNotifications } from "#/hooks/use-notifications";
 
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
@@ -41,7 +42,7 @@ function Component() {
 	const identity = useStore($identity);
 	const room = useStore($room);
 	const peers = useStore($peers);
-
+	useNotifications();
 	const { status, error } = useResult(() => joinRoom(server, id));
 	useEffect(() => {
 		return () => {

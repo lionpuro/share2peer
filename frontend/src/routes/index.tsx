@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
@@ -12,8 +12,8 @@ import {
 } from "#/components/icons";
 import { toast } from "react-toastify";
 import { createRoom } from "#/lib/room";
-import { server, type ServerEventMap } from "#/lib/server";
-import { InviteNotification } from "#/components/toast";
+import { server } from "#/lib/server";
+import { useNotifications } from "#/hooks/use-notifications";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -23,7 +23,7 @@ function Component() {
 	const navigate = useNavigate();
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
-	useInvitationListener();
+	useNotifications();
 
 	async function handleCreate() {
 		setCreating(true);
@@ -122,26 +122,4 @@ function Component() {
 			<Footer />
 		</>
 	);
-}
-
-function useInvitationListener() {
-	const navigate = useNavigate();
-	useEffect(() => {
-		const handler = (e: ServerEventMap["room-invitation"]) => {
-			toast(<InviteNotification invitation={e.detail} />, {
-				autoClose: false,
-				closeButton: false,
-				className: "p-0",
-				onClose: (reason) => {
-					if (reason === "accept") {
-						navigate({ to: "/r/$id", params: { id: e.detail.room_id } });
-					}
-				},
-			});
-		};
-		server.addEventListener("room-invitation", handler);
-		return () => {
-			server.removeEventListener("room-invitation", handler);
-		};
-	}, [navigate]);
 }

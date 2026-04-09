@@ -62,30 +62,50 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 	constructor(url: string) {
 		super();
-		this.#url = url;
 		window.__SignalingServer?.disconnect();
 		window.__SignalingServer = this;
-		this.connect().catch((err) => console.error(err));
+		this.#url = url;
+		$connectionState.set("connecting");
+		this.#ws = this.#createSocket();
+	}
+
+	#createSocket(): WebSocket {
+		this.#ws = new WebSocket(this.#url);
+		this.#ws.addEventListener("open", this.#onopen);
+		this.#ws.addEventListener("close", this.#onclose);
+		this.#ws.addEventListener("message", this.#onmessage);
+		this.#ws.addEventListener("error", this.#onerror);
+		return this.#ws;
 	}
 
 	async connect(): Promise<WebSocket> {
-		if (this.#ws && this.#ws.readyState === WebSocket.OPEN) {
+		if (this.#ws?.readyState === WebSocket.OPEN) {
 			return this.#ws;
+		}
+		if (this.#ws?.readyState === WebSocket.CONNECTING) {
+			return new Promise((resolve, reject) => {
+				if (!this.#ws) {
+					return reject(new Error("connection unavailable"));
+				}
+				this.#ws.addEventListener("open", () => {
+					if (!this.#ws) {
+						return reject(new Error("connection unavailable"));
+					}
+					resolve(this.#ws);
+				});
+			});
 		}
 
 		try {
 			$connectionState.set("connecting");
-			this.#ws = await openSocket(this.#url);
+			this.#ws = this.#createSocket();
+
 			this.#reconnectAttempts = 0;
 			this.#clientDisconnect = false;
 			clearTimeout(this.#reconnectTimeout);
 			this.#reconnectTimeout = undefined;
-			$connectionState.set("connected");
 
-			this.#ws.addEventListener("error", this.#onerror);
-			this.#ws.addEventListener("close", this.#onclose);
-			this.#ws.addEventListener("message", this.#onmessage);
-
+			await waitForOpen(this.#ws);
 			return this.#ws;
 		} catch (err) {
 			$connectionState.set("failed");
@@ -184,6 +204,10 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		console.error("WebSocket error: " + JSON.stringify(e));
 	};
 
+	#onopen = () => {
+		$connectionState.set("connected");
+	};
+
 	#onclose = () => {
 		$connectionState.set("disconnected");
 		removeConnections();
@@ -264,29 +288,21 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 }
 
-function openSocket(url: string): Promise<WebSocket> {
-	return new Promise((resolve, reject) => {
-		const ws = new WebSocket(url);
-
-		const onError = () => {
-			clearTimeout(timeout);
-			reject("failed to connect");
-		};
-		const onOpen = () => {
-			ws.removeEventListener("error", onError);
-			ws.removeEventListener("open", onOpen);
-			clearTimeout(timeout);
-			resolve(ws);
-		};
-
-		const timeout = setTimeout(() => {
-			ws.removeEventListener("error", onError);
-			ws.removeEventListener("open", onOpen);
-			reject("connection timed out");
-		}, 5000);
-
-		ws.addEventListener("error", onError);
-		ws.addEventListener("open", onOpen);
+function waitForOpen(sock: WebSocket) {
+	return new Promise<WebSocket>((resolve, reject) => {
+		if (sock.readyState === WebSocket.CONNECTING) {
+			sock.addEventListener("open", () => resolve(sock));
+			return;
+		}
+		if (sock.readyState === WebSocket.OPEN) {
+			resolve(sock);
+			return;
+		}
+		reject(
+			new Error(
+				`websocket is ${sock.readyState === WebSocket.CLOSING ? "closing" : "closed"}`,
+			),
+		);
 	});
 }
 

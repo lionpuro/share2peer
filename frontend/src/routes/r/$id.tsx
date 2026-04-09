@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
-import { $connectionState, $identity, $networkUsers } from "#/stores/signaling";
+import {
+	$connectionState,
+	$identity,
+	$networkUsers,
+	$room,
+} from "#/stores/signaling";
 import { $peers, type PeerState } from "#/stores/peer";
-import { useJoinRoom, useRoom } from "#/hooks/use-room";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
@@ -21,6 +25,8 @@ import { Heading } from "#/components/ui/heading";
 import type { Room, User } from "#/lib/schemas";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { server } from "#/lib/server";
+import { joinRoom, leaveRoom, roomState } from "#/lib/room";
+import { useResult } from "#/hooks/hooks";
 
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
@@ -33,24 +39,34 @@ function Component() {
 	const { id } = Route.useParams();
 	const connectionState = useStore($connectionState);
 	const identity = useStore($identity);
-	const { room } = useRoom();
-	const { error } = useJoinRoom(id);
+	const room = useStore($room);
 	const peers = useStore($peers);
 
-	if (error) {
-		return (
-			<ErrorComponent error={toTitleCase(error)}>
-				<Link
-					to="/"
-					className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-darker"
-				>
-					Back
-				</Link>
-			</ErrorComponent>
-		);
-	}
-	if (connectionState === "connecting" || !room || !identity) {
+	const { status, error } = useResult(() => joinRoom(server, id));
+	useEffect(() => {
+		return () => {
+			if (roomState() === "active") {
+				leaveRoom(server);
+			}
+		};
+	}, []);
+
+	if (connectionState === "connecting" || !identity) {
 		return <Loader />;
+	}
+
+	if (status === "pending") {
+		return <Loader />;
+	}
+	if (status === "error") {
+		return <RoomError message={error.message} />;
+	}
+	if (status === "success" && !room) {
+		return <Loader />;
+	}
+
+	if (!room) {
+		return <RoomError message="Room not found" />;
 	}
 
 	if (connectionState !== "connected") {
@@ -64,6 +80,19 @@ function Component() {
 				<FileArea />
 			</div>
 		</Main>
+	);
+}
+
+function RoomError({ message }: { message: string }) {
+	return (
+		<ErrorComponent error={toTitleCase(message)}>
+			<Link
+				to="/"
+				className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-darker"
+			>
+				Back
+			</Link>
+		</ErrorComponent>
 	);
 }
 

@@ -17,11 +17,16 @@ export function roomState() {
 	return state;
 }
 
-export async function joinRoom(server: SignalingServer, id: string) {
+export async function joinRoom(
+	server: SignalingServer,
+	id: string,
+): Promise<Room> {
 	if (state === "joining") {
 		throw new Error("already joining a room");
 	}
+
 	await leaveRoom(server);
+
 	state = "joining";
 	const response = await server.sendRequest({
 		type: "join-room",

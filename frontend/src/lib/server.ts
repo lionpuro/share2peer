@@ -58,11 +58,11 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#transactions: Map<string, PendingTransaction> = new Map();
 	#reconnectAttempts: number = 0;
 	#reconnectTimeout: number | undefined = undefined;
-	#clientDisconnect: boolean = false;
+	#destroyed: boolean = false;
 
 	constructor(url: string) {
 		super();
-		window.__SignalingServer?.disconnect();
+		window.__SignalingServer?.destroy();
 		window.__SignalingServer = this;
 		this.#url = url;
 		$connectionState.set("connecting");
@@ -101,7 +101,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#ws = this.#createSocket();
 
 			this.#reconnectAttempts = 0;
-			this.#clientDisconnect = false;
+			this.#destroyed = false;
 			clearTimeout(this.#reconnectTimeout);
 			this.#reconnectTimeout = undefined;
 
@@ -114,7 +114,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	#reconnect() {
-		if (this.#reconnectTimeout) {
+		if (this.#reconnectTimeout || this.#destroyed) {
 			return;
 		}
 
@@ -126,22 +126,24 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#reconnectTimeout = setTimeout(() => {
 			this.#reconnectTimeout = undefined;
 			this.connect().catch(() => {
-				if (!this.#clientDisconnect) {
+				if (!this.#destroyed) {
 					this.#reconnect();
 				}
 			});
 		}, delay);
 	}
 
-	disconnect() {
-		this.#clientDisconnect = true;
+	destroy() {
+		this.#destroyed = true;
 		clearTimeout(this.#reconnectTimeout);
 		this.#reconnectTimeout = undefined;
 		if (this.#ws) {
+			this.#ws.removeEventListener("open", this.#onopen);
+			this.#ws.removeEventListener("close", this.#onclose);
+			this.#ws.removeEventListener("message", this.#onmessage);
+			this.#ws.removeEventListener("error", this.#onerror);
 			this.#ws.close();
-			this.#ws = undefined;
 		}
-		$connectionState.set("disconnected");
 	}
 
 	async sendRequest<
@@ -210,10 +212,11 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 	#onclose = () => {
 		$connectionState.set("disconnected");
+		$identity.set(undefined);
 		removeConnections();
 		closeRoom();
 		this.dispatchTypedEvent("close", new CustomEvent("close"));
-		if (!this.#clientDisconnect) {
+		if (!this.#destroyed) {
 			this.#reconnect();
 		}
 	};

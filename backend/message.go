@@ -26,12 +26,7 @@ const (
 type Message struct {
 	Transaction string      `json:"transaction,omitempty"`
 	Type        string      `json:"type"`
-	Body        MessageBody `json:"body"`
-}
-
-type MessageBody struct {
-	Type    string      `json:"type"`
-	Payload interface{} `json:"payload"`
+	Payload     interface{} `json:"payload"`
 }
 
 type RoomIDPayload struct {
@@ -57,13 +52,10 @@ type InviteToRoomPayload struct {
 func createErrorResponse(req Message, code, message string) Message {
 	return Message{
 		Transaction: req.Transaction,
-		Type:        "response",
-		Body: MessageBody{
-			Type: SignalError,
-			Payload: ErrorPayload{
-				Code:    code,
-				Message: message,
-			},
+		Type:        SignalError,
+		Payload: ErrorPayload{
+			Code:    code,
+			Message: message,
 		},
 	}
 }

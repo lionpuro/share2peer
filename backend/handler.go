@@ -51,11 +51,8 @@ func (sh *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
 	}()
 
 	if err := u.send(Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalIdentity,
-			Payload: u,
-		},
+		Type:    SignalIdentity,
+		Payload: u,
 	}); err != nil {
 		return err
 	}
@@ -114,13 +111,10 @@ func (sh *SignalHandler) disconnect(u *User) error {
 	if room.Host == u.ID {
 		room.ForEachUser(func(user *User) {
 			user.roomID = ""
-			err := user.send(Message{
-				Type: "message",
-				Body: MessageBody{
-					Type:    SignalRoomLeft,
-					Payload: room,
-				}})
-			if err != nil {
+			if err := user.send(Message{
+				Type:    SignalRoomLeft,
+				Payload: room,
+			}); err != nil {
 				log.Printf("write json: %v", err)
 			}
 		})
@@ -133,20 +127,15 @@ func (sh *SignalHandler) disconnect(u *User) error {
 	}
 
 	if err := sh.broadcast(u.conn, Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalUserLeft,
-			Payload: u,
-		},
+		Type:    SignalUserLeft,
+		Payload: u,
 	}, room.ID); err != nil {
 		return fmt.Errorf("broadcast user-left: %v", err)
 	}
 
-	err = sh.broadcast(u.conn, Message{Type: "message",
-		Body: MessageBody{
-			Type:    SignalRoomInfo,
-			Payload: room,
-		},
+	err = sh.broadcast(u.conn, Message{
+		Type:    SignalRoomInfo,
+		Payload: room,
 	}, room.ID)
 	if err != nil {
 		return fmt.Errorf("broadcast room-info: %v", err)
@@ -174,7 +163,7 @@ func (sh *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID 
 }
 
 func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
-	switch msg.Body.Type {
+	switch msg.Type {
 	case SignalInviteToRoom:
 		return sh.handleInviteToRoom(u, msg)
 	case SignalCreateRoom:
@@ -192,7 +181,7 @@ func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
 
 func (sh *SignalHandler) handleInviteToRoom(u *User, msg Message) error {
 	var payload InviteToRoomPayload
-	bytes, err := json.Marshal(msg.Body.Payload)
+	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return err
 	}
@@ -209,13 +198,10 @@ func (sh *SignalHandler) handleInviteToRoom(u *User, msg Message) error {
 	}
 
 	return to.send(Message{
-		Type: "message",
-		Body: MessageBody{
-			Type: SignalRoomInvitation,
-			Payload: map[string]any{
-				"from":    u,
-				"room_id": payload.RoomID,
-			},
+		Type: SignalRoomInvitation,
+		Payload: map[string]any{
+			"from":    u,
+			"room_id": payload.RoomID,
 		},
 	})
 }
@@ -225,30 +211,24 @@ func (sh *SignalHandler) handleCreateRoom(u *User, msg Message) error {
 	if err != nil {
 		return u.send(Message{
 			Transaction: msg.Transaction,
-			Type:        "response",
-			Body: MessageBody{
-				Type: SignalError,
-				Payload: ErrorPayload{
-					Code:    ErrCodeServerError,
-					Message: "Server error",
-				},
+			Type:        SignalError,
+			Payload: ErrorPayload{
+				Code:    ErrCodeServerError,
+				Message: "Server error",
 			},
 		})
 	}
 
 	return u.send(Message{
 		Transaction: msg.Transaction,
-		Type:        "response",
-		Body: MessageBody{
-			Type:    SignalRoomCreated,
-			Payload: room,
-		},
+		Type:        SignalRoomCreated,
+		Payload:     room,
 	})
 }
 
 func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 	var payload RoomIDPayload
-	bytes, err := json.Marshal(msg.Body.Payload)
+	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
@@ -261,13 +241,10 @@ func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 		if errors.Is(err, ErrRoomNotFound) {
 			return u.send(Message{
 				Transaction: msg.Transaction,
-				Type:        "response",
-				Body: MessageBody{
-					Type: SignalError,
-					Payload: ErrorPayload{
-						Code:    ErrCodeNotFound,
-						Message: "Room not found",
-					},
+				Type:        SignalError,
+				Payload: ErrorPayload{
+					Code:    ErrCodeNotFound,
+					Message: "Room not found",
 				},
 			})
 		}
@@ -280,20 +257,14 @@ func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 		if err == nil {
 			room.RemoveUser(u)
 			if err := sh.broadcast(u.conn, Message{
-				Type: "message",
-				Body: MessageBody{
-					Type:    SignalUserLeft,
-					Payload: u,
-				},
+				Type:    SignalUserLeft,
+				Payload: u,
 			}, room.ID); err != nil {
 				log.Printf("join room: failed to broadcast to previous room: %v", err)
 			}
 			if err := sh.broadcast(u.conn, Message{
-				Type: "message",
-				Body: MessageBody{
-					Type:    SignalRoomInfo,
-					Payload: room,
-				},
+				Type:    SignalRoomInfo,
+				Payload: room,
 			}, room.ID); err != nil {
 				log.Printf("join room: failed to broadcast to previous room: %v", err)
 			}
@@ -303,48 +274,37 @@ func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 	if err := room.AddUser(u); err != nil {
 		return u.send(Message{
 			Transaction: msg.Transaction,
-			Type:        "response",
-			Body: MessageBody{
-				Type: SignalError,
-				Payload: ErrorPayload{
-					Code:    ErrCodeServerError,
-					Message: "Server error",
-				},
+			Type:        SignalError,
+			Payload: ErrorPayload{
+				Code:    ErrCodeServerError,
+				Message: "Server error",
 			}})
 	}
 
 	if err := u.send(Message{
 		Transaction: msg.Transaction,
-		Type:        "response",
-		Body: MessageBody{
-			Type:    SignalRoomJoined,
-			Payload: room,
-		}}); err != nil {
+		Type:        SignalRoomJoined,
+		Payload:     room,
+	}); err != nil {
 		return err
 	}
 
 	if err := sh.broadcast(u.conn, Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalRoomInfo,
-			Payload: room,
-		},
+		Type:    SignalRoomInfo,
+		Payload: room,
 	}, room.ID); err != nil {
 		return err
 	}
 
 	return sh.broadcast(u.conn, Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalUserJoined,
-			Payload: u,
-		},
+		Type:    SignalUserJoined,
+		Payload: u,
 	}, room.ID)
 }
 
 func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 	var payload RoomIDPayload
-	bytes, err := json.Marshal(msg.Body.Payload)
+	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
@@ -357,13 +317,10 @@ func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 		if errors.Is(err, ErrRoomNotFound) {
 			return u.send(Message{
 				Transaction: msg.Transaction,
-				Type:        "response",
-				Body: MessageBody{
-					Type: SignalError,
-					Payload: ErrorPayload{
-						Code:    ErrCodeNotFound,
-						Message: "Room not found",
-					},
+				Type:        SignalError,
+				Payload: ErrorPayload{
+					Code:    ErrCodeNotFound,
+					Message: "Room not found",
 				},
 			})
 		}
@@ -373,11 +330,8 @@ func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 	room.RemoveUser(u)
 	if err := u.send(Message{
 		Transaction: msg.Transaction,
-		Type:        "response",
-		Body: MessageBody{
-			Type:    SignalRoomLeft,
-			Payload: room,
-		},
+		Type:        SignalRoomLeft,
+		Payload:     room,
 	}); err != nil {
 		return err
 	}
@@ -386,11 +340,8 @@ func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 		room.ForEachUser(func(user *User) {
 			user.roomID = ""
 			err := user.send(Message{
-				Type: "message",
-				Body: MessageBody{
-					Type:    SignalRoomLeft,
-					Payload: room,
-				},
+				Type:    SignalRoomLeft,
+				Payload: room,
 			})
 			if err != nil {
 				log.Printf("write json: %v", err)
@@ -401,27 +352,21 @@ func (sh *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 	}
 
 	if err := sh.broadcast(u.conn, Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalRoomInfo,
-			Payload: room,
-		},
+		Type:    SignalRoomInfo,
+		Payload: room,
 	}, room.ID); err != nil {
 		return err
 	}
 
 	return sh.broadcast(u.conn, Message{
-		Type: "message",
-		Body: MessageBody{
-			Type:    SignalUserLeft,
-			Payload: u,
-		},
+		Type:    SignalUserLeft,
+		Payload: u,
 	}, room.ID)
 }
 
 func (sh *SignalHandler) handleWebRTCMessage(msg Message) error {
 	var info RTCMessageInfo
-	bytes, err := json.Marshal(msg.Body.Payload)
+	bytes, err := json.Marshal(msg.Payload)
 	if err != nil {
 		return err
 	}
@@ -457,12 +402,9 @@ func broadcastNetworkUsers(to *User, users []*User) error {
 			}
 		}
 		return to.send(Message{
-			Type: "message",
-			Body: MessageBody{
-				Type: SignalNetworkUsers,
-				Payload: map[string]any{
-					"users": peers,
-				},
+			Type: SignalNetworkUsers,
+			Payload: map[string]any{
+				"users": peers,
 			},
 		})
 	}
@@ -475,12 +417,9 @@ func broadcastNetworkUsers(to *User, users []*User) error {
 			}
 		}
 		err := recipient.send(Message{
-			Type: "message",
-			Body: MessageBody{
-				Type: SignalNetworkUsers,
-				Payload: map[string]any{
-					"users": peers,
-				},
+			Type: SignalNetworkUsers,
+			Payload: map[string]any{
+				"users": peers,
 			},
 		})
 		if err != nil {

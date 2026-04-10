@@ -1,12 +1,9 @@
 import { TypedEventTarget } from "typescript-event-target";
 import {
-	parseBody,
 	parseMessage,
 	RequestResponseMap,
-	type IncomingMessageBody,
-	type Message,
+	type IncomingMessage,
 	type OutgoingMessage,
-	type OutgoingMessageBody,
 } from "#/lib/schemas/signaling";
 import { $connectionState, $identity, $networkUsers } from "#/stores/signaling";
 import {
@@ -34,7 +31,7 @@ const MAX_RECONNECT_DELAY = 15000;
 
 type Transaction<Type extends keyof typeof RequestResponseMap> = {
 	action: Type;
-	resolve: (value: Message) => void;
+	resolve: (value: string) => void;
 	reject: (reason?: unknown) => void;
 };
 
@@ -44,7 +41,7 @@ type PendingTransaction =
 	| Transaction<"create-room">;
 
 export type ServerEventMap = {
-	[M in IncomingMessageBody as M["type"]]: CustomEvent<M["payload"]>;
+	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;
 } & {
 	close: CustomEvent;
 };
@@ -147,23 +144,19 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	async sendRequest<
-		Body extends Extract<
-			OutgoingMessageBody,
+		M extends Extract<
+			OutgoingMessage,
 			{ type: keyof typeof RequestResponseMap }
 		>,
-	>(body: Body): Promise<Message> {
+	>(msg: M): Promise<string> {
 		const ws = await this.connect();
 
 		this.#currentID++;
 		const id = this.#currentID.toString();
-		const msg: OutgoingMessage = {
-			transaction: id,
-			type: "request",
-			body,
-		};
+		msg.transaction = id;
 
 		const tx: PendingTransaction = {
-			action: body.type,
+			action: msg.type,
 			resolve: () => {},
 			reject: () => {},
 		};
@@ -175,7 +168,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#transactions.delete(id);
 		}, 8000);
 
-		const promise = new Promise<Message>((resolve, reject) => {
+		const promise = new Promise<string>((resolve, reject) => {
 			tx.resolve = (v) => {
 				clearTimeout(timeout);
 				resolve(v);
@@ -192,11 +185,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		return promise;
 	}
 
-	async send(body: OutgoingMessageBody) {
-		const msg: OutgoingMessage = {
-			type: "message",
-			body,
-		};
+	async send(msg: OutgoingMessage) {
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
 	}
@@ -223,15 +212,20 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 	#onmessage = async (e: MessageEvent) => {
 		try {
-			const message = parseMessage(e.data);
+			const raw = e.data as unknown;
+			if (typeof raw !== "string") {
+				throw new Error("message is not json");
+			}
+
+			const message = parseMessage(raw);
+
 			if (message.transaction) {
 				const tx = this.#transactions.get(message.transaction);
 				if (!tx) return;
-				const body = parseBody(message.body);
-				switch (body.type) {
+				switch (message.type) {
 					case RequestResponseMap[tx.action]:
 					case "error":
-						tx.resolve(message);
+						tx.resolve(raw);
 						break;
 					default:
 						tx.reject(
@@ -244,50 +238,49 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 				return;
 			}
 
-			const body = parseBody(message.body);
-			switch (body.type) {
+			switch (message.type) {
 				case "error":
-					console.error(body.payload.code);
+					console.error(message.payload.code);
 					break;
 				case "identity":
-					$identity.set(body.payload);
+					$identity.set(message.payload);
 					break;
 				case "network-users":
-					$networkUsers.set(body.payload.users);
+					$networkUsers.set(message.payload.users);
 					break;
 				case "offer":
-					await handleOffer(this, body);
+					await handleOffer(this, message);
 					break;
 				case "answer":
-					await handleAnswer(body);
+					await handleAnswer(message);
 					break;
 				case "ice-candidate":
-					await handleICECandidate(body);
+					await handleICECandidate(message);
 					break;
 				case "room-info":
-					handleRoomInfo(body.payload);
+					handleRoomInfo(message.payload);
 					break;
 				case "room-left":
 					handleRoomLeft();
 					break;
 				case "user-joined":
-					await handleUserJoined(this, body.payload);
+					await handleUserJoined(this, message.payload);
 					break;
 				case "user-left":
-					handleUserLeft(body.payload);
+					handleUserLeft(message.payload);
 					break;
 			}
-			this.#dispatchMessageEvent(body);
+			this.#dispatchMessageEvent(message);
 		} catch (err) {
-			console.error(err);
+			console.error("handle message:", err);
 		}
 	};
 
-	#dispatchMessageEvent(body: IncomingMessageBody) {
-		const event: ServerEvent = new CustomEvent(body.type, {
-			detail: body.payload,
+	#dispatchMessageEvent(message: IncomingMessage) {
+		const event: ServerEvent = new CustomEvent(message.type, {
+			detail: message.payload,
 		});
-		this.dispatchTypedEvent(body.type, event);
+		this.dispatchTypedEvent(message.type, event);
 	}
 }
 

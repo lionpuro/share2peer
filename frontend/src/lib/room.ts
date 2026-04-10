@@ -1,6 +1,6 @@
 import { setUploads } from "#/stores/file";
 import { $room } from "#/stores/signaling";
-import { parseBody, type Room, type User } from "./schemas";
+import { parseMessage, type Room, type User } from "./schemas";
 import { SignalingServer } from "./server";
 import {
 	createPeerConnection,
@@ -32,15 +32,15 @@ export async function joinRoom(
 		type: "join-room",
 		payload: { room_id: id },
 	});
-	const body = parseBody(response.body);
-	switch (body.type) {
+	const message = parseMessage(response);
+	switch (message.type) {
 		case "room-joined":
 			state = "active";
-			$room.set(body.payload);
-			return body.payload;
+			$room.set(message.payload);
+			return message.payload;
 		case "error":
 			state = "failed";
-			throw new Error(body.payload.message);
+			throw new Error(message.payload.message);
 		default:
 			state = "failed";
 			throw new Error("Failed to join room");
@@ -72,13 +72,13 @@ export async function createRoom(server: SignalingServer): Promise<Room> {
 	const response = await server.sendRequest({
 		type: "create-room",
 	});
-	const body = parseBody(response.body);
-	switch (body.type) {
+	const message = parseMessage(response);
+	switch (message.type) {
 		case "room-created":
-			return body.payload;
+			return message.payload;
 		case "error":
 			state = "failed";
-			throw new Error(body.payload.message);
+			throw new Error(message.payload.message);
 		default:
 			state = "failed";
 			throw new Error("Failed to create room");

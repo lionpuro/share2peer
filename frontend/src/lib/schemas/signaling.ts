@@ -3,32 +3,18 @@ import { ErrorPayloadSchema } from "./error";
 import { RoomIDSchema, RoomSchema } from "./room";
 import { UserSchema } from "./user";
 
-export const MessageSchema = z.object({
-	type: z.union([
-		z.literal("message"),
-		z.literal("request"),
-		z.literal("response"),
-	]),
-	transaction: z.optional(z.string()),
-	body: z.unknown(),
-});
+export type RawMessage = {
+	transaction?: string;
+	type: string;
+	payload?: unknown;
+};
 
-export function parseMessage(input: unknown) {
-	if (typeof input !== "string") {
-		throw new Error("raw message is not json");
-	}
-	const message = JSON.parse(input) as unknown;
-	return MessageSchema.parse(message);
-}
-
-export type Message = z.infer<typeof MessageSchema>;
-
-export type OutgoingMessage = Message & { body: OutgoingMessageBody };
-
-export type IncomingMessage = Message & { body: IncomingMessageBody };
-
-function body<T extends string, P extends z.ZodMiniType>(type: T, payload: P) {
+function message<T extends string, P extends z.ZodMiniType>(
+	type: T,
+	payload: P,
+) {
 	return z.object({
+		transaction: z.optional(z.string()),
 		type: z.literal(type),
 		payload: payload,
 	});
@@ -107,7 +93,7 @@ const RoomInvitationSchema = z.object({
 	room_id: z.string(),
 });
 
-type OutgoingBodyMap = {
+type OutgoingMessageMap = {
 	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {
 		type: typeof JOIN_ROOM;
@@ -129,46 +115,51 @@ type OutgoingBodyMap = {
 	};
 };
 
-export type OutgoingMessageBody = OutgoingBodyMap[keyof OutgoingBodyMap];
+export type OutgoingMessage = RawMessage &
+	OutgoingMessageMap[keyof OutgoingMessageMap];
 
-export const incomingBodySchemas = {
-	[ERROR]: body(ERROR, ErrorPayloadSchema),
-	[IDENTITY]: body(IDENTITY, UserSchema),
-	[ROOM_INFO]: body(ROOM_INFO, RoomSchema),
-	[USER_JOINED]: body(USER_JOINED, UserSchema),
-	[USER_LEFT]: body(USER_LEFT, UserSchema),
-	[ROOM_CREATED]: body(ROOM_CREATED, RoomSchema),
-	[ROOM_JOINED]: body(ROOM_JOINED, RoomSchema),
-	[ROOM_LEFT]: body(ROOM_LEFT, RoomSchema),
-	[OFFER]: body(OFFER, OfferSchema),
-	[ANSWER]: body(ANSWER, AnswerSchema),
-	[ICE_CANDIDATE]: body(ICE_CANDIDATE, CandidateSchema),
-	[NETWORK_USERS]: body(NETWORK_USERS, NetworkUsersSchema),
-	[ROOM_INVITATION]: body(ROOM_INVITATION, RoomInvitationSchema),
+export const incomingMessageSchemas = {
+	[ERROR]: message(ERROR, ErrorPayloadSchema),
+	[IDENTITY]: message(IDENTITY, UserSchema),
+	[ROOM_INFO]: message(ROOM_INFO, RoomSchema),
+	[USER_JOINED]: message(USER_JOINED, UserSchema),
+	[USER_LEFT]: message(USER_LEFT, UserSchema),
+	[ROOM_CREATED]: message(ROOM_CREATED, RoomSchema),
+	[ROOM_JOINED]: message(ROOM_JOINED, RoomSchema),
+	[ROOM_LEFT]: message(ROOM_LEFT, RoomSchema),
+	[OFFER]: message(OFFER, OfferSchema),
+	[ANSWER]: message(ANSWER, AnswerSchema),
+	[ICE_CANDIDATE]: message(ICE_CANDIDATE, CandidateSchema),
+	[NETWORK_USERS]: message(NETWORK_USERS, NetworkUsersSchema),
+	[ROOM_INVITATION]: message(ROOM_INVITATION, RoomInvitationSchema),
 } as const;
 
-export type IncomingMessageBody = z.infer<
-	(typeof incomingBodySchemas)[keyof typeof incomingBodySchemas]
+export type IncomingMessage = z.infer<
+	(typeof incomingMessageSchemas)[keyof typeof incomingMessageSchemas]
 >;
 
-export function parseBody(input: unknown): IncomingMessageBody {
+export function parseMessage(input: unknown): IncomingMessage {
+	if (typeof input !== "string") {
+		throw new Error("input is not json");
+	}
+	const parsed = JSON.parse(input) as unknown;
 	if (
-		input === null ||
-		typeof input !== "object" ||
-		!("type" in input) ||
-		typeof input.type !== "string" ||
-		!("payload" in input)
+		parsed === null ||
+		typeof parsed !== "object" ||
+		!("type" in parsed) ||
+		typeof parsed.type !== "string" ||
+		!("payload" in parsed)
 	) {
 		throw new Error("invalid message format");
 	}
-	if (!isMessageType(input.type)) {
+	if (!isMessageType(parsed.type)) {
 		throw new Error("invalid message type");
 	}
-	return incomingBodySchemas[input.type].parse(input);
+	return incomingMessageSchemas[parsed.type].parse(parsed);
 }
 
 function isMessageType(
 	input: unknown,
-): input is keyof typeof incomingBodySchemas {
-	return typeof input === "string" && input in incomingBodySchemas;
+): input is keyof typeof incomingMessageSchemas {
+	return typeof input === "string" && input in incomingMessageSchemas;
 }

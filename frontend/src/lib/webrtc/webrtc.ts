@@ -1,4 +1,4 @@
-import type { User, IncomingMessageBody } from "#/lib/schemas";
+import type { User, IncomingMessage } from "#/lib/schemas";
 import type { SignalingServer } from "#/lib/server";
 import { $identity, $room } from "#/stores/signaling";
 import { createConnection, findConnection } from "./connection";
@@ -46,7 +46,7 @@ export async function createPeerConnection(
 
 export async function handleOffer(
 	server: SignalingServer,
-	msg: Extract<IncomingMessageBody, { type: "offer" }>,
+	msg: Extract<IncomingMessage, { type: "offer" }>,
 ) {
 	const user = $room.get()?.users?.find((u) => u.id === msg.payload.from);
 	if (!user) return;
@@ -79,7 +79,7 @@ export async function handleOffer(
 }
 
 export async function handleAnswer(
-	msg: Extract<IncomingMessageBody, { type: "answer" }>,
+	msg: Extract<IncomingMessage, { type: "answer" }>,
 ) {
 	const conn = findConnection(msg.payload.from);
 	if (!conn) {
@@ -90,7 +90,7 @@ export async function handleAnswer(
 }
 
 export async function handleICECandidate(
-	msg: Extract<IncomingMessageBody, { type: "ice-candidate" }>,
+	msg: Extract<IncomingMessage, { type: "ice-candidate" }>,
 ) {
 	const conn = findConnection(msg.payload.from);
 	if (!conn) {

@@ -43,7 +43,10 @@ function Component() {
 	const room = useStore($room);
 	const peers = useStore($peers);
 	useNotifications();
-	const { status, error } = useResult(() => joinRoom(server, id));
+	const { status, error } = useResult(
+		() => joinRoom(server, id),
+		identity === undefined,
+	);
 	useEffect(() => {
 		return () => {
 			if (roomState() === "active") {

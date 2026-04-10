@@ -17,7 +17,10 @@ type UseResultValue<R, E = Error> =
 			error: E;
 	  };
 
-export function useResult<Result>(func: () => Promise<Result>) {
+export function useResult<Result>(
+	func: () => Promise<Result>,
+	disabled?: boolean,
+): UseResultValue<Result> {
 	const promise = useRef<Promise<void> | undefined>(undefined);
 
 	const [state, setState] = useState<UseResultValue<Result>>({
@@ -46,8 +49,13 @@ export function useResult<Result>(func: () => Promise<Result>) {
 	}, [func]);
 
 	useEffect(() => {
-		run();
-	}, [run]);
+		if (!disabled) {
+			run();
+		}
+	}, [run, disabled]);
 
+	if (disabled) {
+		return { status: "pending", result: undefined, error: undefined };
+	}
 	return state;
 }

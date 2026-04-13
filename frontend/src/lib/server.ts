@@ -31,14 +31,15 @@ const MAX_RECONNECT_DELAY = 15000;
 
 type Transaction<Type extends keyof typeof RequestResponseMap> = {
 	action: Type;
-	resolve: (value: string) => void;
+	resolve: (value: ResponseMap[Type]) => void;
 	reject: (reason?: unknown) => void;
 };
 
-type PendingTransaction =
-	| Transaction<"join-room">
-	| Transaction<"leave-room">
-	| Transaction<"create-room">;
+type ResponseMap = {
+	"create-room": Extract<IncomingMessage, { type: "room-created" }>;
+	"join-room": Extract<IncomingMessage, { type: "room-joined" }>;
+	"leave-room": Extract<IncomingMessage, { type: "room-left" }>;
+};
 
 export type ServerEventMap = {
 	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;
@@ -52,7 +53,8 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#url: string;
 	#ws: WebSocket | undefined = undefined;
 	#currentID: number = 0;
-	#transactions: Map<string, PendingTransaction> = new Map();
+	#transactions: Map<string, Transaction<keyof typeof RequestResponseMap>> =
+		new Map();
 	#reconnectAttempts: number = 0;
 	#reconnectTimeout: number | undefined = undefined;
 	#destroyed: boolean = false;
@@ -143,19 +145,19 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		}
 	}
 
-	async sendRequest<
-		M extends Extract<
+	async request<
+		Req extends Extract<
 			OutgoingMessage,
 			{ type: keyof typeof RequestResponseMap }
 		>,
-	>(msg: M): Promise<string> {
+	>(msg: Req): Promise<ResponseMap[Req["type"]]> {
 		const ws = await this.connect();
 
 		this.#currentID++;
 		const id = this.#currentID.toString();
 		msg.transaction = id;
 
-		const tx: PendingTransaction = {
+		const tx: Transaction<Req["type"]> = {
 			action: msg.type,
 			resolve: () => {},
 			reject: () => {},
@@ -168,7 +170,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#transactions.delete(id);
 		}, 8000);
 
-		const promise = new Promise<string>((resolve, reject) => {
+		const promise = new Promise<ResponseMap[Req["type"]]>((resolve, reject) => {
 			tx.resolve = (v) => {
 				clearTimeout(timeout);
 				resolve(v);
@@ -212,20 +214,17 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 	#onmessage = async (e: MessageEvent) => {
 		try {
-			const raw = e.data as unknown;
-			if (typeof raw !== "string") {
-				throw new Error("message is not json");
-			}
-
-			const message = parseMessage(raw);
+			const message = parseMessage(e.data as unknown);
 
 			if (message.transaction) {
 				const tx = this.#transactions.get(message.transaction);
 				if (!tx) return;
 				switch (message.type) {
 					case RequestResponseMap[tx.action]:
+						tx.resolve(message);
+						break;
 					case "error":
-						tx.resolve(raw);
+						tx.reject(new Error(message.payload.message));
 						break;
 					default:
 						tx.reject(

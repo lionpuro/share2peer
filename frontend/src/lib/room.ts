@@ -1,13 +1,13 @@
 import { setUploads } from "#/stores/file";
 import { $room } from "#/stores/signaling";
-import { parseMessage, type Room, type User } from "./schemas";
-import { SignalingServer } from "./server";
+import type { Room, User } from "#/lib/schemas";
 import {
 	createPeerConnection,
 	findConnection,
 	removeConnection,
 	removeConnections,
-} from "./webrtc";
+} from "#/lib/webrtc";
+import type { SignalingServer } from "#/lib/server";
 
 type RoomState = "idle" | "joining" | "active" | "failed";
 
@@ -28,22 +28,23 @@ export async function joinRoom(
 	await leaveRoom(server);
 
 	state = "joining";
-	const response = await server.sendRequest({
-		type: "join-room",
-		payload: { room_id: id },
-	});
-	const message = parseMessage(response);
-	switch (message.type) {
-		case "room-joined":
-			state = "active";
-			$room.set(message.payload);
-			return message.payload;
-		case "error":
-			state = "failed";
-			throw new Error(message.payload.message);
-		default:
-			state = "failed";
-			throw new Error("Failed to join room");
+
+	try {
+		const resp = await server.request({
+			type: "join-room",
+			payload: { room_id: id },
+		});
+		switch (resp.type) {
+			case "room-joined":
+				state = "active";
+				$room.set(resp.payload);
+				return resp.payload;
+			default:
+				throw new Error("Failed to join room");
+		}
+	} catch (err) {
+		state = "failed";
+		throw err;
 	}
 }
 
@@ -52,7 +53,7 @@ export async function leaveRoom(server: SignalingServer) {
 	if (!room) return;
 	try {
 		await server
-			.sendRequest({
+			.request({
 				type: "leave-room",
 				payload: { room_id: room.id },
 			})
@@ -65,20 +66,13 @@ export async function leaveRoom(server: SignalingServer) {
 
 export async function createRoom(server: SignalingServer): Promise<Room> {
 	state = "idle";
-	const room = $room.get();
-	if (room) {
-		await leaveRoom(server);
-	}
-	const response = await server.sendRequest({
+	await leaveRoom(server);
+	const resp = await server.request({
 		type: "create-room",
 	});
-	const message = parseMessage(response);
-	switch (message.type) {
+	switch (resp.type) {
 		case "room-created":
-			return message.payload;
-		case "error":
-			state = "failed";
-			throw new Error(message.payload.message);
+			return resp.payload;
 		default:
 			state = "failed";
 			throw new Error("Failed to create room");

@@ -78,6 +78,10 @@ func (s *RoomStore) Create(host uuid.UUID) (*Room, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generate room id: %s", err.Error())
 	}
+	if _, ok := s.rooms[id]; ok {
+		return nil, fmt.Errorf("duplicate room id")
+	}
+
 	room := &Room{
 		ID:   id,
 		Host: host,

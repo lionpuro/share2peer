@@ -3,6 +3,7 @@ package main
 import "github.com/google/uuid"
 
 const (
+	SignalPing           = "ping"
 	SignalError          = "error"
 	SignalIdentity       = "identity"
 	SignalRoomClosed     = "room-closed"

@@ -174,6 +174,8 @@ func (sh *SignalHandler) handleMessage(u *User, msg Message) error {
 		return sh.handleLeaveRoom(u, msg)
 	case SignalAnswer, SignalOffer, SignalICECandidate:
 		return sh.handleWebRTCMessage(msg)
+	case SignalPing:
+		return nil
 	default:
 		return ErrUnknownMessageType
 	}

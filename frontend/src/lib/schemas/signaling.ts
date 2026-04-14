@@ -20,6 +20,7 @@ function message<T extends string, P extends z.ZodMiniType>(
 	});
 }
 
+const PING = "ping";
 const ERROR = "error";
 const IDENTITY = "identity";
 const ROOM_INFO = "room-info";
@@ -94,6 +95,7 @@ const RoomInvitationSchema = z.object({
 });
 
 type OutgoingMessageMap = {
+	[PING]: { type: typeof PING };
 	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {
 		type: typeof JOIN_ROOM;

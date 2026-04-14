@@ -16,13 +16,12 @@ type Room struct {
 	Users []*User      `json:"users"`
 }
 
-func (s *Room) AddUser(u *User) error {
+func (s *Room) AddUser(u *User) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	u.roomID = s.ID
 	s.Users = append(s.Users, u)
-	return nil
 }
 
 func (r *Room) RemoveUser(u *User) {

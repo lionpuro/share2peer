@@ -273,15 +273,7 @@ func (sh *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 		}
 	}
 
-	if err := room.AddUser(u); err != nil {
-		return u.send(Message{
-			Transaction: msg.Transaction,
-			Type:        SignalError,
-			Payload: ErrorPayload{
-				Code:    ErrCodeServerError,
-				Message: "Server error",
-			}})
-	}
+	room.AddUser(u)
 
 	if err := u.send(Message{
 		Transaction: msg.Transaction,

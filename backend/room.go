@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
-
-	"github.com/google/uuid"
+	"time"
 )
 
 type Room struct {
 	ID    string       `json:"id"`
 	mu    sync.RWMutex `json:"-"`
-	Host  uuid.UUID    `json:"host"`
 	Users []*User      `json:"users"`
 }
 
@@ -69,7 +67,7 @@ func (s *RoomStore) Get(id string) (*Room, error) {
 	return room, nil
 }
 
-func (s *RoomStore) Create(host uuid.UUID) (*Room, error) {
+func (s *RoomStore) Create() (*Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -81,10 +79,7 @@ func (s *RoomStore) Create(host uuid.UUID) (*Room, error) {
 		return nil, fmt.Errorf("duplicate room id")
 	}
 
-	room := &Room{
-		ID:   id,
-		Host: host,
-	}
+	room := &Room{ID: id}
 	s.rooms[id] = room
 	return room, nil
 }
@@ -107,6 +102,94 @@ func (s *RoomStore) Delete(id string) {
 	defer s.mu.Unlock()
 
 	delete(s.rooms, id)
+}
+
+type RoomService struct {
+	store  *RoomStore
+	timers map[string]*time.Timer
+	mu     sync.Mutex
+}
+
+func NewRoomService(store *RoomStore) *RoomService {
+	return &RoomService{
+		store:  store,
+		timers: make(map[string]*time.Timer),
+	}
+}
+
+func (s *RoomService) Get(id string) (*Room, error) {
+	return s.store.Get(id)
+}
+
+func (s *RoomService) Create() (*Room, error) {
+	room, err := s.store.Create()
+	if err != nil {
+		return nil, err
+	}
+
+	s.startDeleteTimer(room.ID)
+
+	return room, err
+}
+
+func (s *RoomService) Delete(id string) {
+	s.stopDeleteTimer(id)
+	s.store.Delete(id)
+}
+
+func (s *RoomService) AddUser(roomID string, u *User) (*Room, error) {
+	room, err := s.store.Get(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	room.AddUser(u)
+	s.stopDeleteTimer(roomID)
+
+	return room, nil
+}
+
+func (s *RoomService) RemoveUser(roomID string, u *User) (*Room, error) {
+	room, err := s.store.Get(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	room.RemoveUser(u)
+	if len(room.Users) == 0 {
+		s.startDeleteTimer(roomID)
+	}
+
+	return room, nil
+}
+
+func (s *RoomService) startDeleteTimer(roomID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	timer := time.AfterFunc(60*time.Second, func() {
+		defer s.stopDeleteTimer(roomID)
+		room, err := s.store.Get(roomID)
+		if err != nil {
+			return
+		}
+		if len(room.Users) == 0 {
+			s.Delete(room.ID)
+		}
+	})
+
+	s.timers[roomID] = timer
+}
+
+func (s *RoomService) stopDeleteTimer(roomID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	timer, ok := s.timers[roomID]
+	if ok {
+		timer.Stop()
+		delete(s.timers, roomID)
+	}
 }
 
 const (

@@ -3,7 +3,6 @@ import { UserSchema } from "./user";
 
 export const RoomSchema = z.object({
 	id: z.string(),
-	host: z.optional(z.string()),
 	users: z.optional(z.union([z.array(UserSchema), z.null()])),
 });
 

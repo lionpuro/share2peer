@@ -11,7 +11,11 @@ import (
 
 func main() {
 	origins := os.Getenv("ALLOWED_ORIGINS")
-	sh := NewSignalHandler(origins, NewUserService(), NewRoomStore())
+	sh := NewSignalHandler(
+		origins,
+		NewUserService(),
+		NewRoomService(NewRoomStore()),
+	)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/socket", func(w http.ResponseWriter, r *http.Request) {

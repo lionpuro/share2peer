@@ -26,6 +26,8 @@ declare global {
 	}
 }
 
+const PING_INTERVAL = 55000;
+
 const MIN_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 15000;
 
@@ -57,6 +59,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		new Map();
 	#reconnectAttempts: number = 0;
 	#reconnectTimeout: number | undefined = undefined;
+	#pingTimer: number | undefined = undefined;
 	#destroyed: boolean = false;
 
 	constructor(url: string) {
@@ -134,6 +137,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#destroyed = true;
 		clearTimeout(this.#reconnectTimeout);
 		this.#reconnectTimeout = undefined;
+		this.stopKeepAlive();
 		if (this.#ws) {
 			this.#ws.removeEventListener("open", this.#onopen);
 			this.#ws.removeEventListener("close", this.#onclose);
@@ -196,10 +200,12 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	};
 
 	#onopen = () => {
+		this.startKeepAlive();
 		$connectionState.set("connected");
 	};
 
 	#onclose = () => {
+		this.stopKeepAlive();
 		$connectionState.set("disconnected");
 		$identity.set(undefined);
 		removeConnections();
@@ -272,6 +278,27 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			console.error("handle message:", err);
 		}
 	};
+
+	startKeepAlive() {
+		if (this.#destroyed) return;
+		const schedulePing = async () => {
+			this.#pingTimer = setTimeout(() => {
+				if (this.#destroyed) return;
+				if (this.#ws?.readyState !== WebSocket.OPEN) return;
+				this.send({ type: "ping" })
+					.then(() => schedulePing())
+					.catch((err) => console.error("ping:", err));
+			}, PING_INTERVAL);
+		};
+		schedulePing();
+	}
+
+	stopKeepAlive() {
+		if (this.#pingTimer) {
+			clearTimeout(this.#pingTimer);
+			this.#pingTimer = undefined;
+		}
+	}
 
 	#dispatchMessageEvent(message: IncomingMessage) {
 		const event: ServerEvent = new CustomEvent(message.type, {

@@ -22,7 +22,7 @@ import {
 
 declare global {
 	interface Window {
-		__SignalingServer: SignalingServer | undefined;
+		__WEBSEND_SERVER: SignalingServer | undefined;
 	}
 }
 
@@ -61,8 +61,6 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 
 	constructor(url: string) {
 		super();
-		window.__SignalingServer?.destroy();
-		window.__SignalingServer = this;
 		this.#url = url;
 		$connectionState.set("connecting");
 		this.#ws = this.#createSocket();
@@ -310,4 +308,13 @@ function resolveSocketURL(): string {
 	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
 }
 
-export const server = new SignalingServer(resolveSocketURL());
+let instance: SignalingServer | undefined;
+
+export function getServer(): SignalingServer {
+	if (!instance) {
+		window.__WEBSEND_SERVER?.destroy();
+		instance = new SignalingServer(resolveSocketURL());
+		window.__WEBSEND_SERVER = instance;
+	}
+	return instance;
+}

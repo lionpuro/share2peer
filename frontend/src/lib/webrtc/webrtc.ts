@@ -1,6 +1,6 @@
 import type { User, IncomingMessage } from "#/lib/schemas";
-import type { SignalingServer } from "#/lib/server";
 import { $identity, $room } from "#/stores/signaling";
+import type { SignalingServer } from "#/lib/server";
 import { createConnection, findConnection } from "./connection";
 
 export async function createPeerConnection(

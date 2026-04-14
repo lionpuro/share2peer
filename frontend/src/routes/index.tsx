@@ -12,7 +12,7 @@ import {
 } from "#/components/icons";
 import { toast } from "react-toastify";
 import { createRoom } from "#/lib/room";
-import { server } from "#/lib/server";
+import { getServer } from "#/lib/server";
 import { useNotifications } from "#/hooks/use-notifications";
 
 export const Route = createFileRoute("/")({
@@ -28,7 +28,7 @@ function Component() {
 	async function handleCreate() {
 		setCreating(true);
 		try {
-			const { id } = await createRoom(server);
+			const { id } = await createRoom(getServer());
 			navigate({ to: "/r/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);

@@ -1,12 +1,20 @@
 name: Deploy backend
 
 on:
+  workflow_run:
+    branches:
+      - main
+    workflows:
+      - "Build backend"
+    types:
+      - completed
   workflow_dispatch:
     branches:
       - main
 
 jobs:
   deploy:
+    if: ${{ (github.event_name != 'workflow_run') || (github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -25,15 +25,17 @@ const themes = [
 function ThemeSwitch() {
 	const { theme, setTheme } = useContext(ThemeContext);
 	return (
-		<div className="ml-auto flex rounded-full border bg-card text-muted-foreground dark:bg-muted">
+		<div className="ml-auto flex">
 			{themes.map((opt) => (
 				<button
 					key={opt.key}
 					title={opt.label}
+					popoverTarget="theme-dropdown"
+					popoverTargetAction="hide"
 					onClick={() => setTheme(opt.key)}
 					className={cn(
-						"flex size-8 items-center justify-center rounded-full",
-						theme === opt.key && "bg-secondary text-foreground",
+						"flex h-8.5 w-8 items-center justify-center",
+						theme === opt.key ? "text-primary" : "hover:text-muted-foreground",
 					)}
 				>
 					<opt.icon className="size-4" />

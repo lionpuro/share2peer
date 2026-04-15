@@ -51,7 +51,10 @@ export type ServerEventMap = {
 
 type ServerEvent = ServerEventMap[keyof ServerEventMap];
 
+type ConnectionState = ReturnType<typeof $connectionState.get>;
+
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
+	state: ConnectionState = "disconnected";
 	#url: string;
 	#ws: WebSocket | undefined = undefined;
 	#currentID: number = 0;
@@ -65,7 +68,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	constructor(url: string) {
 		super();
 		this.#url = url;
-		$connectionState.set("connecting");
+		this.#setState("connecting");
 		this.#ws = this.#createSocket();
 	}
 
@@ -79,6 +82,11 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#ws.addEventListener("open", () => this.startKeepAlive());
 		this.#ws.addEventListener("close", () => this.stopKeepAlive());
 		return this.#ws;
+	}
+
+	#setState(v: ConnectionState) {
+		this.state = v;
+		$connectionState.set(v);
 	}
 
 	async connect(): Promise<WebSocket> {
@@ -100,7 +108,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		}
 
 		try {
-			$connectionState.set("connecting");
+			this.#setState("connecting");
 			this.#ws = this.#createSocket();
 
 			this.#reconnectAttempts = 0;
@@ -111,7 +119,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			await waitForOpen(this.#ws);
 			return this.#ws;
 		} catch (err) {
-			$connectionState.set("failed");
+			this.#setState("failed");
 			throw err;
 		}
 	}
@@ -137,6 +145,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	destroy() {
+		this.state = "disconnected";
 		this.#destroyed = true;
 		clearTimeout(this.#reconnectTimeout);
 		this.#reconnectTimeout = undefined;
@@ -197,16 +206,16 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	#onerror = (e: Event) => {
-		$connectionState.set("failed");
+		this.#setState("failed");
 		console.error("WebSocket error: " + JSON.stringify(e));
 	};
 
 	#onopen = () => {
-		$connectionState.set("connected");
+		this.#setState("connected");
 	};
 
 	#onclose = () => {
-		$connectionState.set("disconnected");
+		this.#setState("disconnected");
 		$identity.set(undefined);
 		removeConnections();
 		closeRoom();

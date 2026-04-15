@@ -50,7 +50,12 @@ export async function joinRoom(
 
 export async function leaveRoom(server: SignalingServer) {
 	const room = $room.get();
-	if (!room) return;
+	if (
+		!room ||
+		(server.state !== "connected" && server.state !== "connecting")
+	) {
+		return;
+	}
 	try {
 		await server
 			.request({

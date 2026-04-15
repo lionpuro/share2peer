@@ -22,7 +22,7 @@ type User struct {
 func createUser(conn *websocket.Conn, ip, deviceType, deviceName string) *User {
 	return &User{
 		ID:         uuid.New(),
-		Username:   generateName(),
+		Username:   generateUsername(),
 		DeviceType: deviceType,
 		DeviceName: deviceName,
 		networkKey: getNetworkKey(ip),

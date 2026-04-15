@@ -45,7 +45,7 @@ func toTitle(s string) string {
 	return cases.Title(language.English, cases.Compact).String(s)
 }
 
-func generateName() string {
+func generateUsername() string {
 	color := toTitle(colors[rand.IntN(len(colors))])
 	animal := toTitle(animals[rand.IntN(len(animals))])
 	return fmt.Sprintf("%s %s", color, animal)

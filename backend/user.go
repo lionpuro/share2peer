@@ -9,24 +9,24 @@ import (
 )
 
 type User struct {
-	ID          uuid.UUID       `json:"id"`
-	DisplayName string          `json:"display_name"`
-	DeviceType  string          `json:"device_type"`
-	DeviceName  string          `json:"device_name"`
-	networkKey  string          `json:"-"`
-	roomID      string          `json:"-"`
-	conn        *websocket.Conn `json:"-"`
-	mu          sync.Mutex      `json:"-"`
+	ID         uuid.UUID       `json:"id"`
+	Username   string          `json:"username"`
+	DeviceType string          `json:"device_type"`
+	DeviceName string          `json:"device_name"`
+	networkKey string          `json:"-"`
+	roomID     string          `json:"-"`
+	conn       *websocket.Conn `json:"-"`
+	mu         sync.Mutex      `json:"-"`
 }
 
 func createUser(conn *websocket.Conn, ip, deviceType, deviceName string) *User {
 	return &User{
-		ID:          uuid.New(),
-		DisplayName: generateName(),
-		DeviceType:  deviceType,
-		DeviceName:  deviceName,
-		networkKey:  getNetworkKey(ip),
-		conn:        conn,
+		ID:         uuid.New(),
+		Username:   generateUsername(),
+		DeviceType: deviceType,
+		DeviceName: deviceName,
+		networkKey: getNetworkKey(ip),
+		conn:       conn,
 	}
 }
 

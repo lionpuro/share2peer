@@ -174,7 +174,7 @@ function RoomInfo({
 					<li key={identity.id} className="flex items-center gap-3">
 						<div className="flex flex-1 flex-col justify-between">
 							<div className="flex items-center leading-none">
-								{identity.display_name}
+								{identity.username}
 								<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
 									YOU
 								</span>
@@ -188,7 +188,7 @@ function RoomInfo({
 						<li key={"user-" + u.id} className="flex items-center gap-3">
 							<div className="flex flex-1 flex-col justify-between">
 								<div className="flex items-center leading-none">
-									{u.display_name}
+									{u.username}
 									<span
 										title={u.connectionState}
 										className={cn(
@@ -332,7 +332,7 @@ function RoomInfo({
 						{networkUsers.map((u) => (
 							<li key={"nw-" + u.id} className="flex gap-3">
 								<div className="flex flex-1 flex-col justify-between">
-									<p className="leading-none">{u.display_name}</p>
+									<p className="leading-none">{u.username}</p>
 									<span className="text-sm leading-none font-medium text-muted-foreground">
 										{u.device_name}
 									</span>

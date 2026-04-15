@@ -48,7 +48,7 @@ export function FileArea() {
 						const transfer =
 							transfers.length > 0 ? getTransferState(transfers) : undefined;
 						const sender = file.uploader
-							? peers[file.uploader]?.display_name
+							? peers[file.uploader]?.username
 							: undefined;
 						return (
 							<li

@@ -44,7 +44,7 @@ export function InviteNotification({
 				Room invitation
 			</p>
 			<p className="w-full text-sm font-medium">
-				{`${user.display_name} (${user.device_name}) has invited you to a room.`}
+				{`${user.username} (${user.device_name}) has invited you to a room.`}
 			</p>
 			<div className="flex gap-2">
 				<Button

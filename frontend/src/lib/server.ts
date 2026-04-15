@@ -51,7 +51,10 @@ export type ServerEventMap = {
 
 type ServerEvent = ServerEventMap[keyof ServerEventMap];
 
+type ConnectionState = ReturnType<typeof $connectionState.get>;
+
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
+	state: ConnectionState = "disconnected";
 	#url: string;
 	#ws: WebSocket | undefined = undefined;
 	#currentID: number = 0;
@@ -65,7 +68,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	constructor(url: string) {
 		super();
 		this.#url = url;
-		$connectionState.set("connecting");
+		this.#setState("connecting");
 		this.#ws = this.#createSocket();
 	}
 
@@ -81,7 +84,15 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		return this.#ws;
 	}
 
+	#setState(v: ConnectionState) {
+		this.state = v;
+		$connectionState.set(v);
+	}
+
 	async connect(): Promise<WebSocket> {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		if (this.#ws?.readyState === WebSocket.OPEN) {
 			return this.#ws;
 		}
@@ -100,7 +111,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		}
 
 		try {
-			$connectionState.set("connecting");
+			this.#setState("connecting");
 			this.#ws = this.#createSocket();
 
 			this.#reconnectAttempts = 0;
@@ -111,7 +122,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			await waitForOpen(this.#ws);
 			return this.#ws;
 		} catch (err) {
-			$connectionState.set("failed");
+			this.#setState("failed");
 			throw err;
 		}
 	}
@@ -137,6 +148,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	destroy() {
+		this.state = "disconnected";
 		this.#destroyed = true;
 		clearTimeout(this.#reconnectTimeout);
 		this.#reconnectTimeout = undefined;
@@ -155,6 +167,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			{ type: keyof typeof RequestResponseMap }
 		>,
 	>(msg: Req): Promise<ResponseMap[Req["type"]]> {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		const ws = await this.connect();
 
 		this.#currentID++;
@@ -192,21 +207,24 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	async send(msg: OutgoingMessage) {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
 	}
 
 	#onerror = (e: Event) => {
-		$connectionState.set("failed");
+		this.#setState("failed");
 		console.error("WebSocket error: " + JSON.stringify(e));
 	};
 
 	#onopen = () => {
-		$connectionState.set("connected");
+		this.#setState("connected");
 	};
 
 	#onclose = () => {
-		$connectionState.set("disconnected");
+		this.#setState("disconnected");
 		$identity.set(undefined);
 		removeConnections();
 		closeRoom();
@@ -337,7 +355,7 @@ function resolveSocketURL(): string {
 
 let instance: SignalingServer | undefined;
 
-export function getServer(): SignalingServer {
+function getServer(): SignalingServer {
 	if (!instance) {
 		window.__WEBSEND_SERVER?.destroy();
 		instance = new SignalingServer(resolveSocketURL());
@@ -345,3 +363,5 @@ export function getServer(): SignalingServer {
 	}
 	return instance;
 }
+
+export const server = getServer();

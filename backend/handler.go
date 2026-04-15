@@ -166,13 +166,9 @@ func (h *SignalHandler) handleMessage(u *User, msg Message) error {
 }
 
 func (h *SignalHandler) handleInviteToRoom(u *User, msg Message) error {
-	var payload InviteToRoomPayload
-	bytes, err := json.Marshal(msg.Payload)
+	payload, err := unmarshal[InviteToRoomPayload](msg.Payload)
 	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(bytes, &payload); err != nil {
-		return err
+		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
 	to, ok := h.users.FindByID(payload.UserID)
@@ -213,12 +209,8 @@ func (h *SignalHandler) handleCreateRoom(u *User, msg Message) error {
 }
 
 func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
-	var payload RoomIDPayload
-	bytes, err := json.Marshal(msg.Payload)
+	payload, err := unmarshal[RoomIDPayload](msg.Payload)
 	if err != nil {
-		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
-	}
-	if err := json.Unmarshal(bytes, &payload); err != nil {
 		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
@@ -285,12 +277,8 @@ func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 }
 
 func (h *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
-	var payload RoomIDPayload
-	bytes, err := json.Marshal(msg.Payload)
+	payload, err := unmarshal[RoomIDPayload](msg.Payload)
 	if err != nil {
-		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
-	}
-	if err := json.Unmarshal(bytes, &payload); err != nil {
 		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
 	}
 
@@ -331,12 +319,8 @@ func (h *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 }
 
 func (h *SignalHandler) handleWebRTCMessage(msg Message) error {
-	var info RTCMessageInfo
-	bytes, err := json.Marshal(msg.Payload)
+	info, err := unmarshal[RTCMessageInfo](msg.Payload)
 	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(bytes, &info); err != nil {
 		return err
 	}
 
@@ -401,4 +385,16 @@ func isUnexpectedCloseError(err error) bool {
 		websocket.CloseNoStatusReceived,
 		websocket.CloseAbnormalClosure,
 	)
+}
+
+func unmarshal[T any](input any) (T, error) {
+	var result T
+	bytes, err := json.Marshal(input)
+	if err != nil {
+		return result, err
+	}
+	if err := json.Unmarshal(bytes, &result); err != nil {
+		return result, err
+	}
+	return result, err
 }

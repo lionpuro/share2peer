@@ -90,6 +90,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	async connect(): Promise<WebSocket> {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		if (this.#ws?.readyState === WebSocket.OPEN) {
 			return this.#ws;
 		}
@@ -164,6 +167,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			{ type: keyof typeof RequestResponseMap }
 		>,
 	>(msg: Req): Promise<ResponseMap[Req["type"]]> {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		const ws = await this.connect();
 
 		this.#currentID++;
@@ -201,6 +207,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	async send(msg: OutgoingMessage) {
+		if (this.#destroyed) {
+			throw new Error("instance has been destroyed");
+		}
 		const ws = await this.connect();
 		ws.send(JSON.stringify(msg));
 	}

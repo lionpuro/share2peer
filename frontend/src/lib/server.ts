@@ -75,6 +75,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#ws.addEventListener("close", this.#onclose);
 		this.#ws.addEventListener("message", this.#onmessage);
 		this.#ws.addEventListener("error", this.#onerror);
+		// ping
+		this.#ws.addEventListener("open", () => this.startKeepAlive());
+		this.#ws.addEventListener("close", () => this.stopKeepAlive());
 		return this.#ws;
 	}
 
@@ -137,7 +140,6 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#destroyed = true;
 		clearTimeout(this.#reconnectTimeout);
 		this.#reconnectTimeout = undefined;
-		this.stopKeepAlive();
 		if (this.#ws) {
 			this.#ws.removeEventListener("open", this.#onopen);
 			this.#ws.removeEventListener("close", this.#onclose);
@@ -200,12 +202,10 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	};
 
 	#onopen = () => {
-		this.startKeepAlive();
 		$connectionState.set("connected");
 	};
 
 	#onclose = () => {
-		this.stopKeepAlive();
 		$connectionState.set("disconnected");
 		$identity.set(undefined);
 		removeConnections();

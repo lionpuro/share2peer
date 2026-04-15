@@ -24,7 +24,7 @@ import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { Room, User } from "#/lib/schemas";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
-import { getServer } from "#/lib/server";
+import { server } from "#/lib/server";
 import { joinRoom, leaveRoom, roomState } from "#/lib/room";
 import { useResult } from "#/hooks/hooks";
 import { useNotifications } from "#/hooks/use-notifications";
@@ -44,13 +44,13 @@ function Component() {
 	const peers = useStore($peers);
 	useNotifications();
 	const { status, error } = useResult(
-		() => joinRoom(getServer(), id),
+		() => joinRoom(server, id),
 		identity === undefined,
 	);
 	useEffect(() => {
 		return () => {
 			if (roomState() === "active") {
-				leaveRoom(getServer());
+				leaveRoom(server);
 			}
 		};
 	}, []);
@@ -147,7 +147,7 @@ function RoomInfo({
 	}
 
 	function inviteUser(id: string) {
-		getServer().send({
+		server.send({
 			type: "invite-to-room",
 			payload: { user_id: id, room_id: room.id },
 		});

@@ -337,7 +337,7 @@ function resolveSocketURL(): string {
 
 let instance: SignalingServer | undefined;
 
-export function getServer(): SignalingServer {
+function getServer(): SignalingServer {
 	if (!instance) {
 		window.__WEBSEND_SERVER?.destroy();
 		instance = new SignalingServer(resolveSocketURL());
@@ -345,3 +345,5 @@ export function getServer(): SignalingServer {
 	}
 	return instance;
 }
+
+export const server = getServer();

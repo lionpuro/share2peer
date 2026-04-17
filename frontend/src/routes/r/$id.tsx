@@ -222,7 +222,7 @@ function RoomInfo({
 				onClose={() => setDialogOpen(false)}
 				className="w-full max-w-md text-foreground max-sm:p-4"
 			>
-				<DialogContent className="relative w-full bg-background dark:bg-card">
+				<DialogContent className="relative w-full bg-background dark:bg-muted">
 					<Heading
 						order={2}
 						className="mb-6 focus:outline-none"
@@ -245,7 +245,7 @@ function RoomInfo({
 						>
 							Room ID
 						</label>
-						<span className="mb-4 flex items-center rounded-lg border bg-card text-sm font-medium dark:bg-muted">
+						<span className="mb-4 flex items-center rounded-lg border bg-card text-sm font-medium dark:border-neutral-700 dark:bg-neutral-700/50">
 							<span id="room-id" className="px-3 py-1.5">
 								{room.id}
 							</span>
@@ -267,7 +267,7 @@ function RoomInfo({
 							Room URL
 						</label>
 						<div className="flex flex-wrap gap-2">
-							<div className="flex flex-1 rounded-lg border bg-card dark:bg-muted">
+							<div className="flex flex-1 rounded-lg border bg-card dark:border-neutral-700 dark:bg-neutral-700/50">
 								<input
 									id="room-url"
 									readOnly={true}

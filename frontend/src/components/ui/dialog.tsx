@@ -37,7 +37,7 @@ export function Dialog({ open, className, children, ...props }: DialogProps) {
 			onClick={handleClick}
 			ref={ref}
 			className={cn(
-				"fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent backdrop:bg-black/75",
+				"fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent backdrop:bg-black/75 dark:backdrop:bg-black/90",
 				className,
 			)}
 		>

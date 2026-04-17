@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"net/http"
 	"sync"
 
 	"github.com/google/uuid"
@@ -19,16 +21,13 @@ type User struct {
 	mu         sync.Mutex      `json:"-"`
 }
 
-func createUser(conn *websocket.Conn, ip, name, deviceType, deviceName string) *User {
-	if name == "" {
-		name = generateUsername()
-	}
+func createUser(conn *websocket.Conn, info clientInfo) *User {
 	return &User{
 		ID:         uuid.New(),
-		Username:   name,
-		DeviceType: deviceType,
-		DeviceName: deviceName,
-		networkKey: getNetworkKey(ip),
+		Username:   info.username,
+		DeviceType: info.deviceType,
+		DeviceName: info.deviceName,
+		networkKey: getNetworkKey(info.ip),
 		conn:       conn,
 	}
 }
@@ -37,43 +36,6 @@ func (u *User) send(v any) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	return u.conn.WriteJSON(v)
-}
-
-const (
-	DeviceTypeDesktop = "desktop"
-	DeviceTypeTablet  = "tablet"
-	DeviceTypeMobile  = "mobile"
-	DeviceTypeUnknown = "unknown"
-)
-
-type clientInfo struct {
-	deviceType string
-	deviceName string
-}
-
-func extractClientInfo(userag string) clientInfo {
-	ua := useragent.Parse(userag)
-
-	t := DeviceTypeUnknown
-	switch {
-	case ua.Desktop:
-		t = DeviceTypeDesktop
-	case ua.Tablet:
-		t = DeviceTypeTablet
-	case ua.Mobile:
-		t = DeviceTypeMobile
-	}
-
-	n := ua.OS
-	specif := ua.Name
-	if ua.Device != "" {
-		specif = ua.Device
-	}
-	if specif != "" {
-		n += " " + specif
-	}
-
-	return clientInfo{deviceType: t, deviceName: n}
 }
 
 type UserService struct {
@@ -140,4 +102,67 @@ func (s *UserService) FindByNetwork(key string) []*User {
 		users = append(users, u)
 	}
 	return users
+}
+
+const (
+	DeviceTypeDesktop = "desktop"
+	DeviceTypeTablet  = "tablet"
+	DeviceTypeMobile  = "mobile"
+	DeviceTypeUnknown = "unknown"
+)
+
+func extractDeviceInfo(userag string) (string, string) {
+	ua := useragent.Parse(userag)
+
+	t := DeviceTypeUnknown
+	switch {
+	case ua.Desktop:
+		t = DeviceTypeDesktop
+	case ua.Tablet:
+		t = DeviceTypeTablet
+	case ua.Mobile:
+		t = DeviceTypeMobile
+	}
+
+	n := ua.OS
+	specif := ua.Name
+	if ua.Device != "" {
+		specif = ua.Device
+	}
+	if specif != "" {
+		n += " " + specif
+	}
+
+	return t, n
+}
+
+type clientInfo struct {
+	ip         string
+	username   string
+	deviceType string
+	deviceName string
+}
+
+func extractClientInfo(req *http.Request) clientInfo {
+	ip := extractIP(req.Header)
+	dt, dn := extractDeviceInfo(req.Header.Get("User-Agent"))
+	name := req.URL.Query().Get("n")
+	if name != "" {
+		decoded, err := base64.RawURLEncoding.DecodeString(name)
+		if err != nil {
+			name = ""
+		} else {
+			name = string(decoded)
+		}
+	}
+	if name == "" {
+		name = generateUsername()
+	}
+
+	return clientInfo{
+		ip:         ip,
+		username:   name,
+		deviceType: dt,
+		deviceName: dn,
+	}
 }

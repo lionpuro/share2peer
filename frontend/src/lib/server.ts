@@ -19,6 +19,7 @@ import {
 	handleUserJoined,
 	handleUserLeft,
 } from "./room";
+import { stringToBase64 } from "./helper";
 
 declare global {
 	interface Window {
@@ -73,7 +74,10 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	#createSocket(): WebSocket {
-		this.#ws = new WebSocket(this.#url);
+		const username = sessionStorage.getItem("username");
+		this.#ws = new WebSocket(
+			`${this.#url}${username ? "?n=" + stringToBase64(username) : ""}`,
+		);
 		this.#ws.addEventListener("open", this.#onopen);
 		this.#ws.addEventListener("close", this.#onclose);
 		this.#ws.addEventListener("message", this.#onmessage);
@@ -265,6 +269,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 					break;
 				case "identity":
 					$identity.set(message.payload);
+					sessionStorage.setItem("username", message.payload.username);
 					break;
 				case "network-users":
 					$networkUsers.set(message.payload.users);

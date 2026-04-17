@@ -23,3 +23,15 @@ export function calcProgress(current: number, total: number): number {
 	const progress = (current / total) * 100;
 	return Math.round(progress);
 }
+
+export function encodeBase64(binary: Uint8Array): string {
+	const str = Array.from(binary)
+		.map((byte) => String.fromCharCode(byte))
+		.join("");
+	const base64 = btoa(str);
+	return base64.replaceAll("=", "").replaceAll("+", "-").replaceAll("/", "_");
+}
+
+export function stringToBase64(str: string): string {
+	return encodeBase64(new TextEncoder().encode(str));
+}

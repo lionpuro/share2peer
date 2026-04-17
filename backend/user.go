@@ -19,10 +19,13 @@ type User struct {
 	mu         sync.Mutex      `json:"-"`
 }
 
-func createUser(conn *websocket.Conn, ip, deviceType, deviceName string) *User {
+func createUser(conn *websocket.Conn, ip, name, deviceType, deviceName string) *User {
+	if name == "" {
+		name = generateUsername()
+	}
 	return &User{
 		ID:         uuid.New(),
-		Username:   generateUsername(),
+		Username:   name,
 		DeviceType: deviceType,
 		DeviceName: deviceName,
 		networkKey: getNetworkKey(ip),

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,10 +39,19 @@ func NewSignalHandler(origins string, us *UserService, rs *RoomService) *SignalH
 	}
 }
 
-func (h *SignalHandler) serve(conn *websocket.Conn, header http.Header) error {
-	ci := extractClientInfo(header.Get("User-Agent"))
-	ip := extractIP(header)
-	u := createUser(conn, ip, ci.deviceType, ci.deviceName)
+func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
+	name := req.URL.Query().Get("n")
+	if name != "" {
+		decoded, err := base64.RawURLEncoding.DecodeString(name)
+		if err != nil {
+			name = ""
+		} else {
+			name = string(decoded)
+		}
+	}
+	ci := extractClientInfo(req.Header.Get("User-Agent"))
+	ip := extractIP(req.Header)
+	u := createUser(conn, ip, name, ci.deviceType, ci.deviceName)
 	h.users.Register(u)
 	log.Printf("connect user: %s", u.ID)
 	defer func() {

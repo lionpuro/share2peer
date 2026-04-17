@@ -30,7 +30,7 @@ func main() {
 			}
 			return
 		}
-		if err := sh.serve(conn, r.Header); err != nil {
+		if err := sh.serve(conn, r); err != nil {
 			if errors.Is(err, ErrUnknownMessageType) {
 				return
 			}

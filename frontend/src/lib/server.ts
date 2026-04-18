@@ -184,16 +184,20 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			const tx = this.#transactions.get(id);
 			if (!tx) return;
 			tx.reject(new Error("action timed out"));
-			this.#transactions.delete(id);
 		}, 8000);
+
+		const cleanup = () => {
+			clearTimeout(timeout);
+			this.#transactions.delete(id);
+		};
 
 		const promise = new Promise<ResponseMap[Req["type"]]>((resolve, reject) => {
 			tx.resolve = (v) => {
-				clearTimeout(timeout);
+				cleanup();
 				resolve(v);
 			};
 			tx.reject = (v) => {
-				clearTimeout(timeout);
+				cleanup();
 				reject(v);
 			};
 		});

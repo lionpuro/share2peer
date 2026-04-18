@@ -338,13 +338,7 @@ function RoomInfo({
 									</span>
 								</div>
 								{users.find((user) => user.id === u.id) === undefined ? (
-									<Button
-										variant="ghost"
-										className="border border-primary py-1.5 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker"
-										onClick={() => inviteUser(u.id)}
-									>
-										Invite
-									</Button>
+									<InviteButton onClick={() => inviteUser(u.id)} />
 								) : (
 									<p className="py-1.75 text-sm font-medium text-muted-foreground">
 										Connected
@@ -356,5 +350,25 @@ function RoomInfo({
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+function InviteButton({ onClick }: { onClick: () => void }) {
+	const [invited, setInvited] = useState(false);
+	function handleClick() {
+		if (invited) return;
+		setInvited(true);
+		setTimeout(() => setInvited(false), 1500);
+		onClick();
+	}
+	return (
+		<Button
+			variant="ghost"
+			className="min-w-18 border border-primary px-0 py-1.5 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker disabled:border-transparent disabled:bg-transparent disabled:text-primary"
+			disabled={invited}
+			onClick={handleClick}
+		>
+			{!invited ? "Invite" : "Invited!"}
+		</Button>
 	);
 }

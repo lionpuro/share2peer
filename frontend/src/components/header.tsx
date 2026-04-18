@@ -6,7 +6,7 @@ import { cn } from "#/lib/helper";
 
 export function Header() {
 	return (
-		<header className="mx-auto flex w-full max-w-screen-2xl items-center px-6 py-3 sm:px-8">
+		<header className="mx-auto flex w-full items-center px-6 py-3 sm:px-8">
 			<Link to="/" className="flex items-center gap-1 text-xl font-semibold">
 				<Logo className="size-6.5 text-primary" />
 				Websend

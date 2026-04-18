@@ -29,9 +29,6 @@ declare global {
 
 const PING_INTERVAL = 55000;
 
-const MIN_RECONNECT_DELAY = 1000;
-const MAX_RECONNECT_DELAY = 15000;
-
 type Transaction<Type extends keyof typeof RequestResponseMap> = {
 	action: Type;
 	resolve: (value: ResponseMap[Type]) => void;
@@ -136,11 +133,8 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			return;
 		}
 
+		const delay = calculateDelay(this.#reconnectAttempts);
 		this.#reconnectAttempts += 1;
-		const delay = Math.min(
-			MIN_RECONNECT_DELAY * 2 ** (this.#reconnectAttempts - 1),
-			MAX_RECONNECT_DELAY,
-		);
 		this.#reconnectTimeout = setTimeout(() => {
 			this.#reconnectTimeout = undefined;
 			this.connect().catch(() => {
@@ -329,6 +323,18 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		});
 		this.dispatchTypedEvent(message.type, event);
 	}
+}
+
+const MIN_RECONNECT_DELAY = 1000;
+const MAX_RECONNECT_DELAY = 15000;
+
+function calculateDelay(attempt: number): number {
+	const delay = Math.min(
+		MIN_RECONNECT_DELAY * 2 ** attempt,
+		MAX_RECONNECT_DELAY,
+	);
+	const jitter = delay * 0.15 * Math.random();
+	return delay + jitter;
 }
 
 function waitForOpen(sock: WebSocket) {

@@ -33,8 +33,6 @@ declare global {
 	}
 }
 
-const PING_INTERVAL = 55000;
-
 type Transaction<Type extends keyof typeof RequestResponseMap> = {
 	action: Type;
 	resolve: (value: ResponseMap[Type]) => void;
@@ -86,8 +84,19 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		this.#ws.addEventListener("message", this.#onmessage);
 		this.#ws.addEventListener("error", this.#onerror);
 		// ping
-		this.#ws.addEventListener("open", () => this.startKeepAlive());
-		this.#ws.addEventListener("close", () => this.stopKeepAlive());
+		this.#ws.addEventListener("open", () => {
+			this.#pingTimer = setInterval(() => {
+				if (this.#destroyed || this.#ws?.readyState !== WebSocket.OPEN) {
+					clearInterval(this.#pingTimer);
+					return;
+				}
+				this.send({ type: "ping" }).catch((err) => console.error("ping:", err));
+			}, 55 * 1000);
+		});
+		this.#ws.addEventListener("close", () => {
+			clearInterval(this.#pingTimer);
+			this.#pingTimer = undefined;
+		});
 		return this.#ws;
 	}
 
@@ -305,27 +314,6 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			console.error("handle message:", err);
 		}
 	};
-
-	startKeepAlive() {
-		if (this.#destroyed) return;
-		const schedulePing = async () => {
-			this.#pingTimer = setTimeout(() => {
-				if (this.#destroyed) return;
-				if (this.#ws?.readyState !== WebSocket.OPEN) return;
-				this.send({ type: "ping" })
-					.then(() => schedulePing())
-					.catch((err) => console.error("ping:", err));
-			}, PING_INTERVAL);
-		};
-		schedulePing();
-	}
-
-	stopKeepAlive() {
-		if (this.#pingTimer) {
-			clearTimeout(this.#pingTimer);
-			this.#pingTimer = undefined;
-		}
-	}
 
 	#dispatchMessageEvent(message: IncomingMessage) {
 		const event: ServerEvent = new CustomEvent(message.type, {

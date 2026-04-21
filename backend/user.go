@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -146,23 +148,34 @@ type clientInfo struct {
 func extractClientInfo(req *http.Request) clientInfo {
 	ip := extractIP(req.Header)
 	dt, dn := extractDeviceInfo(req.Header.Get("User-Agent"))
-	name := req.URL.Query().Get("n")
-	if name != "" {
-		decoded, err := base64.RawURLEncoding.DecodeString(name)
-		if err != nil {
-			name = ""
-		} else {
-			name = string(decoded)
-		}
-	}
-	if name == "" {
-		name = generateUsername()
+	sess, err := parseSessionData(req.URL.Query().Get("s"))
+	if err != nil {
+		sess = sessionData{Username: generateUsername()}
 	}
 
 	return clientInfo{
 		ip:         ip,
-		username:   name,
+		username:   sess.Username,
 		deviceType: dt,
 		deviceName: dn,
 	}
+}
+
+type sessionData struct {
+	Username string `json:"username"`
+}
+
+func parseSessionData(input string) (sessionData, error) {
+	if input == "" {
+		return sessionData{}, fmt.Errorf("input is empty")
+	}
+	decoded, err := base64.RawURLEncoding.DecodeString(input)
+	if err != nil {
+		return sessionData{}, err
+	}
+	var data sessionData
+	if err := json.Unmarshal(decoded, &data); err != nil {
+		return data, err
+	}
+	return data, nil
 }

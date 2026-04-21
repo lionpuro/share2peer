@@ -5,7 +5,13 @@ import {
 	type IncomingMessage,
 	type OutgoingMessage,
 } from "#/lib/schemas/signaling";
-import { $connectionState, $identity, $networkUsers } from "#/stores/signaling";
+import {
+	$connectionState,
+	$identity,
+	$networkUsers,
+	getSessionData,
+	setSessionData,
+} from "#/stores/signaling";
 import {
 	handleAnswer,
 	handleICECandidate,
@@ -71,9 +77,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 
 	#createSocket(): WebSocket {
-		const username = sessionStorage.getItem("username");
+		const session = getSessionData();
 		this.#ws = new WebSocket(
-			`${this.#url}${username ? "?n=" + stringToBase64(username) : ""}`,
+			`${this.#url}${session ? "?s=" + stringToBase64(JSON.stringify(session)) : ""}`,
 		);
 		this.#ws.addEventListener("open", this.#onopen);
 		this.#ws.addEventListener("close", this.#onclose);
@@ -267,7 +273,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 					break;
 				case "identity":
 					$identity.set(message.payload);
-					sessionStorage.setItem("username", message.payload.username);
+					setSessionData({ username: message.payload.username });
 					break;
 				case "network-users":
 					$networkUsers.set(message.payload.users);

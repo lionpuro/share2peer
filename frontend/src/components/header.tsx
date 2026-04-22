@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link } from "@tanstack/react-router";
-import { IconMonitor, IconMoon, IconSun, Logo } from "#/components/icons";
+import { IconMoon, IconSun, Logo } from "#/components/icons";
 import { ThemeContext } from "#/context/theme/context";
 import { cn } from "#/lib/helper";
 
@@ -17,7 +17,6 @@ export function Header() {
 }
 
 const themes = [
-	{ key: "system", icon: IconMonitor, label: "System theme" },
 	{ key: "light", icon: IconSun, label: "Light theme" },
 	{ key: "dark", icon: IconMoon, label: "Dark theme" },
 ] as const;
@@ -26,21 +25,22 @@ function ThemeSwitch() {
 	const { theme, setTheme } = useContext(ThemeContext);
 	return (
 		<div className="ml-auto flex">
-			{themes.map((opt) => (
-				<button
-					key={opt.key}
-					title={opt.label}
-					popoverTarget="theme-dropdown"
-					popoverTargetAction="hide"
-					onClick={() => setTheme(opt.key)}
-					className={cn(
-						"flex h-8.5 w-8 items-center justify-center",
-						theme === opt.key ? "text-primary" : "hover:text-muted-foreground",
-					)}
-				>
-					<opt.icon className="size-4" />
-				</button>
-			))}
+			{themes.map((opt) =>
+				theme === opt.key ? null : (
+					<button
+						key={opt.key}
+						title={opt.label}
+						popoverTarget="theme-dropdown"
+						popoverTargetAction="hide"
+						onClick={() => setTheme(opt.key)}
+						className={cn(
+							"flex size-8 items-center justify-center hover:text-muted-foreground",
+						)}
+					>
+						<opt.icon className="size-5" />
+					</button>
+				),
+			)}
 		</div>
 	);
 }

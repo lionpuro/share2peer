@@ -31,6 +31,5 @@ export { default as IconFileImage } from "~icons/fa-solid/file-image";
 export { default as IconFileVideo } from "~icons/fa-solid/file-video";
 export { default as IconFileAudio } from "~icons/fa-solid/file-audio";
 
-export { default as IconSun } from "~icons/lucide/sun";
-export { default as IconMoon } from "~icons/lucide/moon";
-export { default as IconMonitor } from "~icons/lucide/monitor";
+export { default as IconSun } from "~icons/tabler/sun-high-filled";
+export { default as IconMoon } from "~icons/tabler/moon-filled";

@@ -34,10 +34,10 @@ function ThemeSwitch() {
 						popoverTargetAction="hide"
 						onClick={() => setTheme(opt.key)}
 						className={cn(
-							"flex size-8 items-center justify-center hover:text-muted-foreground",
+							"flex size-8 items-center justify-center text-muted-foreground/80 hover:text-muted-foreground",
 						)}
 					>
-						<opt.icon className="size-5" />
+						<opt.icon />
 					</button>
 				),
 			)}

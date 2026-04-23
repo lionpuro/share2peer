@@ -217,12 +217,8 @@ function RoomInfo({
 					))}
 				</ul>
 			</div>
-			<Dialog
-				open={dialogOpen}
-				onClose={() => setDialogOpen(false)}
-				className="w-full max-w-md text-foreground max-sm:p-4"
-			>
-				<DialogContent className="relative w-full bg-background dark:bg-muted">
+			<Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+				<DialogContent>
 					<Heading
 						order={2}
 						className="mb-6 focus:outline-none"

@@ -23,6 +23,7 @@ export { default as IconShare } from "~icons/mdi/share-variant";
 export { default as IconStop } from "~icons/mdi/stop";
 export { default as IconReload } from "~icons/mdi/reload";
 export { default as IconInvite } from "~icons/mdi/invite";
+export { default as IconPencil } from "~icons/mdi/pencil";
 
 export { default as IconDevices } from "~icons/material-symbols/devices";
 

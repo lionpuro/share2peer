@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { cn, toTitleCase } from "#/lib/helper";
@@ -7,6 +7,7 @@ import {
 	$identity,
 	$networkUsers,
 	$room,
+	setSessionData,
 } from "#/stores/signaling";
 import { $peers, type PeerState } from "#/stores/peer";
 import { Main } from "#/components/ui/main";
@@ -17,6 +18,7 @@ import {
 	IconCheck,
 	IconCopy,
 	IconInvite,
+	IconPencil,
 	IconShare,
 	IconX,
 } from "#/components/icons";
@@ -116,11 +118,13 @@ function RoomInfo({
 				return peers[u.id] || { ...u, connectionState: "disconnected" };
 			}) || [];
 
-	const [dialogOpen, setDialogOpen] = useState(false);
+	const [inviteOpen, setInviteOpen] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
 	const [copiedURL, setCopiedURL] = useState(false);
 	const [copiedID, setCopiedID] = useState(false);
 	const roomURL = `${window.location.protocol}//${window.location.host}/r/${room.id}`;
 	const networkUsers = useStore($networkUsers);
+	const usernameRef = useRef<HTMLInputElement>(null);
 
 	function copyURL() {
 		setCopiedURL(true);
@@ -153,13 +157,20 @@ function RoomInfo({
 		});
 	}
 
+	function updateUsername() {
+		const username = usernameRef.current?.value;
+		if (!username) return;
+		setSessionData({ username });
+		window.location.reload();
+	}
+
 	return (
 		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
 			<div className="flex flex-wrap items-start">
 				<span className="mr-2 leading-none font-bold">Room:</span>
 				<span className="mr-1 leading-none font-medium">{room.id}</span>
 				<Button
-					onClick={() => setDialogOpen(true)}
+					onClick={() => setInviteOpen(true)}
 					className="ml-auto gap-1.5 py-1.75"
 				>
 					<IconInvite />
@@ -175,6 +186,13 @@ function RoomInfo({
 						<div className="flex flex-1 flex-col justify-between">
 							<div className="flex items-center leading-none">
 								{identity.username}
+								<button
+									title="Edit username"
+									className="ml-1 text-muted-foreground/80"
+									onClick={() => setEditOpen(true)}
+								>
+									<IconPencil />
+								</button>
 								<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
 									YOU
 								</span>
@@ -217,7 +235,7 @@ function RoomInfo({
 					))}
 				</ul>
 			</div>
-			<Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+			<Dialog open={inviteOpen} onClose={() => setInviteOpen(false)}>
 				<DialogContent>
 					<Heading
 						order={2}
@@ -229,7 +247,7 @@ function RoomInfo({
 					</Heading>
 					<button
 						title="Close"
-						onClick={() => setDialogOpen(false)}
+						onClick={() => setInviteOpen(false)}
 						className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
 					>
 						<IconX />
@@ -343,6 +361,31 @@ function RoomInfo({
 							</li>
 						))}
 					</ul>
+				</DialogContent>
+			</Dialog>
+			<Dialog open={editOpen} onClose={() => setEditOpen(false)}>
+				<DialogContent>
+					<Heading order={2} className="mb-4 focus:outline-none">
+						Edit username
+					</Heading>
+					<input
+						ref={usernameRef}
+						defaultValue={identity.username}
+						onKeyDown={(e) => e.key === "Enter" && updateUsername()}
+						className="mb-4 rounded-lg border bg-card px-3 py-1.25"
+					/>
+					<div className="flex gap-4">
+						<Button
+							onClick={() => setEditOpen(false)}
+							className="basis-1/2 bg-secondary/80 hover:bg-secondary"
+							variant="secondary"
+						>
+							Cancel
+						</Button>
+						<Button onClick={updateUsername} className="basis-1/2">
+							Save
+						</Button>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</div>

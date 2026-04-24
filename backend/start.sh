@@ -1,4 +1,4 @@
 #!/bin/bash
 
 set -a; source .env; set +a
-go run .
+wgo -debounce 100ms go run .

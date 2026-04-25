@@ -323,6 +323,15 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	}
 }
 
+export function subscribe<E extends keyof ServerEventMap>(
+	target: SignalingServer,
+	evt: E,
+	handler: (e: ServerEventMap[E]) => void,
+): () => void {
+	target.addEventListener(evt, handler);
+	return () => target.removeEventListener(evt, handler);
+}
+
 const MIN_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 15000;
 

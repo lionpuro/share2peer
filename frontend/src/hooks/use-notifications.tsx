@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import type { ServerEventMap } from "#/lib/server";
+import { subscribe } from "#/lib/server";
 import { useSignalingServer } from "./signaling";
 import { InviteNotification } from "#/components/toast";
 
@@ -9,7 +9,7 @@ export function useNotifications() {
 	const navigate = useNavigate();
 	const server = useSignalingServer();
 	useEffect(() => {
-		const handler = (e: ServerEventMap["room-invitation"]) => {
+		const unsubscribe = subscribe(server, "room-invitation", (e) => {
 			toast(<InviteNotification invitation={e.detail} />, {
 				autoClose: false,
 				closeButton: false,
@@ -20,10 +20,7 @@ export function useNotifications() {
 					}
 				},
 			});
-		};
-		server.addEventListener("room-invitation", handler);
-		return () => {
-			server.removeEventListener("room-invitation", handler);
-		};
+		});
+		return () => unsubscribe();
 	}, [navigate, server]);
 }

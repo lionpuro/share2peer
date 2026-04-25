@@ -183,7 +183,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		if (this.#destroyed) {
 			throw new Error("instance has been destroyed");
 		}
-		const ws = await this.connect();
+		if (this.#ws?.readyState !== WebSocket.OPEN) {
+			throw new Error("socket not open");
+		}
 
 		this.#currentID++;
 		const id = this.#currentID.toString();
@@ -218,7 +220,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		});
 
 		this.#transactions.set(id, tx);
-		ws.send(JSON.stringify(msg));
+		this.#ws.send(JSON.stringify(msg));
 
 		return promise;
 	}
@@ -227,8 +229,10 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 		if (this.#destroyed) {
 			throw new Error("instance has been destroyed");
 		}
-		const ws = await this.connect();
-		ws.send(JSON.stringify(msg));
+		if (this.#ws?.readyState !== WebSocket.OPEN) {
+			throw new Error("socket not open");
+		}
+		this.#ws.send(JSON.stringify(msg));
 	}
 
 	#onerror = (e: Event) => {

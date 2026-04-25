@@ -362,10 +362,8 @@ function resolveSocketURL(): string {
 	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
 }
 
-function createServer(): SignalingServer {
+export function createServer(): SignalingServer {
 	window.__WEBSEND_SERVER?.destroy();
 	window.__WEBSEND_SERVER = new SignalingServer(resolveSocketURL());
 	return window.__WEBSEND_SERVER;
 }
-
-export const server = createServer();

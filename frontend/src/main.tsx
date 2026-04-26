@@ -16,7 +16,20 @@ declare module "@tanstack/react-router" {
 	}
 }
 
-const server = createServer();
+const socketURL: string = (() => {
+	const { VITE_WS_PROTOCOL, VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
+	const host = VITE_WS_HOST.startsWith("localhost:")
+		? new URL(import.meta.url).host
+		: VITE_WS_HOST;
+	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
+})();
+
+const server = createServer({
+	url: socketURL,
+	pingInterval: 55 * 1000,
+	minReconnectDelay: 1000,
+	maxReconnectDelay: 15 * 1000,
+});
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>

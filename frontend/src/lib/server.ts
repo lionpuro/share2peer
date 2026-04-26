@@ -55,9 +55,16 @@ type ServerEvent = ServerEventMap[keyof ServerEventMap];
 
 type ConnectionState = ReturnType<typeof $connectionState.get>;
 
+type Config = {
+	url: string;
+	pingInterval: number;
+	minReconnectDelay: number;
+	maxReconnectDelay: number;
+};
+
 export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	state: ConnectionState = "disconnected";
-	#url: string;
+	#config: Config;
 	#ws: WebSocket | undefined = undefined;
 	#currentID: number = 0;
 	#transactions: Map<string, Transaction<keyof typeof RequestResponseMap>> =
@@ -67,9 +74,9 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#pingTimer: number | undefined = undefined;
 	#destroyed: boolean = false;
 
-	constructor(url: string) {
+	constructor(conf: Config) {
 		super();
-		this.#url = url;
+		this.#config = conf;
 		this.#setState("connecting");
 		this.#ws = this.#createSocket();
 	}
@@ -77,7 +84,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 	#createSocket(): WebSocket {
 		const session = getSessionData();
 		this.#ws = new WebSocket(
-			`${this.#url}${session ? "?s=" + stringToBase64(JSON.stringify(session)) : ""}`,
+			`${this.#config.url}${session ? "?s=" + stringToBase64(JSON.stringify(session)) : ""}`,
 		);
 		this.#ws.addEventListener("open", this.#onopen);
 		this.#ws.addEventListener("close", this.#onclose);
@@ -91,7 +98,7 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 					return;
 				}
 				this.send({ type: "ping" }).catch((err) => console.error("ping:", err));
-			}, 55 * 1000);
+			}, this.#config.pingInterval);
 		});
 		this.#ws.addEventListener("close", () => {
 			clearInterval(this.#pingTimer);
@@ -148,7 +155,12 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			return;
 		}
 
-		const delay = calculateDelay(this.#reconnectAttempts);
+		const { minReconnectDelay, maxReconnectDelay } = this.#config;
+		const delay = calculateDelay(
+			this.#reconnectAttempts,
+			minReconnectDelay,
+			maxReconnectDelay,
+		);
 		this.#reconnectAttempts += 1;
 		this.#reconnectTimeout = setTimeout(() => {
 			this.#reconnectTimeout = undefined;
@@ -336,14 +348,8 @@ export function subscribe<E extends keyof ServerEventMap>(
 	return () => target.removeEventListener(evt, handler);
 }
 
-const MIN_RECONNECT_DELAY = 1000;
-const MAX_RECONNECT_DELAY = 15000;
-
-function calculateDelay(attempt: number): number {
-	const delay = Math.min(
-		MIN_RECONNECT_DELAY * 2 ** attempt,
-		MAX_RECONNECT_DELAY,
-	);
+function calculateDelay(attempt: number, base: number, max: number): number {
+	const delay = Math.min(base * 2 ** attempt, max);
 	const jitter = delay * 0.15 * Math.random();
 	return delay + jitter;
 }
@@ -366,17 +372,8 @@ function waitForOpen(sock: WebSocket) {
 	});
 }
 
-function resolveSocketURL(): string {
-	const { VITE_WS_PROTOCOL, VITE_WS_HOST, VITE_WS_ENDPOINT } = import.meta.env;
-	const host = VITE_WS_HOST.startsWith("localhost:")
-		? new URL(import.meta.url).host
-		: VITE_WS_HOST;
-
-	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
-}
-
-export function createServer(): SignalingServer {
+export function createServer(conf: Config): SignalingServer {
 	window.__WEBSEND_SERVER?.destroy();
-	window.__WEBSEND_SERVER = new SignalingServer(resolveSocketURL());
+	window.__WEBSEND_SERVER = new SignalingServer(conf);
 	return window.__WEBSEND_SERVER;
 }

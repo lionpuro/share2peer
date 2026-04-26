@@ -137,12 +137,12 @@ export class SignalingServer extends TypedEventTarget<ServerEventMap> {
 			this.#setState("connecting");
 			this.#ws = this.#createSocket();
 
+			await waitForOpen(this.#ws);
+
 			this.#reconnectAttempts = 0;
-			this.#destroyed = false;
 			clearTimeout(this.#reconnectTimeout);
 			this.#reconnectTimeout = undefined;
 
-			await waitForOpen(this.#ws);
 			return this.#ws;
 		} catch (err) {
 			this.#setState("failed");

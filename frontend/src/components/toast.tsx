@@ -5,7 +5,7 @@ import {
 	type ToastContentProps,
 	type ToastOptions,
 } from "react-toastify";
-import type { ServerEventMap } from "#/lib/server";
+import type { ServerEventMap } from "#/lib/signaling/server";
 import { ThemeContext } from "#/context/theme/context";
 import { Button } from "#/components/ui/button";
 

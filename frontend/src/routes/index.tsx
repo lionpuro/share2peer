@@ -11,9 +11,9 @@ import {
 	IconX,
 } from "#/components/icons";
 import { toast } from "react-toastify";
-import { createRoom } from "#/lib/room";
-import { server } from "#/lib/server";
+import { createRoom } from "#/lib/signaling/room";
 import { useNotifications } from "#/hooks/use-notifications";
+import { useSignalingServer } from "#/hooks/signaling";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
+	const server = useSignalingServer();
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
 	useNotifications();

@@ -24,12 +24,12 @@ import {
 } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
-import type { Room, User } from "#/lib/schemas";
+import type { OutgoingMessage, Room, User } from "#/lib/schemas";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
-import { server } from "#/lib/server";
-import { joinRoom, leaveRoom, roomState } from "#/lib/room";
-import { useResult } from "#/hooks/hooks";
 import { useNotifications } from "#/hooks/use-notifications";
+import { joinRoom, leaveRoom, roomState } from "#/lib/signaling/room";
+import { useResult } from "#/hooks/hooks";
+import { useSignalingServer } from "#/hooks/signaling";
 
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
@@ -40,22 +40,22 @@ export const Route = createFileRoute("/r/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
+	const server = useSignalingServer();
 	const connectionState = useStore($connectionState);
-	const identity = useStore($identity);
+	const connected = connectionState === "connected";
 	const room = useStore($room);
-	const peers = useStore($peers);
 	useNotifications();
-	const { status, error } = useResult(
-		() => joinRoom(server, id),
-		identity === undefined,
-	);
+	const identity = useStore($identity);
+	const peers = useStore($peers);
+	const { status, error } = useResult(() => joinRoom(server, id), !connected);
 	useEffect(() => {
+		if (!connected) return;
 		return () => {
 			if (roomState() === "active") {
 				leaveRoom(server);
 			}
 		};
-	}, []);
+	}, [server, connected]);
 
 	if (connectionState === "connecting" || !identity) {
 		return <Loader />;
@@ -82,7 +82,12 @@ function Component() {
 	return (
 		<Main className="max-w-screen-sm pt-3 sm:pt-3">
 			<div className="flex flex-col gap-10">
-				<RoomInfo identity={identity} room={room} peers={peers} />
+				<RoomInfo
+					onSignal={(m) => server.send(m)}
+					identity={identity}
+					room={room}
+					peers={peers}
+				/>
 				<FileArea />
 			</div>
 		</Main>
@@ -103,10 +108,12 @@ function RoomError({ message }: { message: string }) {
 }
 
 function RoomInfo({
+	onSignal,
 	identity,
 	room,
 	peers,
 }: {
+	onSignal: (m: OutgoingMessage) => Promise<void>;
 	identity: User;
 	room: Room;
 	peers: Record<string, PeerState>;
@@ -151,7 +158,7 @@ function RoomInfo({
 	}
 
 	function inviteUser(id: string) {
-		server.send({
+		onSignal({
 			type: "invite-to-room",
 			payload: { user_id: id, room_id: room.id },
 		});

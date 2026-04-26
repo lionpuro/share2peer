@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { subscribe } from "#/lib/server";
+import { subscribe } from "#/lib/signaling/server";
 import { useSignalingServer } from "./signaling";
 import { InviteNotification } from "#/components/toast";
 

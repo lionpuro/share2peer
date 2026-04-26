@@ -7,7 +7,7 @@ import {
 	removeConnection,
 	removeConnections,
 } from "#/lib/webrtc";
-import type { SignalingServer } from "#/lib/server";
+import type { SignalingServer } from "#/lib/signaling/server";
 
 type RoomState = "idle" | "joining" | "active" | "failed";
 

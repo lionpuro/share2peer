@@ -24,8 +24,8 @@ import {
 	handleRoomLeft,
 	handleUserJoined,
 	handleUserLeft,
-} from "./room";
-import { stringToBase64 } from "./helper";
+} from "#/lib/signaling/room";
+import { stringToBase64 } from "#/lib/helper";
 
 declare global {
 	interface Window {

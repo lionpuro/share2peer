@@ -1,5 +1,5 @@
-import { type ReactNode } from "react";
-import type { SignalingServer } from "#/lib/server";
+import type { ReactNode } from "react";
+import type { SignalingServer } from "#/lib/signaling/server";
 import { SignalingServerContext } from "./context";
 
 export function SignalingServerProvider({

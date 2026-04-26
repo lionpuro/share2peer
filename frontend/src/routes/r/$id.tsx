@@ -27,7 +27,7 @@ import { Heading } from "#/components/ui/heading";
 import type { OutgoingMessage, Room, User } from "#/lib/schemas";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { useNotifications } from "#/hooks/use-notifications";
-import { joinRoom, leaveRoom, roomState } from "#/lib/room";
+import { joinRoom, leaveRoom, roomState } from "#/lib/signaling/room";
 import { useResult } from "#/hooks/hooks";
 import { useSignalingServer } from "#/hooks/signaling";
 

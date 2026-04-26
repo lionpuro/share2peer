@@ -6,7 +6,7 @@ import { routeTree } from "#/routeTree.gen";
 import { ThemeProvider } from "#/context/theme/provider";
 import { ToastContainer } from "#/components/toast";
 import { SignalingServerProvider } from "#/context/signaling/provider";
-import { createServer } from "#/lib/server";
+import { createServer } from "#/lib/signaling/server";
 
 const router = createRouter({ routeTree });
 

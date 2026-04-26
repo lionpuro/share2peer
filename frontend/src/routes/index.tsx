@@ -11,7 +11,7 @@ import {
 	IconX,
 } from "#/components/icons";
 import { toast } from "react-toastify";
-import { createRoom } from "#/lib/room";
+import { createRoom } from "#/lib/signaling/room";
 import { useNotifications } from "#/hooks/use-notifications";
 import { useSignalingServer } from "#/hooks/signaling";
 

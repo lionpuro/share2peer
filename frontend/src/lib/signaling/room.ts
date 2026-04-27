@@ -7,7 +7,7 @@ import {
 	removeConnection,
 	removeConnections,
 } from "#/lib/webrtc";
-import type { SignalingServer } from "#/lib/signaling/server";
+import type { SignalingClient } from "#/lib/signaling/client";
 
 type RoomState = "idle" | "joining" | "active" | "failed";
 
@@ -18,19 +18,19 @@ export function roomState() {
 }
 
 export async function joinRoom(
-	server: SignalingServer,
+	client: SignalingClient,
 	id: string,
 ): Promise<Room> {
 	if (state === "joining") {
 		throw new Error("already joining a room");
 	}
 
-	await leaveRoom(server);
+	await leaveRoom(client);
 
 	state = "joining";
 
 	try {
-		const resp = await server.request({
+		const resp = await client.request({
 			type: "join-room",
 			payload: { room_id: id },
 		});
@@ -48,16 +48,16 @@ export async function joinRoom(
 	}
 }
 
-export async function leaveRoom(server: SignalingServer) {
+export async function leaveRoom(client: SignalingClient) {
 	const room = $room.get();
 	if (
 		!room ||
-		(server.state !== "connected" && server.state !== "connecting")
+		(client.state !== "connected" && client.state !== "connecting")
 	) {
 		return;
 	}
 	try {
-		await server
+		await client
 			.request({
 				type: "leave-room",
 				payload: { room_id: room.id },
@@ -69,10 +69,10 @@ export async function leaveRoom(server: SignalingServer) {
 	}
 }
 
-export async function createRoom(server: SignalingServer): Promise<Room> {
+export async function createRoom(client: SignalingClient): Promise<Room> {
 	state = "idle";
-	await leaveRoom(server);
-	const resp = await server.request({
+	await leaveRoom(client);
+	const resp = await client.request({
 		type: "create-room",
 	});
 	switch (resp.type) {
@@ -95,11 +95,11 @@ export function handleRoomLeft() {
 	setUploads([]);
 }
 
-export async function handleUserJoined(server: SignalingServer, user: User) {
+export async function handleUserJoined(client: SignalingClient, user: User) {
 	if (findConnection(user.id)) return;
 	const room = $room.get();
 	if (!room) return;
-	await createPeerConnection(server, room.id, user);
+	await createPeerConnection(client, room.id, user);
 }
 
 export function handleUserLeft(user: User) {

@@ -13,7 +13,7 @@ import {
 import { toast } from "react-toastify";
 import { createRoom } from "#/lib/signaling/room";
 import { useNotifications } from "#/hooks/use-notifications";
-import { useSignalingServer } from "#/hooks/signaling";
+import { useSignalingClient } from "#/hooks/signaling";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
 
 function Component() {
 	const navigate = useNavigate();
-	const server = useSignalingServer();
+	const client = useSignalingClient();
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
 	useNotifications();
@@ -29,7 +29,7 @@ function Component() {
 	async function handleCreate() {
 		setCreating(true);
 		try {
-			const { id } = await createRoom(server);
+			const { id } = await createRoom(client);
 			navigate({ to: "/r/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);

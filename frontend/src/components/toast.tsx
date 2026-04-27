@@ -5,7 +5,7 @@ import {
 	type ToastContentProps,
 	type ToastOptions,
 } from "react-toastify";
-import type { ServerEventMap } from "#/lib/signaling/server";
+import type { SignalingEvent } from "#/lib/signaling/client";
 import { ThemeContext } from "#/context/theme/context";
 import { Button } from "#/components/ui/button";
 
@@ -25,7 +25,7 @@ export function ToastContainer() {
 }
 
 type InvitationProps = Partial<ToastContentProps> & {
-	invitation: ServerEventMap["room-invitation"]["detail"];
+	invitation: SignalingEvent<"room-invitation">["detail"];
 };
 
 export function InviteNotification({

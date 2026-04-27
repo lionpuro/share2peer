@@ -29,7 +29,7 @@ import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { useNotifications } from "#/hooks/use-notifications";
 import { joinRoom, leaveRoom, roomState } from "#/lib/signaling/room";
 import { useResult } from "#/hooks/hooks";
-import { useSignalingServer } from "#/hooks/signaling";
+import { useSignalingClient } from "#/hooks/signaling";
 
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
@@ -40,22 +40,22 @@ export const Route = createFileRoute("/r/$id")({
 
 function Component() {
 	const { id } = Route.useParams();
-	const server = useSignalingServer();
+	const client = useSignalingClient();
 	const connectionState = useStore($connectionState);
 	const connected = connectionState === "connected";
 	const room = useStore($room);
 	useNotifications();
 	const identity = useStore($identity);
 	const peers = useStore($peers);
-	const { status, error } = useResult(() => joinRoom(server, id), !connected);
+	const { status, error } = useResult(() => joinRoom(client, id), !connected);
 	useEffect(() => {
 		if (!connected) return;
 		return () => {
 			if (roomState() === "active") {
-				leaveRoom(server);
+				leaveRoom(client);
 			}
 		};
-	}, [server, connected]);
+	}, [client, connected]);
 
 	if (connectionState === "connecting" || !identity) {
 		return <Loader />;
@@ -83,7 +83,7 @@ function Component() {
 		<Main className="max-w-screen-sm pt-3 sm:pt-3">
 			<div className="flex flex-col gap-10">
 				<RoomInfo
-					onSignal={(m) => server.send(m)}
+					onSignal={(m) => client.send(m)}
 					identity={identity}
 					room={room}
 					peers={peers}

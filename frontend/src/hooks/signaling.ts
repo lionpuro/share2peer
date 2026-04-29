@@ -1,8 +1,8 @@
 import { useContext } from "react";
-import { SignalingServerContext } from "#/context/signaling/context";
+import { SignalingClientContext } from "#/context/signaling/context";
 
-export function useSignalingServer() {
-	const ctx = useContext(SignalingServerContext);
+export function useSignalingClient() {
+	const ctx = useContext(SignalingClientContext);
 	if (!ctx) {
 		throw new Error("hook can only be used within context provider");
 	}

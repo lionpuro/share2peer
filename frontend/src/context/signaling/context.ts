@@ -1,6 +1,6 @@
-import type { SignalingServer } from "#/lib/signaling/server";
+import type { SignalingClient } from "#/lib/signaling/client";
 import { createContext } from "react";
 
-export const SignalingServerContext = createContext<
-	SignalingServer | undefined
+export const SignalingClientContext = createContext<
+	SignalingClient | undefined
 >(undefined);

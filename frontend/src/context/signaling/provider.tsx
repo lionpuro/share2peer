@@ -1,17 +1,17 @@
 import type { ReactNode } from "react";
-import type { SignalingServer } from "#/lib/signaling/server";
-import { SignalingServerContext } from "./context";
+import type { SignalingClient } from "#/lib/signaling/client";
+import { SignalingClientContext } from "./context";
 
-export function SignalingServerProvider({
-	server,
+export function SignalingClientProvider({
+	client,
 	children,
 }: {
-	server: SignalingServer;
+	client: SignalingClient;
 	children: ReactNode;
 }) {
 	return (
-		<SignalingServerContext.Provider value={server}>
+		<SignalingClientContext.Provider value={client}>
 			{children}
-		</SignalingServerContext.Provider>
+		</SignalingClientContext.Provider>
 	);
 }

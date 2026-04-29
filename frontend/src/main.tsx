@@ -5,8 +5,8 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "#/routeTree.gen";
 import { ThemeProvider } from "#/context/theme/provider";
 import { ToastContainer } from "#/components/toast";
-import { SignalingServerProvider } from "#/context/signaling/provider";
-import { createServer } from "#/lib/signaling/server";
+import { createSignalingClient } from "#/lib/signaling/client";
+import { SignalingClientProvider } from "#/context/signaling/provider";
 
 const router = createRouter({ routeTree });
 
@@ -24,20 +24,15 @@ const socketURL: string = (() => {
 	return new URL(VITE_WS_ENDPOINT, `${VITE_WS_PROTOCOL}://${host}`).toString();
 })();
 
-const server = createServer({
-	url: socketURL,
-	pingInterval: 55 * 1000,
-	minReconnectDelay: 1000,
-	maxReconnectDelay: 15 * 1000,
-});
+const client = createSignalingClient(socketURL);
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
 		<ThemeProvider>
 			<ToastContainer />
-			<SignalingServerProvider server={server}>
+			<SignalingClientProvider client={client}>
 				<RouterProvider router={router} />
-			</SignalingServerProvider>
+			</SignalingClientProvider>
 		</ThemeProvider>
 	</StrictMode>,
 );

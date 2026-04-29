@@ -1,10 +1,10 @@
 import type { User, IncomingMessage } from "#/lib/schemas";
 import { $identity, $room } from "#/stores/signaling";
-import type { SignalingServer } from "#/lib/signaling/server";
+import type { SignalingClient } from "#/lib/signaling/client";
 import { createConnection, findConnection } from "./connection";
 
 export async function createPeerConnection(
-	server: SignalingServer,
+	client: SignalingClient,
 	roomID: string,
 	user: User,
 ) {
@@ -16,7 +16,7 @@ export async function createPeerConnection(
 	try {
 		const conn = createConnection(user, {
 			onIceCandidate: (candidate) => {
-				server.send({
+				client.send({
 					type: "ice-candidate",
 					payload: {
 						room_id: roomID,
@@ -30,7 +30,7 @@ export async function createPeerConnection(
 		conn.createMessageChannel();
 		const offer = await conn.createOffer();
 
-		server.send({
+		client.send({
 			type: "offer",
 			payload: {
 				from: identity.id,
@@ -45,7 +45,7 @@ export async function createPeerConnection(
 }
 
 export async function handleOffer(
-	server: SignalingServer,
+	client: SignalingClient,
 	msg: Extract<IncomingMessage, { type: "offer" }>,
 ) {
 	const user = $room.get()?.users?.find((u) => u.id === msg.payload.from);
@@ -53,7 +53,7 @@ export async function handleOffer(
 
 	const conn = createConnection(user, {
 		onIceCandidate: (candidate) => {
-			server.send({
+			client.send({
 				type: "ice-candidate",
 				payload: {
 					from: msg.payload.to,
@@ -67,7 +67,7 @@ export async function handleOffer(
 	await conn.setRemoteDescription(msg.payload.offer);
 	const answer = await conn.createAnswer();
 
-	server.send({
+	client.send({
 		type: "answer",
 		payload: {
 			from: msg.payload.to,

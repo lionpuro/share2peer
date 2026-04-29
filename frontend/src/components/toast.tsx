@@ -25,7 +25,7 @@ export function ToastContainer() {
 }
 
 type InvitationProps = Partial<ToastContentProps> & {
-	invitation: SignalingEvent<"room-invitation">["detail"];
+	invitation: SignalingEvent<"room-invitation">["payload"];
 };
 
 export function InviteNotification({

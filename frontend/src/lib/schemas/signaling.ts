@@ -136,9 +136,15 @@ export const incomingMessageSchemas = {
 	[ROOM_INVITATION]: message(ROOM_INVITATION, RoomInvitationSchema),
 } as const;
 
-export type IncomingMessage = z.infer<
-	(typeof incomingMessageSchemas)[keyof typeof incomingMessageSchemas]
->;
+type IncomingMessageMap = {
+	[K in keyof typeof incomingMessageSchemas]: z.infer<
+		(typeof incomingMessageSchemas)[K]
+	>;
+};
+
+export type IncomingMessage<
+	K extends keyof IncomingMessageMap = keyof IncomingMessageMap,
+> = IncomingMessageMap[K];
 
 export function parseMessage(input: unknown): IncomingMessage {
 	if (typeof input !== "string") {

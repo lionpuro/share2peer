@@ -1,4 +1,4 @@
-import { TypedEventTarget } from "typescript-event-target";
+import { EventEmitter } from "#/lib/events";
 import {
 	RequestResponseMap,
 	type IncomingMessage,
@@ -23,7 +23,7 @@ import {
 	handleUserJoined,
 	handleUserLeft,
 } from "#/lib/signaling/room";
-import { Socket, type SocketEvent } from "./socket";
+import { Socket, type SocketEvent } from "#/lib/signaling/socket";
 
 declare global {
 	interface Window {
@@ -43,18 +43,17 @@ type ResponseMap = {
 	"leave-room": Extract<IncomingMessage, { type: "room-left" }>;
 };
 
-export type SignalingEventMap = {
-	[M in IncomingMessage as M["type"]]: CustomEvent<M["payload"]>;
-} & {
-	disconnect: CustomEvent;
+type SignalingEventMap = {
+	[K in IncomingMessage["type"]]: IncomingMessage<K>;
 };
 
-export type SignalingEvent<E extends keyof SignalingEventMap> =
-	SignalingEventMap[E];
+export type SignalingEvent<
+	K extends keyof SignalingEventMap = keyof SignalingEventMap,
+> = { [P in K]: { type: P } & SignalingEventMap[P] }[K];
 
 type ConnectionState = ReturnType<typeof $connectionState.get>;
 
-export class SignalingClient extends TypedEventTarget<SignalingEventMap> {
+export class SignalingClient extends EventEmitter<SignalingEventMap> {
 	state: ConnectionState = "disconnected";
 	#socket: Socket;
 	#currentID: number = 0;
@@ -213,7 +212,7 @@ export class SignalingClient extends TypedEventTarget<SignalingEventMap> {
 					handleUserLeft(message.payload);
 					break;
 			}
-			this.#dispatchMessageEvent(message);
+			this.#dispatchMessage(message);
 		} catch (err) {
 			console.error("handle message:", err);
 		}
@@ -223,14 +222,30 @@ export class SignalingClient extends TypedEventTarget<SignalingEventMap> {
 		console.error(e.detail);
 	};
 
-	#dispatchMessageEvent(message: IncomingMessage) {
-		const event: SignalingEventMap[keyof SignalingEventMap] = new CustomEvent(
-			message.type,
-			{
-				detail: message.payload,
-			},
-		);
-		this.dispatchTypedEvent(message.type, event);
+	#dispatchMessage<K extends keyof SignalingEventMap>(e: SignalingEvent<K>) {
+		const dispatch = <K extends keyof SignalingEventMap>(
+			e: SignalingEvent<K>,
+		) => {
+			this.dispatchEvent(e.type, e);
+		};
+		const dispatchers: {
+			[K in keyof SignalingEventMap]: (e: SignalingEvent<K>) => void;
+		} = {
+			error: dispatch,
+			identity: dispatch,
+			"room-info": dispatch,
+			"user-joined": dispatch,
+			"user-left": dispatch,
+			offer: dispatch,
+			answer: dispatch,
+			"ice-candidate": dispatch,
+			"room-created": dispatch,
+			"room-joined": dispatch,
+			"room-left": dispatch,
+			"network-users": dispatch,
+			"room-invitation": dispatch,
+		};
+		dispatchers[e.type](e);
 	}
 }
 

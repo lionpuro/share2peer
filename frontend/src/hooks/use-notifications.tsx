@@ -10,13 +10,13 @@ export function useNotifications() {
 	const client = useSignalingClient();
 	useEffect(() => {
 		const unsubscribe = subscribe(client, "room-invitation", (e) => {
-			toast(<InviteNotification invitation={e.detail} />, {
+			toast(<InviteNotification invitation={e.payload} />, {
 				autoClose: false,
 				closeButton: false,
 				className: "p-0",
 				onClose: (reason) => {
 					if (reason === "accept") {
-						navigate({ to: "/r/$id", params: { id: e.detail.room_id } });
+						navigate({ to: "/r/$id", params: { id: e.payload.room_id } });
 					}
 				},
 			});

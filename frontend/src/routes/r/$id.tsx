@@ -21,6 +21,7 @@ import {
 	IconInvite,
 	IconPencil,
 	IconShare,
+	IconWireless,
 	IconX,
 } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
@@ -130,6 +131,7 @@ function RoomArea({
 	const [copiedID, setCopiedID] = useState(false);
 	const roomURL = `${window.location.protocol}//${window.location.host}/r/${room.id}`;
 	const networkUsers = useStore($networkUsers);
+	const nearbyUsers = networkUsers.filter((u) => !peers[u.id]);
 	const usernameRef = useRef<HTMLInputElement>(null);
 
 	function copyURL() {
@@ -341,34 +343,34 @@ function RoomArea({
 							</div>
 						)}
 					</div>
-					<Heading order={3} className="mb-1">
-						Nearby devices
-					</Heading>
-					<p className="mb-3 text-sm text-muted-foreground">
-						Other devices on the same network will appear here.
-					</p>
-					<ul className="flex flex-col gap-3">
-						{networkUsers.length === 0 && (
-							<p className="text-muted-foreground">No devices</p>
-						)}
-						{networkUsers.map((u) => (
-							<li key={"nw-" + u.id} className="flex gap-3">
-								<div className="flex flex-1 flex-col justify-between">
-									<p className="leading-none">{u.username}</p>
-									<span className="text-sm leading-none font-medium text-muted-foreground">
-										{u.device_name}
-									</span>
-								</div>
-								{users.find((user) => user.id === u.id) === undefined ? (
+					<div className="mb-2 flex gap-2">
+						<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
+							<IconWireless />
+						</span>
+						<div className="flex flex-col">
+							<Heading order={2}>Nearby devices</Heading>
+							<p className="text-sm text-muted-foreground">
+								Devices on the same network
+							</p>
+						</div>
+					</div>
+					{nearbyUsers.length === 0 ? (
+						<p className="text-sm text-muted-foreground">No devices</p>
+					) : (
+						<ul className="flex flex-col gap-3">
+							{nearbyUsers.map((u) => (
+								<li key={"nearby-" + u.id} className="flex gap-3">
+									<div className="flex flex-1 flex-col justify-between">
+										<p className="leading-none">{u.username}</p>
+										<span className="text-sm leading-none font-medium text-muted-foreground">
+											{u.device_name}
+										</span>
+									</div>
 									<InviteButton onClick={() => inviteUser(u.id)} />
-								) : (
-									<p className="py-1.75 text-sm font-medium text-muted-foreground">
-										Connected
-									</p>
-								)}
-							</li>
-						))}
-					</ul>
+								</li>
+							))}
+						</ul>
+					)}
 				</DialogContent>
 			</Dialog>
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)}>

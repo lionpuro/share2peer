@@ -4,6 +4,7 @@ export type IconProps = SVGProps<SVGSVGElement>;
 
 export { default as Logo } from "~icons/mingcute/send-plane-fill";
 
+export { default as IconAccountGroup } from "~icons/mdi/account-group";
 export { default as IconUpload } from "~icons/mdi/upload";
 export { default as IconDownload } from "~icons/mdi/download";
 export { default as IconCopy } from "~icons/mdi/content-copy";
@@ -24,13 +25,13 @@ export { default as IconStop } from "~icons/mdi/stop";
 export { default as IconReload } from "~icons/mdi/reload";
 export { default as IconInvite } from "~icons/mdi/invite";
 export { default as IconPencil } from "~icons/mdi/pencil";
+export { default as IconFile } from "~icons/mdi/file-outline";
+export { default as IconFileDefault } from "~icons/mdi/file-text";
+export { default as IconFileImage } from "~icons/mdi/file-image";
+export { default as IconFileVideo } from "~icons/mdi/file-video";
+export { default as IconFileAudio } from "~icons/mdi/file-music";
 
 export { default as IconDevices } from "~icons/material-symbols/devices";
-
-export { default as IconFileDefault } from "~icons/fa-solid/file-alt";
-export { default as IconFileImage } from "~icons/fa-solid/file-image";
-export { default as IconFileVideo } from "~icons/fa-solid/file-video";
-export { default as IconFileAudio } from "~icons/fa-solid/file-audio";
 
 export { default as IconSun } from "~icons/tabler/sun-high-filled";
 export { default as IconMoon } from "~icons/tabler/moon-filled";

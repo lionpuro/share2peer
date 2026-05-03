@@ -17,6 +17,7 @@ import { ErrorComponent } from "#/components/error";
 import {
 	IconCheck,
 	IconCopy,
+	IconAccountGroup,
 	IconInvite,
 	IconPencil,
 	IconShare,
@@ -80,16 +81,14 @@ function Component() {
 	}
 
 	return (
-		<Main className="max-w-screen-sm pt-3 sm:pt-3">
-			<div className="flex flex-col gap-10">
-				<RoomInfo
-					onSignal={(m) => client.send(m)}
-					identity={identity}
-					room={room}
-					peers={peers}
-				/>
-				<FileArea />
-			</div>
+		<Main className="max-w-screen-sm gap-4 pt-3 sm:pt-3">
+			<RoomArea
+				onSignal={(m) => client.send(m)}
+				identity={identity}
+				room={room}
+				peers={peers}
+			/>
+			<FileArea />
 		</Main>
 	);
 }
@@ -107,7 +106,7 @@ function RoomError({ message }: { message: string }) {
 	);
 }
 
-function RoomInfo({
+function RoomArea({
 	onSignal,
 	identity,
 	room,
@@ -172,22 +171,24 @@ function RoomInfo({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
-			<div className="flex flex-wrap items-start">
-				<span className="mr-2 leading-none font-bold">Room:</span>
-				<span className="mr-1 leading-none font-medium">{room.id}</span>
-				<Button
-					onClick={() => setInviteOpen(true)}
-					className="ml-auto gap-1.5 py-1.75"
-				>
-					<IconInvite />
-					Invite
-				</Button>
-			</div>
-			<div className="mt-2 flex flex-col gap-2">
-				<Heading order={2} size="sm">
-					Users
-				</Heading>
+		<div className="flex flex-col gap-4">
+			<div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+				<div className="flex gap-2">
+					<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
+						<IconAccountGroup />
+					</span>
+					<div className="flex flex-col">
+						<Heading order={2}>Room</Heading>
+						<p className="text-sm text-muted-foreground">{`ID: ${room.id}`}</p>
+					</div>
+					<Button
+						onClick={() => setInviteOpen(true)}
+						className="ml-auto gap-1.5 py-1.75"
+					>
+						<IconInvite />
+						Invite
+					</Button>
+				</div>
 				<ul className="flex flex-col gap-2">
 					<li key={identity.id} className="flex items-center gap-3">
 						<div className="flex flex-1 flex-col justify-between">

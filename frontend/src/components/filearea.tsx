@@ -6,6 +6,7 @@ import { useFiles } from "#/hooks/use-files";
 import {
 	FileIcon,
 	IconDownload,
+	IconFile,
 	IconReload,
 	IconStop,
 	IconUpload,
@@ -37,12 +38,20 @@ export function FileArea() {
 	};
 
 	return (
-		<div className="flex flex-col">
-			<Heading order={2} size="md">
-				Shared files
-			</Heading>
+		<div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+			<div className="flex gap-2">
+				<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
+					<IconFile />
+				</span>
+				<div className="flex flex-col">
+					<Heading order={2}>Shared files</Heading>
+					<p className="text-sm text-muted-foreground">
+						{files.length} {files.length === 1 ? "file" : "files"}
+					</p>
+				</div>
+			</div>
 			{files.length > 0 ? (
-				<ul className="my-3 -mr-2 flex flex-col gap-2">
+				<ul className="flex flex-col gap-2">
 					{files.map((file) => {
 						const transfers = transfersByFile[file.id] || [];
 						const transfer =
@@ -53,9 +62,9 @@ export function FileArea() {
 						return (
 							<li
 								key={"file-" + file.id}
-								className="grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 gap-2"
+								className="grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 gap-2 rounded-lg bg-muted/70 py-2 pr-2 pl-3 dark:bg-muted"
 							>
-								<span className="flex size-10 items-center justify-center rounded-lg bg-primary/20 text-xl text-[#45a568]">
+								<span className="mt-1 flex size-6 items-start justify-center rounded-lg text-lg text-primary sm:text-xl">
 									<FileIcon mime={file.mime} />
 								</span>
 								<div className="flex flex-col justify-between pb-0.5">
@@ -135,11 +144,9 @@ export function FileArea() {
 						);
 					})}
 				</ul>
-			) : (
-				<p className="my-3 mt-2 text-muted-foreground">No files</p>
-			)}
+			) : null}
 			<FileInput
-				className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-400/60 py-10 hover:border-primary/80 sm:py-16 dark:border-secondary"
+				className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-background py-10 hover:border-primary/80 sm:py-16 dark:border-neutral-400/60 dark:border-secondary dark:bg-muted"
 				activeClassName="border-primary/80 bg-primary/10"
 				multiple={true}
 				onFileInput={handleDrop}

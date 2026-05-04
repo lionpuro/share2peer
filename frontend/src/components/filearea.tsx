@@ -62,9 +62,9 @@ export function FileArea() {
 						return (
 							<li
 								key={"file-" + file.id}
-								className="grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 gap-2 rounded-lg bg-muted/70 py-2 pr-2 pl-3 dark:bg-muted"
+								className="grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 rounded-lg bg-muted/70 p-2 pl-3 dark:bg-muted"
 							>
-								<span className="mt-1 flex size-6 items-start justify-center rounded-lg text-lg text-primary sm:text-xl">
+								<span className="mt-1 mr-2 flex size-6 items-start justify-center rounded-lg text-lg text-primary sm:text-xl">
 									<FileIcon mime={file.mime} />
 								</span>
 								<div className="flex flex-col justify-between pb-0.5">
@@ -78,7 +78,7 @@ export function FileArea() {
 											</p>
 										</div>
 										{transfer && transfer.status === "active" && (
-											<span className="ml-auto text-sm text-muted-foreground">
+											<span className="ml-auto pl-2 text-sm text-muted-foreground">
 												{transfer.progress}%
 											</span>
 										)}

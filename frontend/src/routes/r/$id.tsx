@@ -1,13 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useStore } from "@nanostores/react";
 import { toTitleCase } from "#/lib/helper";
-import { $connectionState, $identity, $room } from "#/stores/signaling";
+import {
+	$connectionState,
+	$identity,
+	$networkUsers,
+	$room,
+} from "#/stores/signaling";
 import { $peers } from "#/stores/peer";
 import { Main } from "#/components/ui/main";
+import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
 import { ErrorComponent } from "#/components/error";
+import { IconWireless } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
+import { Heading } from "#/components/ui/heading";
+import type { OutgoingMessage, Room, User } from "#/lib/schemas";
 import { useNotifications } from "#/hooks/use-notifications";
 import { joinRoom, leaveRoom, roomState } from "#/lib/signaling/room";
 import { useResult } from "#/hooks/hooks";
@@ -30,6 +39,9 @@ function Component() {
 	useNotifications();
 	const identity = useStore($identity);
 	const peers = useStore($peers);
+	const networkUsers = useStore($networkUsers);
+	const nearbyUsers = networkUsers.filter((u) => !peers[u.id]);
+
 	const { status, error } = useResult(() => joinRoom(client, id), !connected);
 	useEffect(() => {
 		if (!connected) return;
@@ -64,14 +76,66 @@ function Component() {
 
 	return (
 		<Main className="max-w-screen-sm gap-4 pt-3 sm:pt-3">
-			<RoomArea
+			<RoomArea identity={identity} room={room} peers={peers} />
+			<InviteArea
 				onSignal={(m) => client.send(m)}
-				identity={identity}
 				room={room}
-				peers={peers}
+				nearbyUsers={nearbyUsers}
 			/>
 			<FileArea />
 		</Main>
+	);
+}
+
+function InviteArea({
+	onSignal,
+	nearbyUsers,
+	room,
+}: {
+	onSignal: (m: OutgoingMessage) => Promise<void>;
+	nearbyUsers: User[];
+	room: Room;
+}) {
+	function inviteUser(id: string) {
+		onSignal({
+			type: "invite-to-room",
+			payload: { user_id: id, room_id: room.id },
+		});
+	}
+
+	return (
+		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+			<div className="flex gap-2">
+				<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
+					<IconWireless />
+				</span>
+				<div className="flex flex-col">
+					<Heading order={2}>Nearby devices</Heading>
+					<p className="text-sm text-muted-foreground">
+						Invite devices on the same network
+					</p>
+				</div>
+			</div>
+			{nearbyUsers.length === 0 ? (
+				<p className="text-sm text-muted-foreground">
+					No other devices
+				</p>
+			) : (
+				<ul className="flex flex-col gap-3">
+					{nearbyUsers.map((u) => (
+						<li key={"nearby-" + u.id} className="flex gap-3">
+							<div className="flex flex-1 flex-col justify-between">
+								<p className="leading-none">{u.username}</p>
+								<span className="text-sm leading-none font-medium text-muted-foreground">
+									{u.device_name}
+								</span>
+							</div>
+							<InviteButton onClick={() => inviteUser(u.id)} />
+						</li>
+					))}
+				</ul>
+			)}
+		</div>
 	);
 }
 
@@ -85,5 +149,25 @@ function RoomError({ message }: { message: string }) {
 				Back
 			</Link>
 		</ErrorComponent>
+	);
+}
+
+function InviteButton({ onClick }: { onClick: () => void }) {
+	const [invited, setInvited] = useState(false);
+	function handleClick() {
+		if (invited) return;
+		setInvited(true);
+		setTimeout(() => setInvited(false), 1500);
+		onClick();
+	}
+	return (
+		<Button
+			variant="ghost"
+			className="min-w-18 border border-primary px-0 py-1.5 font-semibold text-primary hover:bg-primary hover:text-background active:border-primary-darker active:bg-primary-darker disabled:border-transparent disabled:bg-transparent disabled:text-primary"
+			disabled={invited}
+			onClick={handleClick}
+		>
+			{!invited ? "Invite" : "Invited!"}
+		</Button>
 	);
 }

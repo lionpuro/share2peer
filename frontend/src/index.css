@@ -24,9 +24,9 @@
 	--color-destructive-darker: #d7141e;
 
 	/* light theme */
-	--color-background: #f8f8fa;
+	--color-background: var(--color-white);
 	--color-foreground: var(--color-black);
-	--color-card: var(--color-white);
+	--color-card: #f8f8fa;
 	--color-primary: var(--color-brand-500);
 	--color-primary-darker: var(--color-brand-600);
 	--color-secondary: var(--color-neutral-200);

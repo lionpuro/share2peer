@@ -75,7 +75,7 @@ function Component() {
 	}
 
 	return (
-		<Main className="max-w-screen-sm gap-4 pt-3 sm:pt-3">
+		<Main className="max-w-screen-sm gap-8 pt-3 sm:pt-3">
 			<RoomArea identity={identity} room={room} peers={peers} />
 			<InviteArea
 				onSignal={(m) => client.send(m)}
@@ -104,7 +104,7 @@ function InviteArea({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+		<div className="flex flex-col gap-2">
 			<div className="flex gap-2">
 				<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
 					<IconWireless />
@@ -117,9 +117,7 @@ function InviteArea({
 				</div>
 			</div>
 			{nearbyUsers.length === 0 ? (
-				<p className="text-sm text-muted-foreground">
-					No other devices
-				</p>
+				<p className="text-sm text-muted-foreground">No other devices</p>
 			) : (
 				<ul className="flex flex-col gap-3">
 					{nearbyUsers.map((u) => (

@@ -38,7 +38,7 @@ export function FileArea() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+		<div className="flex flex-col gap-4">
 			<div className="flex gap-2">
 				<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
 					<IconFile />
@@ -62,7 +62,7 @@ export function FileArea() {
 						return (
 							<li
 								key={"file-" + file.id}
-								className="grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 rounded-lg bg-muted/70 p-2 pl-3 dark:bg-muted"
+								className="grid min-h-14 grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-1 rounded-lg bg-muted/70 p-2 pl-3"
 							>
 								<span className="mt-1 mr-2 flex size-6 items-start justify-center rounded-lg text-lg text-primary sm:text-xl">
 									<FileIcon mime={file.mime} />
@@ -146,7 +146,7 @@ export function FileArea() {
 				</ul>
 			) : null}
 			<FileInput
-				className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-background py-10 hover:border-primary/80 sm:py-16 dark:border-neutral-400/60 dark:border-secondary dark:bg-muted"
+				className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-card/70 py-10 hover:border-primary/80 sm:py-16 dark:border-neutral-400/60 dark:border-secondary dark:bg-card"
 				activeClassName="border-primary/80 bg-primary/10"
 				multiple={true}
 				onFileInput={handleDrop}

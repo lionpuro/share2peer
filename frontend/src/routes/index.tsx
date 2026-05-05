@@ -73,7 +73,7 @@ function Component() {
 							</span>
 						</div>
 					</div>
-					<div className="flex w-full max-w-xs flex-col gap-2 rounded-xl border bg-card p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:min-w-xs">
+					<div className="flex w-full max-w-xs flex-col gap-2 rounded-xl border bg-card/50 p-6 max-md:mx-auto max-md:mt-12 md:ml-auto md:min-w-xs">
 						<span className="text-sm">Create a room to start sharing</span>
 						<Button
 							onClick={handleCreate}
@@ -97,7 +97,7 @@ function Component() {
 									value={joinCode}
 									onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
 									onKeyUp={handleCodeKeyUp}
-									className="w-full rounded-lg border bg-muted/50 px-2 py-1.25 font-mono placeholder:text-muted-foreground"
+									className="w-full rounded-lg border bg-background px-2 py-1.25 font-mono placeholder:text-muted-foreground dark:bg-muted/50"
 								/>
 								{joinCode.length > 0 && (
 									<button

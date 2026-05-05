@@ -60,8 +60,8 @@ export function RoomArea({
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+		<>
+			<div className="flex flex-col gap-2">
 				<div className="flex gap-2">
 					<span className="flex size-9.5 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
 						<IconAccountGroup />
@@ -191,6 +191,6 @@ export function RoomArea({
 					</div>
 				</DialogContent>
 			</Dialog>
-		</div>
+		</>
 	);
 }

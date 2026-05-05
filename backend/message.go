@@ -6,7 +6,6 @@ const (
 	SignalPing           = "ping"
 	SignalError          = "error"
 	SignalIdentity       = "identity"
-	SignalRoomClosed     = "room-closed"
 	SignalRoomInfo       = "room-info"
 	SignalJoinRoom       = "join-room"
 	SignalLeaveRoom      = "leave-room"

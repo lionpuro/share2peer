@@ -71,7 +71,10 @@ export function RoomArea({
 						<p className="text-sm text-muted-foreground">{`ID: ${room.id}`}</p>
 					</div>
 					{!supportsShare && (
-						<Button onClick={copyURL} className="ml-auto gap-1.5 py-1.75">
+						<Button
+							onClick={copyURL}
+							className="ml-auto gap-1.5 py-1.75 disabled:text-white"
+						>
 							<span className="max-sm:hidden">
 								{!copiedURL ? <IconLink /> : <IconCheck />}
 							</span>
@@ -146,7 +149,7 @@ export function RoomArea({
 							disabled={copiedURL}
 							onClick={copyURL}
 							title="Copy"
-							className="basis-1/2 gap-1.5 px-3 py-1.75 disabled:bg-primary disabled:text-background disabled:hover:bg-primary-darker"
+							className="basis-1/2 gap-1.5 px-3 py-1.75 disabled:bg-primary disabled:text-white disabled:hover:bg-primary-darker"
 						>
 							{!copiedURL ? (
 								<>

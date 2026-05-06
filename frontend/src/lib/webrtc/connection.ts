@@ -100,9 +100,7 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 				},
 			});
 		});
-		this.channel.addEventListener("close", () => {
-			console.log("message channel closed");
-		});
+		this.channel.addEventListener("close", () => {});
 		this.channel.addEventListener("message", (e) => {
 			this.#onMessage(e);
 		});

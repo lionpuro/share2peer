@@ -41,7 +41,6 @@ func NewSignalHandler(origins string, us *UserService, rs *RoomService) *SignalH
 func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
 	u := createUser(conn, extractClientInfo(req))
 	h.users.Register(u)
-	log.Printf("connect user: %s", u.ID)
 	defer func() {
 		if err := h.disconnect(u); err != nil {
 			log.Printf("disconnect: %v", err)
@@ -93,7 +92,6 @@ func (h *SignalHandler) disconnect(u *User) error {
 		if err := broadcastNetworkUsers(nil, users); err != nil {
 			log.Printf("broadcast network users: %v", err)
 		}
-		log.Printf("disconnect user: %s", u.ID)
 	}()
 
 	if u.roomID == "" {

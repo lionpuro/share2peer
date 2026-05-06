@@ -18,7 +18,6 @@ import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { OutgoingMessage, Room, User } from "#/lib/schemas";
 import { useNotifications } from "#/hooks/use-notifications";
-import { joinRoom, leaveRoom, roomState } from "#/lib/signaling/room";
 import { useResult } from "#/hooks/hooks";
 import { useSignalingClient } from "#/hooks/signaling";
 import { RoomArea } from "#/components/roomarea";
@@ -42,13 +41,11 @@ function Component() {
 	const networkUsers = useStore($networkUsers);
 	const nearbyUsers = networkUsers.filter((u) => !peers[u.id]);
 
-	const { status, error } = useResult(() => joinRoom(client, id), !connected);
+	const { status, error } = useResult(() => client.joinRoom(id), !connected);
 	useEffect(() => {
 		if (!connected) return;
 		return () => {
-			if (roomState() === "active") {
-				leaveRoom(client);
-			}
+			client.leaveRoom();
 		};
 	}, [client, connected]);
 

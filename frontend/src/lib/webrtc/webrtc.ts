@@ -5,13 +5,14 @@ import { createConnection, findConnection } from "./connection";
 
 export async function createPeerConnection(
 	client: SignalingClient,
-	roomID: string,
 	user: User,
 ) {
 	const identity = $identity.get();
 	if (!identity || findConnection(user.id)) {
 		return;
 	}
+	const roomID = $room.get()?.id;
+	if (!roomID) return;
 
 	try {
 		const conn = createConnection(user, {

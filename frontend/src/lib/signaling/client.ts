@@ -8,22 +8,20 @@ import {
 	$connectionState,
 	$identity,
 	$networkUsers,
+	$room,
 	setSessionData,
 } from "#/stores/signaling";
 import {
+	createPeerConnection,
 	handleAnswer,
 	handleICECandidate,
 	handleOffer,
+	removeConnection,
 	removeConnections,
 } from "#/lib/webrtc";
-import {
-	closeRoom,
-	handleRoomInfo,
-	handleRoomLeft,
-	handleUserJoined,
-	handleUserLeft,
-} from "#/lib/signaling/room";
 import { Socket, type SocketEvent } from "#/lib/signaling/socket";
+import type { Room } from "#/lib/schemas";
+import { setUploads } from "#/stores/file";
 
 declare global {
 	interface Window {
@@ -55,6 +53,7 @@ type ConnectionState = ReturnType<typeof $connectionState.get>;
 
 export class SignalingClient extends EventEmitter<SignalingEventMap> {
 	state: ConnectionState = "disconnected";
+	#roomState: "idle" | "joining" | "active" | "failed" = "idle";
 	#socket: Socket;
 	#currentID: number = 0;
 	#transactions: Map<string, Transaction<keyof typeof RequestResponseMap>> =
@@ -140,6 +139,52 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 		await this.#socket.send(msg);
 	}
 
+	async joinRoom(id: string): Promise<Room> {
+		if (this.#roomState === "joining") {
+			throw new Error("already joining a room");
+		}
+
+		await this.leaveRoom();
+
+		try {
+			this.#roomState = "joining";
+			const resp = await this.request({
+				type: "join-room",
+				payload: { room_id: id },
+			});
+			this.#roomState = "active";
+			$room.set(resp.payload);
+			return resp.payload;
+		} catch (err) {
+			this.#roomState = "failed";
+			throw err;
+		}
+	}
+
+	async leaveRoom() {
+		const room = $room.get();
+		if (!room || (this.state !== "connected" && this.state !== "connecting")) {
+			return;
+		}
+		await this.request({
+			type: "leave-room",
+			payload: { room_id: room.id },
+		}).catch(console.error);
+		$room.set(undefined);
+		this.#roomState = "idle";
+		removeConnections();
+		setUploads([]);
+	}
+
+	async createRoom(): Promise<Room> {
+		this.#roomState = "idle";
+		await this.leaveRoom();
+		const resp = await this.request({
+			type: "create-room",
+		});
+		return resp.payload;
+	}
+
 	#onstate = (e: SocketEvent<"state">) => {
 		const state = e.detail;
 		this.state = state;
@@ -149,7 +194,8 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 			case "disconnected":
 				$identity.set(undefined);
 				removeConnections();
-				closeRoom();
+				$room.set(undefined);
+				this.#roomState = "idle";
 				break;
 		}
 	};
@@ -200,16 +246,19 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 					await handleICECandidate(message);
 					break;
 				case "room-info":
-					handleRoomInfo(message.payload);
+					$room.set(message.payload);
 					break;
 				case "room-left":
-					handleRoomLeft();
+					$room.set(undefined);
+					this.#roomState = "idle";
+					removeConnections();
+					setUploads([]);
 					break;
 				case "user-joined":
-					await handleUserJoined(this, message.payload);
+					await createPeerConnection(this, message.payload);
 					break;
 				case "user-left":
-					handleUserLeft(message.payload);
+					removeConnection(message.payload.id);
 					break;
 			}
 			this.#dispatchMessage(message);

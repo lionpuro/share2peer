@@ -11,7 +11,6 @@ import {
 	IconX,
 } from "#/components/icons";
 import { toast } from "react-toastify";
-import { createRoom } from "#/lib/signaling/room";
 import { useNotifications } from "#/hooks/use-notifications";
 import { useSignalingClient } from "#/hooks/signaling";
 
@@ -29,7 +28,7 @@ function Component() {
 	async function handleCreate() {
 		setCreating(true);
 		try {
-			const { id } = await createRoom(client);
+			const { id } = await client.createRoom();
 			navigate({ to: "/r/$id", params: { id } });
 		} catch (err) {
 			console.error("create room:", err);

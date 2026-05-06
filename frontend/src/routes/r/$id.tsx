@@ -35,10 +35,10 @@ function Component() {
 	const client = useSignalingClient();
 	const connectionState = useStore($connectionState);
 	const connected = connectionState === "connected";
-	const room = useStore($room);
-	useNotifications();
 	const identity = useStore($identity);
+	const room = useStore($room);
 	const peers = useStore($peers);
+	useNotifications();
 	const networkUsers = useStore($networkUsers);
 	const nearbyUsers = networkUsers.filter((u) => !peers[u.id]);
 

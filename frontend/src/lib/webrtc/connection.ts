@@ -64,6 +64,11 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 		conn.addEventListener("connectionstatechange", () => {
 			updatePeer(this.id, { connectionState: this.state() });
 		});
+		conn.addEventListener("iceconnectionstatechange", () => {
+			if (conn.iceConnectionState === "failed") {
+				conn.restartIce();
+			}
+		});
 		conn.addEventListener("datachannel", (e) => {
 			if (e.channel.label === "messages") {
 				this.channel = e.channel;

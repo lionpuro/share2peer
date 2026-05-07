@@ -1,6 +1,6 @@
 name: websend-dev
 services:
-  shell:
+  app:
     build:
       context: .
       dockerfile: Dockerfile.dev

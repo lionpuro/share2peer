@@ -169,7 +169,7 @@ export class PeerConnection extends TypedEventTarget<EventMap> {
 	}
 
 	async createOffer(): Promise<RTCSessionDescriptionInit> {
-		const offer = await this.connection.createOffer();
+		const offer = await this.connection.createOffer({ iceRestart: true });
 		await this.connection.setLocalDescription(offer);
 		return offer;
 	}

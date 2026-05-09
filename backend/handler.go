@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -12,13 +12,15 @@ import (
 )
 
 type SignalHandler struct {
+	log      *slog.Logger
 	users    *UserService
 	rooms    *RoomService
 	upgrader websocket.Upgrader
 }
 
-func NewSignalHandler(origins string, us *UserService, rs *RoomService) *SignalHandler {
+func NewSignalHandler(log *slog.Logger, origins string, us *UserService, rs *RoomService) *SignalHandler {
 	return &SignalHandler{
+		log:   log,
 		users: us,
 		rooms: rs,
 		upgrader: websocket.Upgrader{
@@ -41,9 +43,10 @@ func NewSignalHandler(origins string, us *UserService, rs *RoomService) *SignalH
 func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
 	u := createUser(conn, extractClientInfo(req))
 	h.users.Register(u)
+	h.log.Debug("connect user", "user", u)
 	defer func() {
 		if err := h.disconnect(u); err != nil {
-			log.Printf("disconnect: %v", err)
+			h.log.Error("error disconnecting user", "error", err)
 		}
 	}()
 
@@ -69,7 +72,7 @@ func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
 
 		var message Message
 		if err := json.Unmarshal(msg, &message); err != nil {
-			log.Printf("unmarshal message: %s", err.Error())
+			h.log.Error("failed to parse message", "error", err)
 			continue
 		}
 
@@ -85,13 +88,14 @@ func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
 func (h *SignalHandler) disconnect(u *User) error {
 	defer func() {
 		if err := u.conn.Close(); err != nil {
-			log.Printf("close connection: %v", err)
+			h.log.Error("error closing connection", "error", err)
 		}
 		h.users.Delete(u.ID)
 		users := h.users.FindByNetwork(u.networkKey)
 		if err := broadcastNetworkUsers(nil, users); err != nil {
-			log.Printf("broadcast network users: %v", err)
+			h.log.Error("failed to broadcast network users", "error", err)
 		}
+		h.log.Debug("disconnect user", "user", u)
 	}()
 
 	if u.roomID == "" {
@@ -135,7 +139,7 @@ func (h *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID s
 			return
 		}
 		if err := user.send(json); err != nil {
-			log.Printf("write json: %s", err.Error())
+			h.log.Error("failed to send message", "error", err)
 		}
 	})
 
@@ -234,13 +238,13 @@ func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 				Type:    SignalUserLeft,
 				Payload: u,
 			}, room.ID); err != nil {
-				log.Printf("join room: failed to broadcast to previous room: %v", err)
+				h.log.Error("join room: error broadcasting to old room", "error", err)
 			}
 			if err := h.broadcast(u.conn, Message{
 				Type:    SignalRoomInfo,
 				Payload: room,
 			}, room.ID); err != nil {
-				log.Printf("join room: failed to broadcast to previous room: %v", err)
+				h.log.Error("join room: error broadcasting to old room", "error", err)
 			}
 		}
 	}
@@ -332,7 +336,10 @@ func (h *SignalHandler) handleWebRTCMessage(msg Message) error {
 		}
 	}
 	if recipient == nil {
-		log.Printf("webrtc: message recipient not found")
+		h.log.Error(
+			"failed to forward webrtc message",
+			"error", fmt.Errorf("message recipient not found"),
+		)
 		return nil
 	}
 

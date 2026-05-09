@@ -6,6 +6,7 @@ services:
     environment:
       - PORT=${PORT}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - LOG_LEVEL=info
     networks:
       - app
   caddy:

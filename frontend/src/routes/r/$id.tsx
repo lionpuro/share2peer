@@ -39,7 +39,9 @@ function Component() {
 	const peers = useStore($peers);
 	useNotifications();
 	const networkUsers = useStore($networkUsers);
-	const nearbyUsers = networkUsers.filter((u) => !peers[u.id]);
+	const nearbyUsers = networkUsers.filter((usr) => {
+		return room?.users?.find((u) => u.id === usr.id) === undefined;
+	});
 
 	const { status, error } = useResult(() => client.joinRoom(id), !connected);
 	useEffect(() => {

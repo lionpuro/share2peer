@@ -8,7 +8,7 @@ import {
 	IconDownload,
 	IconFile,
 	IconReload,
-	IconStop,
+	IconTrash,
 	IconUpload,
 	IconX,
 } from "#/components/icons";
@@ -111,7 +111,7 @@ export function FileArea() {
 										onClick={() => removeFile(file.id)}
 										title="Remove"
 									>
-										<IconX />
+										<IconTrash />
 									</Button>
 								) : !transfer || transfer.status !== "active" ? (
 									<Button
@@ -135,9 +135,9 @@ export function FileArea() {
 												stopTransfer(t.id),
 											)
 										}
-										title="Stop"
+										title="Cancel transfer"
 									>
-										<IconStop />
+										<IconX />
 									</Button>
 								)}
 							</li>

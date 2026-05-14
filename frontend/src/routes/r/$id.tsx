@@ -21,6 +21,7 @@ import { useNotifications } from "#/hooks/use-notifications";
 import { useResult } from "#/hooks/hooks";
 import { useSignalingClient } from "#/hooks/signaling";
 import { RoomArea } from "#/components/roomarea";
+import { useWakeLock } from "#/hooks/use-wake-lock";
 
 export const Route = createFileRoute("/r/$id")({
 	component: Component,
@@ -50,6 +51,8 @@ function Component() {
 			client.leaveRoom();
 		};
 	}, [client, connected]);
+
+	useWakeLock();
 
 	if (connectionState === "connecting" || !identity) {
 		return <Loader />;

@@ -7,8 +7,9 @@ import { ThemeProvider } from "#/context/theme/provider";
 import { ToastContainer } from "#/components/toast";
 import { createSignalingClient } from "#/lib/signaling/client";
 import { SignalingClientProvider } from "#/context/signaling/provider";
+import { NotFound } from "#/components/not-found";
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, defaultNotFoundComponent: NotFound });
 
 declare module "@tanstack/react-router" {
 	interface Register {

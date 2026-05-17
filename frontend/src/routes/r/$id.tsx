@@ -18,8 +18,8 @@ import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
 import type { OutgoingMessage, Room, User } from "#/lib/schemas";
 import { useNotifications } from "#/hooks/use-notifications";
-import { useResult } from "#/hooks/hooks";
-import { useSignalingClient } from "#/hooks/signaling";
+import { useResult } from "#/hooks/use-result";
+import { useSignalingClient } from "#/hooks/use-signaling-client";
 import { RoomArea } from "#/components/roomarea";
 import { useWakeLock } from "#/hooks/use-wake-lock";
 

@@ -12,7 +12,7 @@ import {
 } from "#/components/icons";
 import { toast } from "react-toastify";
 import { useNotifications } from "#/hooks/use-notifications";
-import { useSignalingClient } from "#/hooks/signaling";
+import { useSignalingClient } from "#/hooks/use-signaling-client";
 
 export const Route = createFileRoute("/")({
 	component: Component,

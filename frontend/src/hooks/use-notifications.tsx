@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
 import { subscribe } from "#/lib/signaling/client";
-import { useSignalingClient } from "./signaling";
+import { useSignalingClient } from "./use-signaling-client";
 import { InviteNotification } from "#/components/toast";
 
 export function useNotifications() {

@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { $peers } from "#/stores/peer";
 import { createFileMetadata, type FileMetadata } from "#/lib/file";
-import { useTransfers } from "#/hooks/transfer";
+import { useTransfers } from "#/hooks/use-transfers";
 import { useFiles } from "#/hooks/use-files";
 import {
 	FileIcon,

@@ -2,7 +2,7 @@ import { cn } from "#/lib/helper";
 import type { ButtonHTMLAttributes } from "react";
 
 const baseStyles =
-	"rounded-lg flex items-center justify-center disabled:bg-muted disabled:text-muted-foreground";
+	"rounded-lg flex items-center justify-center disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed";
 
 const options = {
 	variants: {

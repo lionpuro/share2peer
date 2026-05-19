@@ -10,6 +10,7 @@ import {
 	$networkUsers,
 	$room,
 	setSessionData,
+	type SocketState,
 } from "#/stores/signaling";
 import {
 	createPeerConnection,
@@ -49,10 +50,8 @@ export type SignalingEvent<
 	K extends keyof SignalingEventMap = keyof SignalingEventMap,
 > = { [P in K]: { type: P } & SignalingEventMap[P] }[K];
 
-type ConnectionState = ReturnType<typeof $connectionState.get>;
-
 export class SignalingClient extends EventEmitter<SignalingEventMap> {
-	state: ConnectionState = "disconnected";
+	state: SocketState = "disconnected";
 	#roomState: "idle" | "joining" | "active" | "failed" = "idle";
 	#socket: Socket;
 	#currentID: number = 0;
@@ -68,7 +67,7 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 		socket.addEventListener("message", this.#onmessage);
 	}
 
-	#setState(v: ConnectionState) {
+	#setState(v: SocketState) {
 		this.state = v;
 		if (!this.#destroyed) {
 			$connectionState.set(v);

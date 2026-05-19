@@ -1,9 +1,13 @@
 import { atom } from "nanostores";
 import type { User, Room } from "#/lib/schemas";
 
-type ConnectionState = "disconnected" | "connecting" | "connected" | "failed";
+export type SocketState =
+	| "disconnected"
+	| "connecting"
+	| "connected"
+	| "failed";
 
-export const $connectionState = atom<ConnectionState>("disconnected");
+export const $connectionState = atom<SocketState>("disconnected");
 
 export const $identity = atom<User | undefined>();
 

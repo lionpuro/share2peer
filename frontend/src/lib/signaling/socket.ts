@@ -4,14 +4,12 @@ import {
 	type IncomingMessage,
 	type OutgoingMessage,
 } from "#/lib/schemas/signaling";
-import { getSessionData } from "#/stores/signaling";
+import { getSessionData, type SocketState } from "#/stores/signaling";
 import { stringToBase64 } from "#/lib/helper";
-
-type ConnectionState = "disconnected" | "connecting" | "connected";
 
 export type SocketEventMap = {
 	message: CustomEvent<IncomingMessage>;
-	state: CustomEvent<ConnectionState>;
+	state: CustomEvent<SocketState>;
 	error: CustomEvent<Error>;
 };
 
@@ -25,7 +23,7 @@ type SocketConfig = {
 };
 
 export class Socket extends TypedEventTarget<SocketEventMap> {
-	state: ConnectionState = "disconnected";
+	state: SocketState = "disconnected";
 	#config: SocketConfig;
 	#ws: WebSocket | undefined = undefined;
 	#reconnectAttempts: number = 0;
@@ -52,7 +50,7 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 		return this.#ws;
 	}
 
-	#setState(v: ConnectionState) {
+	#setState(v: SocketState) {
 		this.state = v;
 		if (!this.#destroyed) {
 			this.dispatchTypedEvent("state", new CustomEvent("state", { detail: v }));

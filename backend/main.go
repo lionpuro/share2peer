@@ -11,7 +11,8 @@ import (
 )
 
 func main() {
-	logger := NewLogger(getLogLevel())
+	format := strings.ToLower(os.Getenv("LOG_FORMAT"))
+	logger := NewLogger(getLogLevel(), format)
 	origins := os.Getenv("ALLOWED_ORIGINS")
 	sh := NewSignalHandler(
 		logger,

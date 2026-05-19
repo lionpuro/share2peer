@@ -11,25 +11,31 @@ import (
 	"time"
 )
 
-func NewLogger(level slog.Level) *slog.Logger {
-	return slog.New(NewLogHandler(os.Stdout, &slog.HandlerOptions{
+func NewLogger(level slog.Level, format string) *slog.Logger {
+	if format == "json" {
+		return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: false,
+			Level:     level,
+		}))
+	}
+	return slog.New(NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: false,
 		Level:     level,
 	}))
 }
 
-type LogHandler struct {
+type TextHandler struct {
 	opts slog.HandlerOptions
 	h    slog.Handler
 	mu   *sync.Mutex
 	out  io.Writer
 }
 
-func NewLogHandler(w io.Writer, opts *slog.HandlerOptions) *LogHandler {
+func NewTextHandler(w io.Writer, opts *slog.HandlerOptions) *TextHandler {
 	if opts == nil {
 		opts = &slog.HandlerOptions{}
 	}
-	h := &LogHandler{
+	h := &TextHandler{
 		opts: *opts,
 		h: slog.NewTextHandler(w, &slog.HandlerOptions{
 			Level:       opts.Level,
@@ -42,19 +48,19 @@ func NewLogHandler(w io.Writer, opts *slog.HandlerOptions) *LogHandler {
 	return h
 }
 
-func (h *LogHandler) Enabled(ctx context.Context, level slog.Level) bool {
+func (h *TextHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return h.h.Enabled(ctx, level)
 }
 
-func (h *LogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &LogHandler{h: h.h.WithAttrs(attrs), out: h.out, mu: h.mu}
+func (h *TextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &TextHandler{h: h.h.WithAttrs(attrs), out: h.out, mu: h.mu}
 }
 
-func (h *LogHandler) WithGroup(name string) slog.Handler {
-	return &LogHandler{h: h.h.WithGroup(name), out: h.out, mu: h.mu}
+func (h *TextHandler) WithGroup(name string) slog.Handler {
+	return &TextHandler{h: h.h.WithGroup(name), out: h.out, mu: h.mu}
 }
 
-func (h *LogHandler) Handle(ctx context.Context, r slog.Record) error {
+func (h *TextHandler) Handle(ctx context.Context, r slog.Record) error {
 	var buf []byte
 
 	if !r.Time.IsZero() {
@@ -82,7 +88,7 @@ func (h *LogHandler) Handle(ctx context.Context, r slog.Record) error {
 	return err
 }
 
-func (h *LogHandler) appendAttr(buf []byte, a slog.Attr) []byte {
+func (h *TextHandler) appendAttr(buf []byte, a slog.Attr) []byte {
 	if a.Equal(slog.Attr{}) {
 		return buf
 	}

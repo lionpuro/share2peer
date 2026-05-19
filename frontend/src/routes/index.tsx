@@ -13,6 +13,8 @@ import {
 import { toast } from "react-toastify";
 import { useNotifications } from "#/hooks/use-notifications";
 import { useSignalingClient } from "#/hooks/use-signaling-client";
+import { useStore } from "@nanostores/react";
+import { $connectionState } from "#/stores/signaling";
 
 export const Route = createFileRoute("/")({
 	component: Component,
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/")({
 function Component() {
 	const navigate = useNavigate();
 	const client = useSignalingClient();
+	const connectionState = useStore($connectionState);
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
 	useNotifications();
@@ -76,8 +79,8 @@ function Component() {
 						<span className="text-sm">Create a room to start sharing</span>
 						<Button
 							onClick={handleCreate}
-							className="gap-1"
-							disabled={creating}
+							className="gap-1 disabled:bg-secondary"
+							disabled={creating || connectionState !== "connected"}
 						>
 							<IconPlus />
 							New Room

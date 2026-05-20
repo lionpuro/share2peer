@@ -11,12 +11,13 @@ import (
 )
 
 func main() {
-	format := strings.ToLower(os.Getenv("LOG_FORMAT"))
-	logger := NewLogger(getLogLevel(), format)
-	origins := os.Getenv("ALLOWED_ORIGINS")
+	logger := NewLogger(
+		getLogLevel(),
+		strings.ToLower(getenv("LOG_FORMAT", "text")),
+	)
 	sh := NewSignalHandler(
 		logger,
-		origins,
+		getenv("ALLOWED_ORIGINS", ""),
 		NewUserService(),
 		NewRoomService(NewRoomStore()),
 	)
@@ -50,6 +51,14 @@ func main() {
 
 	logger.Info(fmt.Sprintf("Listening on %s...", s.Addr))
 	log.Fatal(s.ListenAndServe())
+}
+
+func getenv(key string, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
 }
 
 func getLogLevel() slog.Level {

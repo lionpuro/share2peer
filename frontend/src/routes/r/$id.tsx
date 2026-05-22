@@ -12,7 +12,6 @@ import { $peers } from "#/stores/peer";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { Loader } from "#/components/ui/loader";
-import { ErrorComponent } from "#/components/error";
 import { IconWireless } from "#/components/icons";
 import { FileArea } from "#/components/filearea";
 import { Heading } from "#/components/ui/heading";
@@ -141,14 +140,15 @@ function InviteArea({
 
 function RoomError({ message }: { message: string }) {
 	return (
-		<ErrorComponent error={toTitleCase(message)}>
+		<div className="my-12 flex flex-col items-center">
+			<h1 className="mb-3 text-lg font-semibold">{toTitleCase(message)}</h1>
 			<Link
 				to="/"
-				className="rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-darker"
+				className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
 			>
-				Back
+				Home
 			</Link>
-		</ErrorComponent>
+		</div>
 	);
 }
 

@@ -29,7 +29,7 @@ function ThemeSwitch() {
 				theme === opt.key ? null : (
 					<button
 						key={opt.key}
-						title={opt.label}
+						title={`Switch to ${opt.label.toLowerCase()}`}
 						popoverTarget="theme-dropdown"
 						popoverTargetAction="hide"
 						onClick={() => setTheme(opt.key)}

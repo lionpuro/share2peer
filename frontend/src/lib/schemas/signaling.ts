@@ -23,7 +23,7 @@ function message<T extends string, P extends z.ZodMiniType>(
 const PING = "ping";
 const ERROR = "error";
 const IDENTITY = "identity";
-const ROOM_INFO = "room-info";
+const ROOM_STATE = "room-state";
 const USER_JOINED = "user-joined";
 const USER_LEFT = "user-left";
 const OFFER = "offer";
@@ -123,7 +123,7 @@ export type OutgoingMessage = RawMessage &
 export const incomingMessageSchemas = {
 	[ERROR]: message(ERROR, ErrorPayloadSchema),
 	[IDENTITY]: message(IDENTITY, UserSchema),
-	[ROOM_INFO]: message(ROOM_INFO, RoomSchema),
+	[ROOM_STATE]: message(ROOM_STATE, RoomSchema),
 	[USER_JOINED]: message(USER_JOINED, UserSchema),
 	[USER_LEFT]: message(USER_LEFT, UserSchema),
 	[ROOM_CREATED]: message(ROOM_CREATED, RoomSchema),

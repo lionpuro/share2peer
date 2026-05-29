@@ -119,10 +119,10 @@ func (h *SignalHandler) disconnect(u *User) error {
 	}
 
 	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomInfo,
+		Type:    SignalRoomState,
 		Payload: room,
 	}, roomID); err != nil {
-		return fmt.Errorf("broadcast room-info: %v", err)
+		return fmt.Errorf("broadcast room state: %v", err)
 	}
 
 	return nil
@@ -241,7 +241,7 @@ func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 				h.log.Error("join room: error broadcasting to old room", "error", err)
 			}
 			if err := h.broadcast(u.conn, Message{
-				Type:    SignalRoomInfo,
+				Type:    SignalRoomState,
 				Payload: room,
 			}, room.ID); err != nil {
 				h.log.Error("join room: error broadcasting to old room", "error", err)
@@ -260,7 +260,7 @@ func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
 	}
 
 	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomInfo,
+		Type:    SignalRoomState,
 		Payload: room,
 	}, room.ID); err != nil {
 		return err
@@ -306,7 +306,7 @@ func (h *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
 	}
 
 	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomInfo,
+		Type:    SignalRoomState,
 		Payload: room,
 	}, room.ID); err != nil {
 		return err

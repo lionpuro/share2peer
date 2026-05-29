@@ -244,7 +244,7 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 				case "ice-candidate":
 					await handleICECandidate(message);
 					break;
-				case "room-info":
+				case "room-state":
 					$room.set(message.payload);
 					break;
 				case "room-left":
@@ -281,7 +281,7 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 		} = {
 			error: dispatch,
 			identity: dispatch,
-			"room-info": dispatch,
+			"room-state": dispatch,
 			"user-joined": dispatch,
 			"user-left": dispatch,
 			offer: dispatch,

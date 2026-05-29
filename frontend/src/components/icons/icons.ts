@@ -4,6 +4,7 @@ export type IconProps = SVGProps<SVGSVGElement>;
 
 export { default as Logo } from "~icons/mingcute/send-plane-fill";
 
+export { default as IconAccount } from "~icons/mdi/account";
 export { default as IconAccountGroup } from "~icons/mdi/account-group";
 export { default as IconUpload } from "~icons/mdi/upload";
 export { default as IconDownload } from "~icons/mdi/download";

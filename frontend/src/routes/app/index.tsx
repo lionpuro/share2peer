@@ -1,14 +1,26 @@
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-toastify";
-import { IconArrowRight, IconPlus, IconX } from "#/components/icons";
+import {
+	IconAccount,
+	IconArrowRight,
+	IconPencil,
+	IconPlus,
+	IconX,
+} from "#/components/icons";
 import { Main } from "#/components/ui/main";
 import { Button } from "#/components/ui/button";
 import { useSignalingClient } from "#/hooks/use-signaling-client";
 import { useStore } from "@nanostores/react";
-import { $connectionState, $identity } from "#/stores/signaling";
+import {
+	$connectionState,
+	$identity,
+	setSessionData,
+} from "#/stores/signaling";
 import { useNotifications } from "#/hooks/use-notifications";
 import { Loader } from "#/components/ui/loader";
+import { Dialog, DialogContent } from "#/components/ui/dialog";
+import { Heading } from "#/components/ui/heading";
 
 export const Route = createFileRoute("/app/")({
 	component: Component,
@@ -21,7 +33,16 @@ function Component() {
 	const identity = useStore($identity);
 	const [joinCode, setJoinCode] = useState("");
 	const [creating, setCreating] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
 	useNotifications();
+	const usernameRef = useRef<HTMLInputElement>(null);
+
+	function updateUsername() {
+		const username = usernameRef.current?.value;
+		if (!username) return;
+		setSessionData({ username });
+		window.location.reload();
+	}
 
 	async function handleCreate() {
 		setCreating(true);
@@ -69,7 +90,27 @@ function Component() {
 
 	return (
 		<Main>
-			<div className="max-sm:my-auto sm:mt-24 mx-auto flex w-full max-w-screen-sm flex-col items-center max-sm:pb-14">
+			<div className="mx-auto flex w-full flex-col items-center max-sm:pb-14">
+				<div className="mx-auto mb-4 flex w-full max-w-xs gap-2 rounded-xl border bg-card/50 p-3">
+					<span className="flex size-9.5 shrink-0 items-center justify-center rounded-lg bg-primary/20 text-lg text-primary">
+						<IconAccount />
+					</span>
+					<div className="flex flex-1 flex-col justify-between">
+						<div className="flex items-center leading-none">
+							{identity.username}
+							<button
+								title="Edit username"
+								className="ml-1 text-muted-foreground/80"
+								onClick={() => setEditOpen(true)}
+							>
+								<IconPencil />
+							</button>
+						</div>
+						<span className="text-sm font-medium text-muted-foreground">
+							{identity.device_name}
+						</span>
+					</div>
+				</div>
 				<div className="flex w-full max-w-xs flex-col gap-2 rounded-xl border bg-card/50 p-6 max-md:mx-auto md:min-w-xs">
 					<span className="font-bold">Create a room</span>
 					<Button
@@ -118,6 +159,31 @@ function Component() {
 					</Link>
 				</div>
 			</div>
+			<Dialog open={editOpen} onClose={() => setEditOpen(false)}>
+				<DialogContent>
+					<Heading order={2} className="mb-4 focus:outline-none">
+						Edit username
+					</Heading>
+					<input
+						ref={usernameRef}
+						defaultValue={identity.username}
+						onKeyDown={(e) => e.key === "Enter" && updateUsername()}
+						className="mb-4 rounded-lg border bg-card px-3 py-1.25"
+					/>
+					<div className="flex gap-4">
+						<Button
+							onClick={() => setEditOpen(false)}
+							className="basis-1/2 bg-secondary/80 hover:bg-secondary"
+							variant="secondary"
+						>
+							Cancel
+						</Button>
+						<Button onClick={updateUsername} className="basis-1/2">
+							Save
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</Main>
 	);
 }

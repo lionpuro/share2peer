@@ -1,17 +1,14 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { cn } from "#/lib/helper";
 import type { Room, User } from "#/lib/schemas";
 import type { PeerState } from "#/stores/peer";
-import { setSessionData } from "#/stores/signaling";
 import { Heading } from "#/components/ui/heading";
 import { Button } from "#/components/ui/button";
-import { Dialog, DialogContent } from "#/components/ui/dialog";
 import {
 	IconAccountGroup,
 	IconCheck,
 	IconCopy,
 	IconLink,
-	IconPencil,
 	IconShare,
 } from "#/components/icons";
 
@@ -31,10 +28,8 @@ export function RoomArea({
 				return peers[u.id] || { ...u, connectionState: "disconnected" };
 			}) || [];
 
-	const [editOpen, setEditOpen] = useState(false);
 	const [copiedURL, setCopiedURL] = useState(false);
 	const roomURL = `${window.location.protocol}//${window.location.host}/r/${room.id}`;
-	const usernameRef = useRef<HTMLInputElement>(null);
 
 	function copyURL() {
 		setCopiedURL(true);
@@ -50,13 +45,6 @@ export function RoomArea({
 		if (supportsShare) {
 			navigator.share({ url: roomURL });
 		}
-	}
-
-	function updateUsername() {
-		const username = usernameRef.current?.value;
-		if (!username) return;
-		setSessionData({ username });
-		window.location.reload();
 	}
 
 	return (
@@ -87,13 +75,6 @@ export function RoomArea({
 						<div className="flex flex-1 flex-col justify-between">
 							<div className="flex items-center leading-none">
 								{identity.username}
-								<button
-									title="Edit username"
-									className="ml-1 text-muted-foreground/80"
-									onClick={() => setEditOpen(true)}
-								>
-									<IconPencil />
-								</button>
 								<span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
 									YOU
 								</span>
@@ -166,31 +147,6 @@ export function RoomArea({
 					</div>
 				)}
 			</div>
-			<Dialog open={editOpen} onClose={() => setEditOpen(false)}>
-				<DialogContent>
-					<Heading order={2} className="mb-4 focus:outline-none">
-						Edit username
-					</Heading>
-					<input
-						ref={usernameRef}
-						defaultValue={identity.username}
-						onKeyDown={(e) => e.key === "Enter" && updateUsername()}
-						className="mb-4 rounded-lg border bg-card px-3 py-1.25"
-					/>
-					<div className="flex gap-4">
-						<Button
-							onClick={() => setEditOpen(false)}
-							className="basis-1/2 bg-secondary/80 hover:bg-secondary"
-							variant="secondary"
-						>
-							Cancel
-						</Button>
-						<Button onClick={updateUsername} className="basis-1/2">
-							Save
-						</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
 		</>
 	);
 }

@@ -6,7 +6,7 @@ export function NotFound() {
 			<span className="mb-2 text-5xl font-bold">404</span>
 			<h1 className="mb-4">Page not found</h1>
 			<Link
-				to="/"
+				to="/app"
 				className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
 			>
 				Home

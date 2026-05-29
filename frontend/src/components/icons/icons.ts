@@ -4,6 +4,7 @@ export type IconProps = SVGProps<SVGSVGElement>;
 
 export { default as Logo } from "~icons/mingcute/send-plane-fill";
 
+export { default as IconAccount } from "~icons/mdi/account";
 export { default as IconAccountGroup } from "~icons/mdi/account-group";
 export { default as IconUpload } from "~icons/mdi/upload";
 export { default as IconDownload } from "~icons/mdi/download";
@@ -18,7 +19,7 @@ export { default as IconMobile } from "~icons/mdi/mobile-phone";
 export { default as IconConnect } from "~icons/mdi/lan-connect";
 export { default as IconInfinity } from "~icons/mdi/infinity";
 export { default as IconGithub } from "~icons/mdi/github";
-export { default as IconArrowLeft } from "~icons/mdi/arrow-left";
+export { default as IconArrowRight } from "~icons/mdi/arrow-right";
 export { default as IconPlus } from "~icons/mdi/plus";
 export { default as IconLink } from "~icons/mdi/link-variant";
 export { default as IconShare } from "~icons/mdi/share-variant";

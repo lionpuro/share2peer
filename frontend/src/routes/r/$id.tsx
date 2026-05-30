@@ -43,7 +43,7 @@ function Component() {
 		return room?.users?.find((u) => u.id === usr.id) === undefined;
 	});
 
-	const { status, error } = useResult(() => client.joinRoom(id), !connected);
+	const { status, error } = useResult(() => client.joinRoom(id), connected);
 	useEffect(() => {
 		if (!connected) return;
 		return () => {

@@ -53,8 +53,28 @@ function Component() {
 
 	useWakeLock();
 
-	if (connectionState === "connecting" || !identity) {
+	if (
+		connectionState === "disconnected" ||
+		connectionState === "connecting" ||
+		!identity
+	) {
 		return <Loader />;
+	}
+	if (connectionState === "failed") {
+		return (
+			<div className="my-16 flex flex-col items-center">
+				<h1 className="mb-2 text-2xl font-bold">Connection error</h1>
+				<p className="mb-4 text-muted-foreground">
+					Failed to connect to the signaling server
+				</p>
+				<button
+					onClick={() => window.location.reload()}
+					className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-darker"
+				>
+					Retry
+				</button>
+			</div>
+		);
 	}
 
 	if (status === "pending") {
@@ -69,10 +89,6 @@ function Component() {
 
 	if (!room) {
 		return <RoomError message="Room not found" />;
-	}
-
-	if (connectionState !== "connected") {
-		return "Failed to connect";
 	}
 
 	return (

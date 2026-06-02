@@ -64,18 +64,14 @@ function Component() {
 		navigate({ to: "/r/$id", params: { id: joinCode } });
 	}
 
-	if (
-		connectionState === "disconnected" ||
-		connectionState === "connecting" ||
-		!identity
-	) {
+	if (connectionState === "disconnected" || connectionState === "connecting") {
 		return <Loader />;
 	}
 	if (connectionState === "failed") {
 		return (
 			<div className="my-16 flex flex-col items-center">
-				<h1 className="mb-2 text-2xl font-bold">Connection error</h1>
-				<p className="mb-4 text-muted-foreground">
+				<h1 className="mb-1 text-2xl font-bold">Connection error</h1>
+				<p className="mb-3 text-muted-foreground">
 					Failed to connect to the signaling server
 				</p>
 				<button
@@ -86,6 +82,9 @@ function Component() {
 				</button>
 			</div>
 		);
+	}
+	if (!identity) {
+		return <Loader />;
 	}
 
 	return (

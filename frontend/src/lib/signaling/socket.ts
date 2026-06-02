@@ -20,6 +20,7 @@ type SocketConfig = {
 	pingInterval: number;
 	minReconnectDelay: number;
 	maxReconnectDelay: number;
+	autoReconnectAttempts?: number;
 };
 
 export class Socket extends TypedEventTarget<SocketEventMap> {
@@ -100,10 +101,19 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 			cfg.minReconnectDelay,
 			cfg.maxReconnectDelay,
 		);
+
+		if (
+			cfg.autoReconnectAttempts &&
+			this.#reconnectAttempts >= cfg.autoReconnectAttempts
+		) {
+			this.#setState("failed");
+			return;
+		}
 		this.#reconnectAttempts += 1;
 		this.#reconnectTimeout = setTimeout(() => {
 			this.#reconnectTimeout = undefined;
-			this.connect().catch(() => {
+			this.connect().catch((err) => {
+				console.error(err);
 				if (!this.#destroyed) {
 					this.#scheduleReconnect();
 				}

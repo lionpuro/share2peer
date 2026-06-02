@@ -313,6 +313,7 @@ export function createSignalingClient(url: string): SignalingClient {
 		pingInterval: 55 * 1000,
 		minReconnectDelay: 1000,
 		maxReconnectDelay: 15 * 1000,
+		autoReconnectAttempts: 3,
 	});
 	window.__WEBSEND_CLIENT = new SignalingClient(socket);
 	return window.__WEBSEND_CLIENT;

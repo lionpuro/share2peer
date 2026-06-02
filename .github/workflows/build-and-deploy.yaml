@@ -1,4 +1,4 @@
-name: Build backend
+name: Build and deploy backend
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "backend/**"
-      - ".github/workflows/build.yaml"
+      - ".github/workflows/build-and-deploy.yaml"
   workflow_dispatch:
     branches:
       - main
@@ -36,3 +36,20 @@ jobs:
             backend
           docker push ghcr.io/lionpuro/websend-backend:${{ github.sha }}
           docker push ghcr.io/lionpuro/websend-backend:latest
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Deploy
+        env:
+          PORT: ${{ secrets.PORT }}
+          ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: PORT,ALLOWED_ORIGINS
+          script_path: infra/pull.sh

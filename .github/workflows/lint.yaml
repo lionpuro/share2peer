@@ -30,6 +30,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: stable
+          cache-dependency-path: "**/go.mod"
       - name: Run linters
         uses: golangci/golangci-lint-action@v9
         with:

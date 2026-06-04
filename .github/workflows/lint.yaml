@@ -6,9 +6,36 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+              - 'package*.json'
+            workflows:
+              - '.github/workflows/lint.yaml'
+              - '.github/workflows/ci.yaml'
   lint-frontend:
+    needs: [changes]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.changes.outputs.workflows == 'true' ||
+      needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,6 +49,11 @@ jobs:
       - name: Run linters
         run: npm run lint:frontend
   lint-backend:
+    needs: [changes]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      needs.changes.outputs.workflows == 'true' ||
+      needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

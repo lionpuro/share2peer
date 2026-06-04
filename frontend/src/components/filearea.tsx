@@ -1,3 +1,4 @@
+import { useCallback, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { $peers } from "#/stores/peer";
 import { createFileMetadata, type FileMetadata } from "#/lib/file";
@@ -36,6 +37,25 @@ export function FileArea() {
 		});
 		addFiles(uploads);
 	};
+
+	const handlePaste = useCallback(
+		(e: ClipboardEvent) => {
+			const pasted = [...(e.clipboardData?.files || [])];
+			const uploads = pasted.map((file) => {
+				const meta = createFileMetadata(file);
+				return { ...meta, file: file };
+			});
+			addFiles(uploads);
+		},
+		[addFiles],
+	);
+
+	useEffect(() => {
+		document.addEventListener("paste", handlePaste);
+		return () => {
+			document.removeEventListener("paste", handlePaste);
+		};
+	}, [handlePaste]);
 
 	return (
 		<div className="flex flex-col gap-4">

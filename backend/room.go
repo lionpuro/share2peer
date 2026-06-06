@@ -9,9 +9,9 @@ import (
 )
 
 type Room struct {
-	ID    string       `json:"id"`
-	mu    sync.RWMutex `json:"-"`
-	Users []*User      `json:"users"`
+	ID    string  `json:"id"`
+	Users []*User `json:"users"`
+	mu    sync.RWMutex
 }
 
 func (s *Room) AddUser(u *User) {

@@ -16,16 +16,16 @@ import (
 )
 
 type User struct {
-	ID         uuid.UUID       `json:"id"`
-	Username   string          `json:"username"`
-	DeviceType string          `json:"device_type"`
-	DeviceName string          `json:"device_name"`
-	networkKey string          `json:"-"`
-	roomID     string          `json:"-"`
-	conn       *websocket.Conn `json:"-"`
+	ID         uuid.UUID `json:"id"`
+	Username   string    `json:"username"`
+	DeviceType string    `json:"device_type"`
+	DeviceName string    `json:"device_name"`
+	networkKey string
+	roomID     string
+	conn       *websocket.Conn
+	hub        *Hub
 	// send is a buffered channel for outbound messages
-	send chan Message `json:"-"`
-	hub  *Hub         `json:"-"`
+	send chan Message
 }
 
 func createUser(hub *Hub, conn *websocket.Conn, info clientInfo) *User {

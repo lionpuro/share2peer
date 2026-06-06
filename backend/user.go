@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -20,10 +23,12 @@ type User struct {
 	networkKey string          `json:"-"`
 	roomID     string          `json:"-"`
 	conn       *websocket.Conn `json:"-"`
-	mu         sync.Mutex      `json:"-"`
+	// send is a buffered channel for outbound messages
+	send chan Message `json:"-"`
+	hub  *Hub         `json:"-"`
 }
 
-func createUser(conn *websocket.Conn, info clientInfo) *User {
+func createUser(hub *Hub, conn *websocket.Conn, info clientInfo) *User {
 	return &User{
 		ID:         uuid.New(),
 		Username:   info.username,
@@ -31,13 +36,70 @@ func createUser(conn *websocket.Conn, info clientInfo) *User {
 		DeviceName: info.deviceName,
 		networkKey: getNetworkKey(info.ip),
 		conn:       conn,
+		send:       make(chan Message, 256),
+		hub:        hub,
 	}
 }
 
-func (u *User) send(v any) error {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	return u.conn.WriteJSON(v)
+// readPump pumps messages from the connection to the hub.
+//
+// The application runs readPump in a per-connection goroutine and ensures
+// ensures that there is at most one reader on a connection by executing all
+// reads from this goroutine.
+func (u *User) readPump() {
+	hub := u.hub
+	defer func() {
+		hub.unregister <- u
+		if err := u.conn.Close(); err != nil {
+			if !errors.Is(err, net.ErrClosed) {
+				hub.log.Error("error closing connection", "error", err)
+			}
+		}
+	}()
+
+	for {
+		_, msg, err := u.conn.ReadMessage()
+		if err != nil {
+			if isUnexpectedCloseError(err) {
+				hub.log.Error("unexpected close error", "error", err)
+			}
+			return
+		}
+
+		var message Message
+		if err := json.Unmarshal(msg, &message); err != nil {
+			hub.log.Error("failed to parse message", "error", err)
+			continue
+		}
+
+		message.user = u
+		hub.send <- message
+	}
+}
+
+// writePump pumps messages from the hub to the connection.
+//
+// A goroutine running writePump is started for each connection.
+// The application ensures that there is at most one writer to a connection by
+// executing all writes from this goroutine.
+func (u *User) writePump() {
+	hub := u.hub
+	defer func() {
+		if err := u.conn.Close(); err != nil {
+			if !errors.Is(err, net.ErrClosed) {
+				hub.log.Error("error closing connection", "error", err)
+			}
+		}
+	}()
+
+	for msg := range u.send {
+		if err := u.conn.SetWriteDeadline(time.Now().Add(10 * time.Second)); err != nil {
+			hub.log.Error("write deadline exceeded", "error", err)
+		}
+		if err := u.conn.WriteJSON(msg); err != nil {
+			return
+		}
+	}
 }
 
 type UserService struct {
@@ -53,7 +115,7 @@ func NewUserService() *UserService {
 	}
 }
 
-func (s *UserService) Register(user *User) {
+func (s *UserService) Add(user *User) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -15,34 +14,18 @@ func main() {
 		getLogLevel(),
 		strings.ToLower(getenv("LOG_FORMAT", "text")),
 	)
-	sh := NewSignalHandler(
+
+	hub := NewHub(
 		logger,
-		getenv("ALLOWED_ORIGINS", ""),
 		NewUserService(),
 		NewRoomService(NewRoomStore()),
 	)
+	go hub.run()
+
+	handle := handler(hub, getenv("ALLOWED_ORIGINS", ""))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/socket", func(w http.ResponseWriter, r *http.Request) {
-		(w).Header().Set("Access-Control-Allow-Origin", "*")
-		conn, err := sh.upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			if strings.Contains(err.Error(), "websocket: request origin not allowed by Upgrader.CheckOrigin") {
-				return
-			}
-			if !strings.Contains(err.Error(), "the client is not using the websocket protocol") {
-				logger.Error("failed to upgrade request", "error", err)
-			}
-			return
-		}
-		if err := sh.serve(conn, r); err != nil {
-			if errors.Is(err, ErrUnknownMessageType) {
-				return
-			}
-			logger.Error("error serving websocket", "error", err)
-			return
-		}
-	})
+	mux.HandleFunc("/socket", handle)
 
 	s := &http.Server{
 		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),

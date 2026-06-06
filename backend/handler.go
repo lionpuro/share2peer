@@ -1,403 +1,45 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/websocket"
 )
 
-type SignalHandler struct {
-	log      *slog.Logger
-	users    *UserService
-	rooms    *RoomService
-	upgrader websocket.Upgrader
-}
-
-func NewSignalHandler(log *slog.Logger, origins string, us *UserService, rs *RoomService) *SignalHandler {
-	return &SignalHandler{
-		log:   log,
-		users: us,
-		rooms: rs,
-		upgrader: websocket.Upgrader{
-			CheckOrigin: func(r *http.Request) bool {
-				if origins == "*" {
+func handler(hub *Hub, origins string) http.HandlerFunc {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			if origins == "*" {
+				return true
+			}
+			origin := r.Header.Get("Origin")
+			for o := range strings.SplitSeq(origins, ",") {
+				if origin == o {
 					return true
 				}
-				origin := r.Header.Get("Origin")
-				for _, o := range strings.Split(origins, ",") {
-					if origin == o {
-						return true
-					}
-				}
-				return false
-			},
+			}
+			return false
 		},
 	}
-}
 
-func (h *SignalHandler) serve(conn *websocket.Conn, req *http.Request) error {
-	u := createUser(conn, extractClientInfo(req))
-	h.users.Register(u)
-	h.log.Debug("connect user", "user", u)
-	defer func() {
-		if err := h.disconnect(u); err != nil {
-			h.log.Error("error disconnecting user", "error", err)
-		}
-	}()
-
-	if err := u.send(Message{
-		Type:    SignalIdentity,
-		Payload: u,
-	}); err != nil {
-		return err
-	}
-
-	if err := broadcastNetworkUsers(nil, h.users.FindByNetwork(u.networkKey)); err != nil {
-		return err
-	}
-
-	for {
-		_, msg, err := conn.ReadMessage()
+	return func(w http.ResponseWriter, r *http.Request) {
+		(w).Header().Set("Access-Control-Allow-Origin", "*")
+		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			if !isUnexpectedCloseError(err) {
-				return nil
+			if strings.Contains(err.Error(), "websocket: request origin not allowed by Upgrader.CheckOrigin") {
+				return
 			}
-			return fmt.Errorf("read message: %v", err)
-		}
-
-		var message Message
-		if err := json.Unmarshal(msg, &message); err != nil {
-			h.log.Error("failed to parse message", "error", err)
-			continue
-		}
-
-		if err := h.handleMessage(u, message); err != nil {
-			if !isUnexpectedCloseError(err) {
-				return nil
+			if !strings.Contains(err.Error(), "the client is not using the websocket protocol") {
+				hub.log.Error("failed to upgrade request", "error", err)
 			}
-			return err
-		}
-	}
-}
-
-func (h *SignalHandler) disconnect(u *User) error {
-	defer func() {
-		if err := u.conn.Close(); err != nil {
-			h.log.Error("error closing connection", "error", err)
-		}
-		h.users.Delete(u.ID)
-		users := h.users.FindByNetwork(u.networkKey)
-		if err := broadcastNetworkUsers(nil, users); err != nil {
-			h.log.Error("failed to broadcast network users", "error", err)
-		}
-		h.log.Debug("disconnect user", "user", u)
-	}()
-
-	if u.roomID == "" {
-		return nil
-	}
-
-	roomID := u.roomID
-	room, err := h.rooms.RemoveUser(roomID, u)
-	if err != nil {
-		if !errors.Is(err, ErrRoomNotFound) {
-			return err
-		}
-		return nil
-	}
-
-	if err := h.broadcast(u.conn, Message{
-		Type:    SignalUserLeft,
-		Payload: u,
-	}, roomID); err != nil {
-		return fmt.Errorf("broadcast user-left: %v", err)
-	}
-
-	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomState,
-		Payload: room,
-	}, roomID); err != nil {
-		return fmt.Errorf("broadcast room state: %v", err)
-	}
-
-	return nil
-}
-
-func (h *SignalHandler) broadcast(sender *websocket.Conn, json Message, roomID string) error {
-	room, err := h.rooms.Get(roomID)
-	if err != nil {
-		return err
-	}
-
-	room.ForEachUser(func(user *User) {
-		if user.conn == sender {
 			return
 		}
-		if err := user.send(json); err != nil {
-			h.log.Error("failed to send message", "error", err)
-		}
-	})
 
-	return nil
-}
+		user := createUser(hub, conn, extractClientInfo(r))
+		hub.register <- user
 
-func (h *SignalHandler) handleMessage(u *User, msg Message) error {
-	switch msg.Type {
-	case SignalInviteToRoom:
-		return h.handleInviteToRoom(u, msg)
-	case SignalCreateRoom:
-		return h.handleCreateRoom(u, msg)
-	case SignalJoinRoom:
-		return h.handleJoinRoom(u, msg)
-	case SignalLeaveRoom:
-		return h.handleLeaveRoom(u, msg)
-	case SignalAnswer, SignalOffer, SignalICECandidate:
-		return h.handleWebRTCMessage(msg)
-	case SignalPing:
-		return nil
-	default:
-		return ErrUnknownMessageType
+		go user.writePump()
+		go user.readPump()
 	}
-}
-
-func (h *SignalHandler) handleInviteToRoom(u *User, msg Message) error {
-	payload, err := unmarshal[InviteToRoomPayload](msg.Payload)
-	if err != nil {
-		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
-	}
-
-	to, ok := h.users.FindByID(payload.UserID)
-	if !ok {
-		return nil
-	}
-	if to.networkKey != u.networkKey {
-		return nil
-	}
-
-	return to.send(Message{
-		Type: SignalRoomInvitation,
-		Payload: map[string]any{
-			"from":    u,
-			"room_id": payload.RoomID,
-		},
-	})
-}
-
-func (h *SignalHandler) handleCreateRoom(u *User, msg Message) error {
-	room, err := h.rooms.Create()
-	if err != nil {
-		return u.send(Message{
-			Transaction: msg.Transaction,
-			Type:        SignalError,
-			Payload: ErrorPayload{
-				Code:    ErrCodeServerError,
-				Message: "Server error",
-			},
-		})
-	}
-
-	return u.send(Message{
-		Transaction: msg.Transaction,
-		Type:        SignalRoomCreated,
-		Payload:     room,
-	})
-}
-
-func (h *SignalHandler) handleJoinRoom(u *User, msg Message) error {
-	payload, err := unmarshal[RoomIDPayload](msg.Payload)
-	if err != nil {
-		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
-	}
-
-	room, err := h.rooms.Get(payload.RoomID)
-	if err != nil {
-		if errors.Is(err, ErrRoomNotFound) {
-			return u.send(Message{
-				Transaction: msg.Transaction,
-				Type:        SignalError,
-				Payload: ErrorPayload{
-					Code:    ErrCodeNotFound,
-					Message: "Room not found",
-				},
-			})
-		}
-		return err
-	}
-
-	// leave previous room in case the user hasn't done it already
-	if u.roomID != "" {
-		room, err := h.rooms.Get(u.roomID)
-		if err == nil {
-			room.RemoveUser(u)
-			if err := h.broadcast(u.conn, Message{
-				Type:    SignalUserLeft,
-				Payload: u,
-			}, room.ID); err != nil {
-				h.log.Error("join room: error broadcasting to old room", "error", err)
-			}
-			if err := h.broadcast(u.conn, Message{
-				Type:    SignalRoomState,
-				Payload: room,
-			}, room.ID); err != nil {
-				h.log.Error("join room: error broadcasting to old room", "error", err)
-			}
-		}
-	}
-
-	room.AddUser(u)
-
-	if err := u.send(Message{
-		Transaction: msg.Transaction,
-		Type:        SignalRoomJoined,
-		Payload:     room,
-	}); err != nil {
-		return err
-	}
-
-	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomState,
-		Payload: room,
-	}, room.ID); err != nil {
-		return err
-	}
-
-	if err := h.broadcast(u.conn, Message{
-		Type:    SignalUserJoined,
-		Payload: u,
-	}, room.ID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (h *SignalHandler) handleLeaveRoom(u *User, msg Message) error {
-	payload, err := unmarshal[RoomIDPayload](msg.Payload)
-	if err != nil {
-		return u.send(createErrorResponse(msg, ErrCodeBadRequest, "Bad request"))
-	}
-
-	room, err := h.rooms.RemoveUser(payload.RoomID, u)
-	if err != nil {
-		if errors.Is(err, ErrRoomNotFound) {
-			return u.send(Message{
-				Transaction: msg.Transaction,
-				Type:        SignalError,
-				Payload: ErrorPayload{
-					Code:    ErrCodeNotFound,
-					Message: "Room not found",
-				},
-			})
-		}
-		return err
-	}
-
-	if err := u.send(Message{
-		Transaction: msg.Transaction,
-		Type:        SignalRoomLeft,
-		Payload:     room,
-	}); err != nil {
-		return err
-	}
-
-	if err := h.broadcast(u.conn, Message{
-		Type:    SignalRoomState,
-		Payload: room,
-	}, room.ID); err != nil {
-		return err
-	}
-
-	return h.broadcast(u.conn, Message{
-		Type:    SignalUserLeft,
-		Payload: u,
-	}, room.ID)
-}
-
-func (h *SignalHandler) handleWebRTCMessage(msg Message) error {
-	info, err := unmarshal[RTCMessageInfo](msg.Payload)
-	if err != nil {
-		return err
-	}
-
-	room, err := h.rooms.Get(info.RoomID)
-	if err != nil {
-		return err
-	}
-
-	var recipient *User
-	for _, u := range room.Users {
-		if u.ID.String() == info.To {
-			recipient = u
-		}
-	}
-	if recipient == nil {
-		h.log.Error(
-			"failed to forward webrtc message",
-			"error", fmt.Errorf("message recipient not found"),
-		)
-		return nil
-	}
-
-	return recipient.send(msg)
-}
-
-func broadcastNetworkUsers(to *User, users []*User) error {
-	if to != nil {
-		var peers = []*User{}
-		for _, user := range users {
-			if user.ID != to.ID {
-				peers = append(peers, user)
-			}
-		}
-		return to.send(Message{
-			Type: SignalNetworkUsers,
-			Payload: map[string]any{
-				"users": peers,
-			},
-		})
-	}
-
-	for _, recipient := range users {
-		var peers = []*User{}
-		for _, user := range users {
-			if user.ID != recipient.ID {
-				peers = append(peers, user)
-			}
-		}
-		err := recipient.send(Message{
-			Type: SignalNetworkUsers,
-			Payload: map[string]any{
-				"users": peers,
-			},
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func isUnexpectedCloseError(err error) bool {
-	return websocket.IsUnexpectedCloseError(err,
-		websocket.CloseGoingAway,
-		websocket.CloseNoStatusReceived,
-		websocket.CloseAbnormalClosure,
-	)
-}
-
-func unmarshal[T any](input any) (T, error) {
-	var result T
-	bytes, err := json.Marshal(input)
-	if err != nil {
-		return result, err
-	}
-	if err := json.Unmarshal(bytes, &result); err != nil {
-		return result, err
-	}
-	return result, err
 }

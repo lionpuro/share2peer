@@ -24,6 +24,7 @@ const (
 )
 
 type Message struct {
+	user        *User
 	Transaction string      `json:"transaction,omitempty"`
 	Type        string      `json:"type"`
 	Payload     interface{} `json:"payload"`

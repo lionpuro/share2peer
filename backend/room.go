@@ -36,13 +36,10 @@ func (r *Room) RemoveUser(u *User) {
 	r.Users = users
 }
 
-func (r *Room) ForEachUser(fn func(user *User)) {
+func (r *Room) ListUsers() []*User {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	for _, user := range r.Users {
-		fn(user)
-	}
+	return r.Users
 }
 
 type RoomStore struct {

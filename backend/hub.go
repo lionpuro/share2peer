@@ -43,19 +43,19 @@ func (h *Hub) run() {
 }
 
 func (h *Hub) handleRegister(u *User) {
-	h.users.Add(u)
+	h.users.add(u)
 	u.send <- Message{
 		Type:    SignalIdentity,
 		Payload: u,
 	}
-	broadcastNetworkUsers(u, h.users.FindByNetwork(u.networkKey))
+	broadcastNetworkUsers(u, h.users.findByNetwork(u.networkKey))
 	h.log.Debug("connect user", "user", u)
 }
 
 func (h *Hub) handleUnregister(u *User) {
 	defer func() {
-		h.users.Delete(u.ID)
-		users := h.users.FindByNetwork(u.networkKey)
+		h.users.delete(u.ID)
+		users := h.users.findByNetwork(u.networkKey)
 		broadcastNetworkUsers(nil, users)
 		h.log.Debug("disconnect user", "user", u)
 		close(u.send)
@@ -65,12 +65,12 @@ func (h *Hub) handleUnregister(u *User) {
 		return
 	}
 
-	room, err := h.rooms.RemoveUser(u.roomID, u)
+	room, err := h.rooms.removeUser(u.roomID, u)
 	if err != nil {
 		return
 	}
 
-	users := room.ListUsers()
+	users := room.listUsers()
 	broadcast(u, Message{
 		Type:    SignalUserLeft,
 		Payload: u,
@@ -89,7 +89,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
 			return
 		}
-		to, ok := h.users.FindByID(payload.UserID)
+		to, ok := h.users.findByID(payload.UserID)
 		if !ok {
 			return
 		}
@@ -105,7 +105,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 		}
 
 	case SignalCreateRoom:
-		room, err := h.rooms.Create()
+		room, err := h.rooms.create()
 		if err != nil {
 			user.send <- Message{
 				Transaction: msg.Transaction,
@@ -131,7 +131,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 
 		// leave previous room in case the client hasn't done it already
 		if user.roomID != "" {
-			if room, err := h.rooms.RemoveUser(user.roomID, user); err == nil {
+			if room, err := h.rooms.removeUser(user.roomID, user); err == nil {
 				broadcast(user, Message{
 					Type:    SignalUserLeft,
 					Payload: user,
@@ -143,7 +143,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			}
 		}
 
-		room, err := h.rooms.AddUser(payload.RoomID, user)
+		room, err := h.rooms.addUser(payload.RoomID, user)
 		if err != nil {
 			if errors.Is(err, ErrRoomNotFound) {
 				user.send <- Message{
@@ -179,7 +179,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			return
 		}
 
-		room, err := h.rooms.RemoveUser(payload.RoomID, user)
+		room, err := h.rooms.removeUser(payload.RoomID, user)
 		if err != nil {
 			if errors.Is(err, ErrRoomNotFound) {
 				user.send <- Message{
@@ -203,12 +203,12 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 		broadcast(user, Message{
 			Type:    SignalRoomState,
 			Payload: room,
-		}, room.ListUsers())
+		}, room.listUsers())
 
 		broadcast(user, Message{
 			Type:    SignalUserLeft,
 			Payload: user,
-		}, room.ListUsers())
+		}, room.listUsers())
 
 	case SignalAnswer, SignalOffer, SignalICECandidate:
 		info, err := unmarshal[RTCMessageInfo](msg.Payload)
@@ -217,13 +217,13 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			return
 		}
 
-		room, err := h.rooms.Get(info.RoomID)
+		room, err := h.rooms.get(info.RoomID)
 		if err != nil {
 			return
 		}
 
 		var recipient *User
-		for _, u := range room.ListUsers() {
+		for _, u := range room.listUsers() {
 			if u.ID.String() == info.To {
 				recipient = u
 			}

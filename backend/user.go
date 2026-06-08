@@ -115,7 +115,7 @@ func newUserService() *UserService {
 	}
 }
 
-func (s *UserService) Add(user *User) {
+func (s *UserService) add(user *User) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -128,7 +128,7 @@ func (s *UserService) Add(user *User) {
 	}
 }
 
-func (s *UserService) Delete(id uuid.UUID) {
+func (s *UserService) delete(id uuid.UUID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -145,7 +145,7 @@ func (s *UserService) Delete(id uuid.UUID) {
 	}
 }
 
-func (s *UserService) FindByID(id uuid.UUID) (*User, bool) {
+func (s *UserService) findByID(id uuid.UUID) (*User, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -153,7 +153,7 @@ func (s *UserService) FindByID(id uuid.UUID) (*User, bool) {
 	return user, ok
 }
 
-func (s *UserService) FindByNetwork(key string) []*User {
+func (s *UserService) findByNetwork(key string) []*User {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -129,7 +129,21 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			return
 		}
 
-		room, err := h.rooms.Get(payload.RoomID)
+		// leave previous room in case the client hasn't done it already
+		if user.roomID != "" {
+			if room, err := h.rooms.RemoveUser(user.roomID, user); err == nil {
+				broadcast(user, Message{
+					Type:    SignalUserLeft,
+					Payload: user,
+				}, room.Users)
+				broadcast(user, Message{
+					Type:    SignalRoomState,
+					Payload: room,
+				}, room.Users)
+			}
+		}
+
+		room, err := h.rooms.AddUser(payload.RoomID, user)
 		if err != nil {
 			if errors.Is(err, ErrRoomNotFound) {
 				user.send <- Message{
@@ -143,24 +157,6 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			}
 			return
 		}
-
-		// leave previous room in case the client hasn't done it already
-		if user.roomID != "" {
-			room, err := h.rooms.Get(user.roomID)
-			if err == nil {
-				room.RemoveUser(user)
-				broadcast(user, Message{
-					Type:    SignalUserLeft,
-					Payload: user,
-				}, room.Users)
-				broadcast(user, Message{
-					Type:    SignalRoomState,
-					Payload: room,
-				}, room.Users)
-			}
-		}
-
-		room.AddUser(user)
 
 		user.send <- Message{
 			Transaction: msg.Transaction,

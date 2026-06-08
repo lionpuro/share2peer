@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-func NewLogger(level slog.Level, format string) *slog.Logger {
+func newLogger(level slog.Level, format string) *slog.Logger {
 	if format == "json" {
 		return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 			AddSource: false,
 			Level:     level,
 		}))
 	}
-	return slog.New(NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	return slog.New(newTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: false,
 		Level:     level,
 	}))
@@ -31,7 +31,7 @@ type TextHandler struct {
 	out  io.Writer
 }
 
-func NewTextHandler(w io.Writer, opts *slog.HandlerOptions) *TextHandler {
+func newTextHandler(w io.Writer, opts *slog.HandlerOptions) *TextHandler {
 	if opts == nil {
 		opts = &slog.HandlerOptions{}
 	}

@@ -14,7 +14,7 @@ type Room struct {
 	mu    sync.RWMutex
 }
 
-func (s *Room) AddUser(u *User) {
+func (s *Room) addUser(u *User) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -22,7 +22,7 @@ func (s *Room) AddUser(u *User) {
 	s.Users = append(s.Users, u)
 }
 
-func (r *Room) RemoveUser(u *User) {
+func (r *Room) removeUser(u *User) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -36,7 +36,7 @@ func (r *Room) RemoveUser(u *User) {
 	r.Users = users
 }
 
-func (r *Room) ListUsers() []*User {
+func (r *Room) listUsers() []*User {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.Users
@@ -47,13 +47,13 @@ type RoomStore struct {
 	rooms map[string]*Room
 }
 
-func NewRoomStore() *RoomStore {
+func newRoomStore() *RoomStore {
 	return &RoomStore{
 		rooms: make(map[string]*Room),
 	}
 }
 
-func (s *RoomStore) Get(id string) (*Room, error) {
+func (s *RoomStore) get(id string) (*Room, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -64,7 +64,7 @@ func (s *RoomStore) Get(id string) (*Room, error) {
 	return room, nil
 }
 
-func (s *RoomStore) Create() (*Room, error) {
+func (s *RoomStore) create() (*Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -81,7 +81,7 @@ func (s *RoomStore) Create() (*Room, error) {
 	return room, nil
 }
 
-func (s *RoomStore) Update(id string, room *Room) (*Room, error) {
+func (s *RoomStore) update(id string, room *Room) (*Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -94,7 +94,7 @@ func (s *RoomStore) Update(id string, room *Room) (*Room, error) {
 	return room, nil
 }
 
-func (s *RoomStore) Delete(id string) {
+func (s *RoomStore) delete(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -107,19 +107,19 @@ type RoomService struct {
 	mu     sync.Mutex
 }
 
-func NewRoomService(store *RoomStore) *RoomService {
+func newRoomService(store *RoomStore) *RoomService {
 	return &RoomService{
 		store:  store,
 		timers: make(map[string]*time.Timer),
 	}
 }
 
-func (s *RoomService) Get(id string) (*Room, error) {
-	return s.store.Get(id)
+func (s *RoomService) get(id string) (*Room, error) {
+	return s.store.get(id)
 }
 
-func (s *RoomService) Create() (*Room, error) {
-	room, err := s.store.Create()
+func (s *RoomService) create() (*Room, error) {
+	room, err := s.store.create()
 	if err != nil {
 		return nil, err
 	}
@@ -129,30 +129,30 @@ func (s *RoomService) Create() (*Room, error) {
 	return room, err
 }
 
-func (s *RoomService) Delete(id string) {
+func (s *RoomService) delete(id string) {
 	s.stopDeleteTimer(id)
-	s.store.Delete(id)
+	s.store.delete(id)
 }
 
-func (s *RoomService) AddUser(roomID string, u *User) (*Room, error) {
-	room, err := s.store.Get(roomID)
+func (s *RoomService) addUser(roomID string, u *User) (*Room, error) {
+	room, err := s.store.get(roomID)
 	if err != nil {
 		return nil, err
 	}
 
-	room.AddUser(u)
+	room.addUser(u)
 	s.stopDeleteTimer(roomID)
 
 	return room, nil
 }
 
-func (s *RoomService) RemoveUser(roomID string, u *User) (*Room, error) {
-	room, err := s.store.Get(roomID)
+func (s *RoomService) removeUser(roomID string, u *User) (*Room, error) {
+	room, err := s.store.get(roomID)
 	if err != nil {
 		return nil, err
 	}
 
-	room.RemoveUser(u)
+	room.removeUser(u)
 	if len(room.Users) == 0 {
 		s.startDeleteTimer(roomID)
 	}
@@ -166,12 +166,12 @@ func (s *RoomService) startDeleteTimer(roomID string) {
 
 	timer := time.AfterFunc(60*time.Second, func() {
 		defer s.stopDeleteTimer(roomID)
-		room, err := s.store.Get(roomID)
+		room, err := s.store.get(roomID)
 		if err != nil {
 			return
 		}
 		if len(room.Users) == 0 {
-			s.Delete(room.ID)
+			s.delete(room.ID)
 		}
 	})
 

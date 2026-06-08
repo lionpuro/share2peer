@@ -10,15 +10,15 @@ import (
 )
 
 func main() {
-	logger := NewLogger(
+	logger := newLogger(
 		getLogLevel(),
 		strings.ToLower(getenv("LOG_FORMAT", "text")),
 	)
 
-	hub := NewHub(
+	hub := newHub(
 		logger,
-		NewUserService(),
-		NewRoomService(NewRoomStore()),
+		newUserService(),
+		newRoomService(newRoomStore()),
 	)
 	go hub.run()
 

@@ -108,7 +108,7 @@ type UserService struct {
 	mu             sync.RWMutex
 }
 
-func NewUserService() *UserService {
+func newUserService() *UserService {
 	return &UserService{
 		usersByID:      make(map[uuid.UUID]*User),
 		usersByNetwork: make(map[string]map[uuid.UUID]*User),

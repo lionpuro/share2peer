@@ -18,7 +18,7 @@ type Hub struct {
 	unregister chan *User
 }
 
-func NewHub(log *slog.Logger, us *UserService, rs *RoomService) *Hub {
+func newHub(log *slog.Logger, us *UserService, rs *RoomService) *Hub {
 	return &Hub{
 		log:        log,
 		users:      us,

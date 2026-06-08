@@ -47,7 +47,7 @@ type RoomStore struct {
 	rooms map[string]*Room
 }
 
-func NewRoomStore() *RoomStore {
+func newRoomStore() *RoomStore {
 	return &RoomStore{
 		rooms: make(map[string]*Room),
 	}
@@ -107,7 +107,7 @@ type RoomService struct {
 	mu     sync.Mutex
 }
 
-func NewRoomService(store *RoomStore) *RoomService {
+func newRoomService(store *RoomStore) *RoomService {
 	return &RoomService{
 		store:  store,
 		timers: make(map[string]*time.Timer),

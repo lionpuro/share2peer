@@ -81,19 +81,6 @@ func (s *RoomStore) create() (*Room, error) {
 	return room, nil
 }
 
-func (s *RoomStore) update(id string, room *Room) (*Room, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	_, ok := s.rooms[id]
-	if !ok {
-		return nil, fmt.Errorf("no room found")
-	}
-	s.rooms[id] = room
-
-	return room, nil
-}
-
 func (s *RoomStore) delete(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

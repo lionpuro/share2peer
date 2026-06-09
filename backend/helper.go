@@ -1,10 +1,23 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"regexp"
 	"strings"
 )
+
+func unmarshal[T any](input any) (T, error) {
+	var result T
+	bytes, err := json.Marshal(input)
+	if err != nil {
+		return result, err
+	}
+	if err := json.Unmarshal(bytes, &result); err != nil {
+		return result, err
+	}
+	return result, err
+}
 
 func extractIP(header http.Header) string {
 	raw := header.Get("x-forwarded-for")

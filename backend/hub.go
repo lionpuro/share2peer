@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -278,16 +277,4 @@ func isUnexpectedCloseError(err error) bool {
 		websocket.CloseNoStatusReceived,
 		websocket.CloseAbnormalClosure,
 	)
-}
-
-func unmarshal[T any](input any) (T, error) {
-	var result T
-	bytes, err := json.Marshal(input)
-	if err != nil {
-		return result, err
-	}
-	if err := json.Unmarshal(bytes, &result); err != nil {
-		return result, err
-	}
-	return result, err
 }

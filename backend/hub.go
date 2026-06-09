@@ -48,7 +48,7 @@ func (h *Hub) handleRegister(u *User) {
 		Type:    SignalIdentity,
 		Payload: u,
 	}
-	broadcastNetworkUsers(u, h.users.findByNetwork(u.networkKey))
+	broadcastNetworkUsers(h.users.findByNetwork(u.networkKey))
 	h.log.Debug("connect user", "user", u)
 }
 
@@ -56,7 +56,7 @@ func (h *Hub) handleUnregister(u *User) {
 	defer func() {
 		h.users.delete(u.ID)
 		users := h.users.findByNetwork(u.networkKey)
-		broadcastNetworkUsers(nil, users)
+		broadcastNetworkUsers(users)
 		h.log.Debug("disconnect user", "user", u)
 		close(u.send)
 	}()
@@ -255,8 +255,8 @@ func broadcast(skip *User, msg Message, users []*User) {
 	}
 }
 
-func broadcastNetworkUsers(to *User, users []*User) {
-	if to != nil {
+func broadcastNetworkUsers(users []*User) {
+	for _, to := range users {
 		var peers = []*User{}
 		for _, user := range users {
 			if user.ID != to.ID {
@@ -264,21 +264,6 @@ func broadcastNetworkUsers(to *User, users []*User) {
 			}
 		}
 		to.send <- Message{
-			Type: SignalNetworkUsers,
-			Payload: map[string]any{
-				"users": peers,
-			},
-		}
-	}
-
-	for _, recipient := range users {
-		var peers = []*User{}
-		for _, user := range users {
-			if user.ID != recipient.ID {
-				peers = append(peers, user)
-			}
-		}
-		recipient.send <- Message{
 			Type: SignalNetworkUsers,
 			Payload: map[string]any{
 				"users": peers,

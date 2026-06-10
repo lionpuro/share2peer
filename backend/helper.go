@@ -27,8 +27,8 @@ func extractIP(header http.Header) string {
 	}
 
 	ip := s[0]
-	if strings.HasPrefix(ip, "::ffff:") {
-		return strings.TrimPrefix(ip, "::ffff:")
+	if v, ok := strings.CutPrefix(ip, "::ffff:"); ok {
+		return v
 	}
 	if ip == "::1" {
 		return "127.0.0.1"

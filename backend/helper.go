@@ -26,7 +26,7 @@ func extractIP(header http.Header) string {
 		return ""
 	}
 
-	ip := s[0]
+	ip := strings.TrimSpace(s[0])
 	if v, ok := strings.CutPrefix(ip, "::ffff:"); ok {
 		return v
 	}

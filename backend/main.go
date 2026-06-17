@@ -5,7 +5,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -36,16 +35,8 @@ func main() {
 	log.Fatal(s.ListenAndServe())
 }
 
-func getenv(key string, fallback string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-
 func getLogLevel() slog.Level {
-	val := os.Getenv("LOG_LEVEL")
+	val := getenv("LOG_LEVEL", "info")
 	switch strings.ToLower(val) {
 	case "debug":
 		return slog.LevelDebug

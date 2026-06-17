@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -17,6 +18,14 @@ func unmarshal[T any](input any) (T, error) {
 		return result, err
 	}
 	return result, err
+}
+
+func getenv(key string, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
 }
 
 func extractIP(header http.Header) string {

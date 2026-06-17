@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-
-	"github.com/gorilla/websocket"
 )
 
 type Hub struct {
@@ -269,12 +267,4 @@ func broadcastNetworkUsers(users []*User) {
 			},
 		}
 	}
-}
-
-func isUnexpectedCloseError(err error) bool {
-	return websocket.IsUnexpectedCloseError(err,
-		websocket.CloseGoingAway,
-		websocket.CloseNoStatusReceived,
-		websocket.CloseAbnormalClosure,
-	)
 }

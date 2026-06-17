@@ -1,6 +1,10 @@
 package main
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/gorilla/websocket"
+)
 
 var (
 	ErrUnknownMessageType = errors.New("unknown message type")
@@ -13,3 +17,11 @@ const (
 	ErrCodeNotFound    = "NOT_FOUND"
 	ErrCodeBadRequest  = "BAD_REQUEST"
 )
+
+func isUnexpectedCloseError(err error) bool {
+	return websocket.IsUnexpectedCloseError(err,
+		websocket.CloseGoingAway,
+		websocket.CloseNoStatusReceived,
+		websocket.CloseAbnormalClosure,
+	)
+}

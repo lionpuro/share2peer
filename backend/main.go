@@ -28,7 +28,7 @@ func main() {
 	mux.HandleFunc("/socket", handle)
 
 	s := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),
+		Addr:    fmt.Sprintf(":%s", getenv("PORT", "3000")),
 		Handler: mux,
 	}
 

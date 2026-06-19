@@ -208,8 +208,13 @@ type clientInfo struct {
 }
 
 func extractClientInfo(req *http.Request) clientInfo {
-	ip := extractIP(req.Header)
+	var ip string
+	if addr, ok := parseIP(req.Header.Get("X-Forwarded-For")); ok {
+		ip = addr.String()
+	}
+
 	dt, dn := extractDeviceInfo(req.Header.Get("User-Agent"))
+
 	sess, err := parseSessionData(req.URL.Query().Get("s"))
 	if err != nil {
 		sess = sessionData{Username: generateUsername()}

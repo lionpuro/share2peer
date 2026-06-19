@@ -20,7 +20,7 @@ type User struct {
 	Username   string    `json:"username"`
 	DeviceType string    `json:"device_type"`
 	DeviceName string    `json:"device_name"`
-	networkKey string
+	network    string
 	roomID     string
 	conn       *websocket.Conn
 	hub        *Hub
@@ -34,7 +34,7 @@ func createUser(hub *Hub, conn *websocket.Conn, info clientInfo) *User {
 		Username:   info.username,
 		DeviceType: info.deviceType,
 		DeviceName: info.deviceName,
-		networkKey: getNetworkKey(info.ip),
+		network:    info.network,
 		conn:       conn,
 		send:       make(chan Message, 256),
 		hub:        hub,
@@ -120,11 +120,11 @@ func (s *UserService) add(user *User) {
 	defer s.mu.Unlock()
 
 	s.usersByID[user.ID] = user
-	if user.networkKey != "" {
-		if _, ok := s.usersByNetwork[user.networkKey]; !ok {
-			s.usersByNetwork[user.networkKey] = make(map[uuid.UUID]*User)
+	if user.network != "" {
+		if _, ok := s.usersByNetwork[user.network]; !ok {
+			s.usersByNetwork[user.network] = make(map[uuid.UUID]*User)
 		}
-		s.usersByNetwork[user.networkKey][user.ID] = user
+		s.usersByNetwork[user.network][user.ID] = user
 	}
 }
 
@@ -137,10 +137,10 @@ func (s *UserService) delete(id uuid.UUID) {
 		return
 	}
 	delete(s.usersByID, id)
-	if user.networkKey != "" {
-		delete(s.usersByNetwork[user.networkKey], user.ID)
-		if len(s.usersByNetwork[user.networkKey]) == 0 {
-			delete(s.usersByNetwork, user.networkKey)
+	if user.network != "" {
+		delete(s.usersByNetwork[user.network], user.ID)
+		if len(s.usersByNetwork[user.network]) == 0 {
+			delete(s.usersByNetwork, user.network)
 		}
 	}
 }
@@ -201,16 +201,16 @@ func extractDeviceInfo(userag string) (string, string) {
 }
 
 type clientInfo struct {
-	ip         string
+	network    string
 	username   string
 	deviceType string
 	deviceName string
 }
 
 func extractClientInfo(req *http.Request) clientInfo {
-	var ip string
+	var network string
 	if addr, ok := parseIP(req.Header.Get("X-Forwarded-For")); ok {
-		ip = addr.String()
+		network = getNetworkIdentifier(addr)
 	}
 
 	dt, dn := extractDeviceInfo(req.Header.Get("User-Agent"))
@@ -221,7 +221,7 @@ func extractClientInfo(req *http.Request) clientInfo {
 	}
 
 	return clientInfo{
-		ip:         ip,
+		network:    network,
 		username:   sess.Username,
 		deviceType: dt,
 		deviceName: dn,

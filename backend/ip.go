@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/netip"
-	"regexp"
 	"strings"
 )
 
@@ -22,12 +21,20 @@ func parseIP(input string) (netip.Addr, bool) {
 	return ip.Unmap(), true
 }
 
-var ipRegexp = regexp.MustCompile(`(^127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$)|(^10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$)|(^172\.1[6-9]{1}[0-9]{0,1}\.[0-9]{1,3}\.[0-9]{1,3}$)|(^172\.2[0-9]{1}[0-9]{0,1}\.[0-9]{1,3}\.[0-9]{1,3}$)|(^172\.3[0-1]{1}[0-9]{0,1}\.[0-9]{1,3}\.[0-9]{1,3}$)|(^192\.168\.[0-9]{1,3}\.[0-9]{1,3}$)`)
-
-func getNetworkKey(ip string) string {
-       private := ipRegexp.MatchString(ip)
-       if private {
-               return strings.Join(strings.Split(ip, ".")[:3], ".")
-       }
-       return ip
+func getNetworkIdentifier(addr netip.Addr) string {
+	if !addr.IsValid() {
+		return ""
+	}
+	ip := addr.Unmap()
+	switch {
+	case ip.Is4():
+		if ip.IsPrivate() {
+			return netip.PrefixFrom(ip, 24).Masked().String()
+		}
+		return ip.String()
+	case ip.Is6():
+		return netip.PrefixFrom(ip, 64).Masked().String()
+	default:
+		return ip.String()
+	}
 }

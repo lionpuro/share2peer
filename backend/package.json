@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "./start.sh",
 		"build": "go build -o bin/websend",
-		"lint": "golangci-lint run"
+		"lint": "golangci-lint run",
+		"test": "go test -v ./..."
 	}
 }

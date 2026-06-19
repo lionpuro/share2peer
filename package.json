@@ -11,6 +11,8 @@
 		"build": "npm run build --workspaces --if-present",
 		"build:frontend": "npm run build -w frontend",
 		"dev": "wgo -xdir . npm run dev -w backend :: wgo -xdir . npm run dev -w frontend",
+		"test": "npm run test --workspaces --if-present",
+		"test:backend": "npm run test -w backend",
 		"lint": "npm run lint --workspaces --if-present",
 		"lint:frontend": "npm run lint -w frontend",
 		"format": "prettier --write . && gofmt -l -s -w backend"

@@ -20,3 +20,7 @@ jobs:
     name: Lint
     uses: ./.github/workflows/lint.yaml
     secrets: inherit
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit

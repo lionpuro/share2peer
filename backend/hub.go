@@ -45,14 +45,14 @@ func (h *Hub) handleRegister(u *User) {
 		Type:    SignalIdentity,
 		Payload: u,
 	}
-	broadcastNetworkUsers(h.users.findByNetwork(u.networkKey))
+	broadcastNetworkUsers(h.users.findByNetwork(u.network))
 	h.log.Debug("connect user", "user", u)
 }
 
 func (h *Hub) handleUnregister(u *User) {
 	defer func() {
 		h.users.delete(u.ID)
-		users := h.users.findByNetwork(u.networkKey)
+		users := h.users.findByNetwork(u.network)
 		broadcastNetworkUsers(users)
 		h.log.Debug("disconnect user", "user", u)
 		close(u.send)
@@ -90,7 +90,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 		if !ok {
 			return
 		}
-		if to.networkKey != user.networkKey {
+		if to.network != user.network {
 			return
 		}
 		to.send <- Message{

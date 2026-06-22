@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -36,7 +37,32 @@ func handler(hub *Hub, origins string) http.HandlerFunc {
 			return
 		}
 
-		user := createUser(hub, conn, extractClientInfo(r))
+		if err := conn.SetReadDeadline(time.Now().Add(time.Second * 10)); err != nil {
+			hub.log.Error("failed to set read deadline", "error", err)
+			return
+		}
+		var msg Message
+		if err := conn.ReadJSON(&msg); err != nil {
+			hub.log.Debug("error reading initial message", "error", err)
+			return
+		}
+		if err := conn.SetReadDeadline(time.Time{}); err != nil {
+			hub.log.Error("failed to reset read deadline", "error", err)
+			return
+		}
+		if msg.Type != SignalRegister {
+			return
+		}
+		payload, err := unmarshal[RegisterPayload](msg.Payload)
+		if err != nil {
+			hub.log.Debug("failed to unmarshal register message", "error", err)
+			return
+		}
+		if payload.Username == "" {
+			payload.Username = generateUsername()
+		}
+
+		user := createUser(hub, conn, payload.Username, extractClientInfo(r))
 		hub.register <- user
 
 		go user.writePump()

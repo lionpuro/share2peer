@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -28,10 +26,10 @@ type User struct {
 	send chan Message
 }
 
-func createUser(hub *Hub, conn *websocket.Conn, info clientInfo) *User {
+func createUser(hub *Hub, conn *websocket.Conn, username string, info clientInfo) *User {
 	return &User{
 		ID:         uuid.New(),
-		Username:   info.username,
+		Username:   username,
 		DeviceType: info.deviceType,
 		DeviceName: info.deviceName,
 		network:    info.network,
@@ -202,7 +200,6 @@ func extractDeviceInfo(userag string) (string, string) {
 
 type clientInfo struct {
 	network    string
-	username   string
 	deviceType string
 	deviceName string
 }
@@ -215,34 +212,9 @@ func extractClientInfo(req *http.Request) clientInfo {
 
 	dt, dn := extractDeviceInfo(req.Header.Get("User-Agent"))
 
-	sess, err := parseSessionData(req.URL.Query().Get("s"))
-	if err != nil {
-		sess = sessionData{Username: generateUsername()}
-	}
-
 	return clientInfo{
 		network:    network,
-		username:   sess.Username,
 		deviceType: dt,
 		deviceName: dn,
 	}
-}
-
-type sessionData struct {
-	Username string `json:"username"`
-}
-
-func parseSessionData(input string) (sessionData, error) {
-	if input == "" {
-		return sessionData{}, fmt.Errorf("input is empty")
-	}
-	decoded, err := base64.RawURLEncoding.DecodeString(input)
-	if err != nil {
-		return sessionData{}, err
-	}
-	var data sessionData
-	if err := json.Unmarshal(decoded, &data); err != nil {
-		return data, err
-	}
-	return data, nil
 }

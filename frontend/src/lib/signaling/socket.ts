@@ -5,7 +5,6 @@ import {
 	type OutgoingMessage,
 } from "#/lib/schemas/signaling";
 import { getSessionData, type SocketState } from "#/stores/signaling";
-import { stringToBase64 } from "#/lib/helper";
 
 export type SocketEventMap = {
 	message: CustomEvent<IncomingMessage>;
@@ -40,10 +39,7 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 	}
 
 	#createSocket(): WebSocket {
-		const session = getSessionData();
-		this.#ws = new WebSocket(
-			`${this.#config.url}${session ? "?s=" + stringToBase64(JSON.stringify(session)) : ""}`,
-		);
+		this.#ws = new WebSocket(this.#config.url);
 		this.#ws.addEventListener("open", this.#onopen);
 		this.#ws.addEventListener("close", this.#onclose);
 		this.#ws.addEventListener("message", this.#onmessage);
@@ -156,6 +152,13 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 
 	#onopen = () => {
 		this.#setState("connected");
+
+		const session = getSessionData();
+		this.send({
+			type: "register",
+			payload: { username: session?.username },
+		});
+
 		clearInterval(this.#pingTimer);
 		this.#pingTimer = setInterval(() => {
 			if (this.#destroyed || this.#ws?.readyState !== WebSocket.OPEN) {

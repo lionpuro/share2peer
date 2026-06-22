@@ -5,6 +5,7 @@ import "github.com/google/uuid"
 const (
 	SignalPing           = "ping"
 	SignalError          = "error"
+	SignalRegister       = "register"
 	SignalIdentity       = "identity"
 	SignalRoomState      = "room-state"
 	SignalJoinRoom       = "join-room"
@@ -28,6 +29,10 @@ type Message struct {
 	Transaction string `json:"transaction,omitempty"`
 	Type        string `json:"type"`
 	Payload     any    `json:"payload"`
+}
+
+type RegisterPayload struct {
+	Username string `json:"username"`
 }
 
 type RoomIDPayload struct {

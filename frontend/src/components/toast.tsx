@@ -13,7 +13,7 @@ const options: ToastOptions = {
 	position: "top-right",
 	autoClose: 5000,
 	hideProgressBar: true,
-	closeOnClick: true,
+	closeOnClick: false,
 	pauseOnHover: true,
 	pauseOnFocusLoss: false,
 	transition: Slide,

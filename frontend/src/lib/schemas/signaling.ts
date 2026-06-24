@@ -20,7 +20,6 @@ function message<T extends string, P extends z.ZodMiniType>(
 	});
 }
 
-const PING = "ping";
 const ERROR = "error";
 const REGISTER = "register";
 const IDENTITY = "identity";
@@ -96,7 +95,6 @@ const RoomInvitationSchema = z.object({
 });
 
 type OutgoingMessageMap = {
-	[PING]: { type: typeof PING };
 	[REGISTER]: { type: typeof REGISTER; payload: { username?: string } };
 	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {

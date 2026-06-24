@@ -16,7 +16,6 @@ export type SocketEvent<E extends keyof SocketEventMap> = SocketEventMap[E];
 
 type SocketConfig = {
 	url: string;
-	pingInterval: number;
 	minReconnectDelay: number;
 	maxReconnectDelay: number;
 	autoReconnectAttempts?: number;
@@ -28,7 +27,6 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 	#ws: WebSocket | undefined = undefined;
 	#reconnectAttempts: number = 0;
 	#reconnectTimeout: number | undefined = undefined;
-	#pingTimer: number | undefined = undefined;
 	#destroyed: boolean = false;
 
 	constructor(conf: SocketConfig) {
@@ -152,28 +150,15 @@ export class Socket extends TypedEventTarget<SocketEventMap> {
 
 	#onopen = () => {
 		this.#setState("connected");
-
 		const session = getSessionData();
 		this.send({
 			type: "register",
 			payload: { username: session?.username },
 		});
-
-		clearInterval(this.#pingTimer);
-		this.#pingTimer = setInterval(() => {
-			if (this.#destroyed || this.#ws?.readyState !== WebSocket.OPEN) {
-				clearInterval(this.#pingTimer);
-				return;
-			}
-			this.send({ type: "ping" }).catch((err) => console.error("ping:", err));
-		}, this.#config.pingInterval);
 	};
 
 	#onclose = () => {
 		this.#setState("disconnected");
-		clearInterval(this.#pingTimer);
-
-		this.#pingTimer = undefined;
 		if (!this.#destroyed) {
 			this.#scheduleReconnect();
 		}

@@ -310,7 +310,6 @@ export function createSignalingClient(url: string): SignalingClient {
 	window.__WEBSEND_CLIENT?.destroy();
 	const socket = new Socket({
 		url: url,
-		pingInterval: 55 * 1000,
 		minReconnectDelay: 1000,
 		maxReconnectDelay: 15 * 1000,
 		autoReconnectAttempts: 3,

@@ -13,6 +13,13 @@ import (
 	"github.com/mileusna/useragent"
 )
 
+const (
+	writeDeadline = 10 * time.Second
+
+	pongWait = 60 * time.Second
+	pingWait = (pongWait * 9) / 10
+)
+
 type User struct {
 	ID         uuid.UUID `json:"id"`
 	Username   string    `json:"username"`
@@ -55,6 +62,16 @@ func (u *User) readPump() {
 		}
 	}()
 
+	if err := u.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		hub.log.Error("failed to set read deadline", "error", err)
+	}
+	u.conn.SetPongHandler(func(string) error {
+		if err := u.conn.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+			hub.log.Error("failed to set read deadline", "error", err)
+		}
+		return nil
+	})
+
 	for {
 		_, msg, err := u.conn.ReadMessage()
 		if err != nil {
@@ -82,7 +99,10 @@ func (u *User) readPump() {
 // executing all writes from this goroutine.
 func (u *User) writePump() {
 	hub := u.hub
+	ticker := time.NewTicker(pingWait)
+
 	defer func() {
+		ticker.Stop()
 		if err := u.conn.Close(); err != nil {
 			if !errors.Is(err, net.ErrClosed) {
 				hub.log.Error("error closing connection", "error", err)
@@ -90,12 +110,25 @@ func (u *User) writePump() {
 		}
 	}()
 
-	for msg := range u.send {
-		if err := u.conn.SetWriteDeadline(time.Now().Add(10 * time.Second)); err != nil {
-			hub.log.Error("write deadline exceeded", "error", err)
-		}
-		if err := u.conn.WriteJSON(msg); err != nil {
-			return
+	for {
+		select {
+		case msg, ok := <-u.send:
+			if !ok {
+				return
+			}
+			if err := u.conn.SetWriteDeadline(time.Now().Add(writeDeadline)); err != nil {
+				hub.log.Error("failed to set write deadline", "error", err)
+			}
+			if err := u.conn.WriteJSON(msg); err != nil {
+				return
+			}
+		case <-ticker.C:
+			if err := u.conn.SetWriteDeadline(time.Now().Add(writeDeadline)); err != nil {
+				hub.log.Error("failed to set write deadline", "error", err)
+			}
+			if err := u.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }

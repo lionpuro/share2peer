@@ -235,9 +235,6 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 
 		recipient.send <- msg
 
-	case SignalPing:
-		return
-
 	default:
 		user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Invalid message type")
 		return

@@ -200,23 +200,23 @@ func (s *UserService) findByNetwork(key string) []*User {
 }
 
 const (
-	DeviceTypeDesktop = "desktop"
-	DeviceTypeTablet  = "tablet"
-	DeviceTypeMobile  = "mobile"
-	DeviceTypeUnknown = "unknown"
+	deviceTypeDesktop = "desktop"
+	deviceTypeTablet  = "tablet"
+	deviceTypeMobile  = "mobile"
+	deviceTypeUnknown = "unknown"
 )
 
 func extractDeviceInfo(userag string) (string, string) {
 	ua := useragent.Parse(userag)
 
-	t := DeviceTypeUnknown
+	t := deviceTypeUnknown
 	switch {
 	case ua.Desktop:
-		t = DeviceTypeDesktop
+		t = deviceTypeDesktop
 	case ua.Tablet:
-		t = DeviceTypeTablet
+		t = deviceTypeTablet
 	case ua.Mobile:
-		t = DeviceTypeMobile
+		t = deviceTypeMobile
 	}
 
 	n := ua.OS

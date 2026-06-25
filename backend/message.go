@@ -3,24 +3,24 @@ package main
 import "github.com/google/uuid"
 
 const (
-	SignalError          = "error"
-	SignalRegister       = "register"
-	SignalIdentity       = "identity"
-	SignalRoomState      = "room-state"
-	SignalJoinRoom       = "join-room"
-	SignalLeaveRoom      = "leave-room"
-	SignalCreateRoom     = "create-room"
-	SignalRoomCreated    = "room-created"
-	SignalRoomJoined     = "room-joined"
-	SignalRoomLeft       = "room-left"
-	SignalUserJoined     = "user-joined"
-	SignalUserLeft       = "user-left"
-	SignalOffer          = "offer"
-	SignalAnswer         = "answer"
-	SignalICECandidate   = "ice-candidate"
-	SignalNetworkUsers   = "network-users"
-	SignalInviteToRoom   = "invite-to-room"
-	SignalRoomInvitation = "room-invitation"
+	signalError          = "error"
+	signalRegister       = "register"
+	signalIdentity       = "identity"
+	signalRoomState      = "room-state"
+	signalJoinRoom       = "join-room"
+	signalLeaveRoom      = "leave-room"
+	signalCreateRoom     = "create-room"
+	signalRoomCreated    = "room-created"
+	signalRoomJoined     = "room-joined"
+	signalRoomLeft       = "room-left"
+	signalUserJoined     = "user-joined"
+	signalUserLeft       = "user-left"
+	signalOffer          = "offer"
+	signalAnswer         = "answer"
+	signalICECandidate   = "ice-candidate"
+	signalNetworkUsers   = "network-users"
+	signalInviteToRoom   = "invite-to-room"
+	signalRoomInvitation = "room-invitation"
 )
 
 type Message struct {
@@ -57,7 +57,7 @@ type InviteToRoomPayload struct {
 func createErrorResponse(req Message, code, message string) Message {
 	return Message{
 		Transaction: req.Transaction,
-		Type:        SignalError,
+		Type:        signalError,
 		Payload: ErrorPayload{
 			Code:    code,
 			Message: message,

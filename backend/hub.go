@@ -42,7 +42,7 @@ func (h *Hub) run() {
 func (h *Hub) handleRegister(u *User) {
 	h.users.add(u)
 	u.send <- Message{
-		Type:    SignalIdentity,
+		Type:    signalIdentity,
 		Payload: u,
 	}
 	broadcastNetworkUsers(h.users.findByNetwork(u.network))
@@ -69,18 +69,18 @@ func (h *Hub) handleUnregister(u *User) {
 
 	users := room.listUsers()
 	broadcast(u, Message{
-		Type:    SignalUserLeft,
+		Type:    signalUserLeft,
 		Payload: u,
 	}, users)
 	broadcast(u, Message{
-		Type:    SignalRoomState,
+		Type:    signalRoomState,
 		Payload: room,
 	}, users)
 }
 
 func (h *Hub) handleMessage(user *User, msg Message) {
 	switch msg.Type {
-	case SignalInviteToRoom:
+	case signalInviteToRoom:
 		payload, err := unmarshal[InviteToRoomPayload](msg.Payload)
 		if err != nil {
 			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
@@ -94,19 +94,19 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			return
 		}
 		to.send <- Message{
-			Type: SignalRoomInvitation,
+			Type: signalRoomInvitation,
 			Payload: map[string]any{
 				"from":    user,
 				"room_id": payload.RoomID,
 			},
 		}
 
-	case SignalCreateRoom:
+	case signalCreateRoom:
 		room, err := h.rooms.create()
 		if err != nil {
 			user.send <- Message{
 				Transaction: msg.Transaction,
-				Type:        SignalError,
+				Type:        signalError,
 				Payload: ErrorPayload{
 					Code:    ErrCodeServerError,
 					Message: "Server error",
@@ -115,11 +115,11 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 		}
 		user.send <- Message{
 			Transaction: msg.Transaction,
-			Type:        SignalRoomCreated,
+			Type:        signalRoomCreated,
 			Payload:     room,
 		}
 
-	case SignalJoinRoom:
+	case signalJoinRoom:
 		payload, err := unmarshal[RoomIDPayload](msg.Payload)
 		if err != nil {
 			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
@@ -130,11 +130,11 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 		if user.roomID != "" {
 			if room, err := h.rooms.removeUser(user.roomID, user); err == nil {
 				broadcast(user, Message{
-					Type:    SignalUserLeft,
+					Type:    signalUserLeft,
 					Payload: user,
 				}, room.Users)
 				broadcast(user, Message{
-					Type:    SignalRoomState,
+					Type:    signalRoomState,
 					Payload: room,
 				}, room.Users)
 			}
@@ -145,7 +145,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			if errors.Is(err, ErrRoomNotFound) {
 				user.send <- Message{
 					Transaction: msg.Transaction,
-					Type:        SignalError,
+					Type:        signalError,
 					Payload: ErrorPayload{
 						Code:    ErrCodeNotFound,
 						Message: "Room not found",
@@ -157,19 +157,19 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 
 		user.send <- Message{
 			Transaction: msg.Transaction,
-			Type:        SignalRoomJoined,
+			Type:        signalRoomJoined,
 			Payload:     room,
 		}
 		broadcast(user, Message{
-			Type:    SignalRoomState,
+			Type:    signalRoomState,
 			Payload: room,
 		}, room.Users)
 		broadcast(user, Message{
-			Type:    SignalUserJoined,
+			Type:    signalUserJoined,
 			Payload: user,
 		}, room.Users)
 
-	case SignalLeaveRoom:
+	case signalLeaveRoom:
 		payload, err := unmarshal[RoomIDPayload](msg.Payload)
 		if err != nil {
 			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
@@ -181,7 +181,7 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			if errors.Is(err, ErrRoomNotFound) {
 				user.send <- Message{
 					Transaction: msg.Transaction,
-					Type:        SignalError,
+					Type:        signalError,
 					Payload: ErrorPayload{
 						Code:    ErrCodeNotFound,
 						Message: "Room not found",
@@ -193,21 +193,21 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 
 		user.send <- Message{
 			Transaction: msg.Transaction,
-			Type:        SignalRoomLeft,
+			Type:        signalRoomLeft,
 			Payload:     room,
 		}
 
 		broadcast(user, Message{
-			Type:    SignalRoomState,
+			Type:    signalRoomState,
 			Payload: room,
 		}, room.listUsers())
 
 		broadcast(user, Message{
-			Type:    SignalUserLeft,
+			Type:    signalUserLeft,
 			Payload: user,
 		}, room.listUsers())
 
-	case SignalAnswer, SignalOffer, SignalICECandidate:
+	case signalAnswer, signalOffer, signalICECandidate:
 		info, err := unmarshal[RTCMessageInfo](msg.Payload)
 		if err != nil {
 			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
@@ -258,7 +258,7 @@ func broadcastNetworkUsers(users []*User) {
 			}
 		}
 		to.send <- Message{
-			Type: SignalNetworkUsers,
+			Type: signalNetworkUsers,
 			Payload: map[string]any{
 				"users": peers,
 			},

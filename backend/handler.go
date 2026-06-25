@@ -50,7 +50,7 @@ func handler(hub *Hub, origins string) http.HandlerFunc {
 			hub.log.Error("failed to reset read deadline", "error", err)
 			return
 		}
-		if msg.Type != SignalRegister {
+		if msg.Type != signalRegister {
 			return
 		}
 		payload, err := unmarshal[RegisterPayload](msg.Payload)

@@ -214,6 +214,11 @@ func (h *Hub) handleMessage(user *User, msg Message) {
 			return
 		}
 
+		if user.ID.String() != info.From {
+			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
+			return
+		}
+
 		room, err := h.rooms.get(info.RoomID)
 		if err != nil {
 			return

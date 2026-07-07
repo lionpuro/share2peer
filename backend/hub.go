@@ -80,6 +80,15 @@ func (h *Hub) handleUnregister(u *User) {
 
 func (h *Hub) handleMessage(user *User, msg Message) {
 	switch msg.Type {
+	case signalSettings:
+		payload, err := unmarshal[Settings](msg.Payload)
+		if err != nil {
+			user.send <- createErrorResponse(msg, ErrCodeBadRequest, "Bad request")
+			return
+		}
+		user.settings = payload
+		broadcastNetworkUsers(h.users.findByNetwork(user.network))
+
 	case signalInviteToRoom:
 		payload, err := unmarshal[InviteToRoomPayload](msg.Payload)
 		if err != nil {
@@ -258,7 +267,7 @@ func broadcastNetworkUsers(users []*User) {
 	for _, to := range users {
 		var peers = []*User{}
 		for _, user := range users {
-			if user.ID != to.ID {
+			if user.ID != to.ID && user.settings.Discoverable {
 				peers = append(peers, user)
 			}
 		}

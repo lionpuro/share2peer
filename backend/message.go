@@ -6,6 +6,7 @@ const (
 	signalError          = "error"
 	signalRegister       = "register"
 	signalIdentity       = "identity"
+	signalSettings       = "settings"
 	signalRoomState      = "room-state"
 	signalJoinRoom       = "join-room"
 	signalLeaveRoom      = "leave-room"

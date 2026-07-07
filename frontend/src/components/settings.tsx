@@ -1,9 +1,13 @@
 import { useContext } from "react";
+import { useStore } from "@nanostores/react";
+import { $settings, setSettings } from "#/stores/settings";
 import { ThemeContext } from "#/context/theme/context";
 import { IconMoon, IconSun, IconX } from "#/components/icons";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { Heading } from "#/components/ui/heading";
+import { Switch } from "#/components/ui/switch";
 import { cn, toTitleCase } from "#/lib/helper";
+import { useSignalingClient } from "#/hooks/use-signaling-client";
 
 export function SettingsDialog({
 	open,
@@ -12,6 +16,19 @@ export function SettingsDialog({
 	open: boolean;
 	onClose: () => void;
 }) {
+	const client = useSignalingClient();
+	const settings = useStore($settings);
+
+	function updateDiscoverable(v: boolean) {
+		const updated = { ...settings, discoverable: v };
+		setSettings(updated);
+		if (client.state === "connected") {
+			client
+				.send({ type: "settings", payload: updated })
+				.catch((err) => console.error("update settings:", err));
+		}
+	}
+
 	return (
 		<Dialog open={open} onClose={onClose}>
 			<DialogContent>
@@ -29,6 +46,18 @@ export function SettingsDialog({
 					<div className="flex flex-wrap items-center justify-between gap-y-2">
 						<Heading order={3}>Theme</Heading>
 						<ThemeSwitch />
+					</div>
+					<div className="flex flex-wrap items-center gap-y-1">
+						<Heading order={3}>Discoverable</Heading>
+						<Switch
+							id="pref-discoverable"
+							checked={settings.discoverable}
+							onChange={(e) => updateDiscoverable(e.target.checked)}
+							className="ml-auto"
+						/>
+						<p className="w-full text-sm text-muted-foreground">
+							Allow other devices on your network to discover this device
+						</p>
 					</div>
 				</div>
 			</DialogContent>

@@ -25,6 +25,7 @@ type User struct {
 	Username   string    `json:"username"`
 	DeviceType string    `json:"device_type"`
 	DeviceName string    `json:"device_name"`
+	settings   Settings
 	network    string
 	roomID     string
 	conn       *websocket.Conn
@@ -39,6 +40,7 @@ func createUser(hub *Hub, conn *websocket.Conn, username string, info clientInfo
 		Username:   username,
 		DeviceType: info.deviceType,
 		DeviceName: info.deviceName,
+		settings:   Settings{Discoverable: false},
 		network:    info.network,
 		conn:       conn,
 		send:       make(chan Message, 256),
@@ -250,4 +252,8 @@ func extractClientInfo(req *http.Request) clientInfo {
 		deviceType: dt,
 		deviceName: dn,
 	}
+}
+
+type Settings struct {
+	Discoverable bool `json:"discoverable"`
 }

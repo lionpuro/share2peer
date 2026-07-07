@@ -2,6 +2,7 @@ import * as z from "zod/mini";
 import { ErrorPayloadSchema } from "./error";
 import { RoomIDSchema, RoomSchema } from "./room";
 import { UserSchema } from "./user";
+import type { Settings } from "#/stores/settings";
 
 export type RawMessage = {
 	transaction?: string;
@@ -23,6 +24,7 @@ function message<T extends string, P extends z.ZodMiniType>(
 const ERROR = "error";
 const REGISTER = "register";
 const IDENTITY = "identity";
+const SETTINGS = "settings";
 const ROOM_STATE = "room-state";
 const USER_JOINED = "user-joined";
 const USER_LEFT = "user-left";
@@ -96,6 +98,7 @@ const RoomInvitationSchema = z.object({
 
 type OutgoingMessageMap = {
 	[REGISTER]: { type: typeof REGISTER; payload: { username?: string } };
+	[SETTINGS]: { type: typeof SETTINGS; payload: Settings };
 	[CREATE_ROOM]: { type: typeof CREATE_ROOM };
 	[JOIN_ROOM]: {
 		type: typeof JOIN_ROOM;

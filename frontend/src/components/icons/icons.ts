@@ -27,6 +27,7 @@ export { default as IconReload } from "~icons/mdi/reload";
 export { default as IconInvite } from "~icons/mdi/invite";
 export { default as IconPencil } from "~icons/mdi/pencil";
 export { default as IconWireless } from "~icons/mdi/wireless";
+export { default as IconSettings } from "~icons/mdi/settings";
 export { default as IconFile } from "~icons/mdi/file-outline";
 export { default as IconFileDefault } from "~icons/mdi/file-text";
 export { default as IconFileImage } from "~icons/mdi/file-image";
@@ -35,5 +36,5 @@ export { default as IconFileAudio } from "~icons/mdi/file-music";
 
 export { default as IconDevices } from "~icons/material-symbols/devices";
 
-export { default as IconSun } from "~icons/tabler/sun-high-filled";
-export { default as IconMoon } from "~icons/tabler/moon-filled";
+export { default as IconSun } from "~icons/tabler/sun-high";
+export { default as IconMoon } from "~icons/tabler/moon";

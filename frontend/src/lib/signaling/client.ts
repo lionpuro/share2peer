@@ -23,6 +23,7 @@ import {
 import { Socket, type SocketEvent } from "#/lib/signaling/socket";
 import type { Room } from "#/lib/schemas";
 import { setUploads } from "#/stores/file";
+import { $settings } from "#/stores/settings";
 
 declare global {
 	interface Window {
@@ -231,6 +232,9 @@ export class SignalingClient extends EventEmitter<SignalingEventMap> {
 					$identity.set(message.payload);
 					setSessionData({ username: message.payload.username });
 					this.#setState("connected");
+					this.send({ type: "settings", payload: $settings.get() }).catch(
+						(err) => console.error("send settings:", err),
+					);
 					break;
 				case "network-users":
 					$networkUsers.set(message.payload.users);

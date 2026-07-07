@@ -36,5 +36,5 @@ export { default as IconFileAudio } from "~icons/mdi/file-music";
 
 export { default as IconDevices } from "~icons/material-symbols/devices";
 
-export { default as IconSun } from "~icons/tabler/sun-high-filled";
-export { default as IconMoon } from "~icons/tabler/moon-filled";
+export { default as IconSun } from "~icons/tabler/sun-high";
+export { default as IconMoon } from "~icons/tabler/moon";

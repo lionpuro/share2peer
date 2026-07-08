@@ -2,12 +2,12 @@ import { useContext } from "react";
 import { useStore } from "@nanostores/react";
 import { $settings, setSettings } from "#/stores/settings";
 import { ThemeContext } from "#/context/theme/context";
-import { IconMoon, IconSun, IconX } from "#/components/icons";
+import { useSignalingClient } from "#/hooks/use-signaling-client";
+import { IconMonitor, IconMoon, IconSun, IconX } from "#/components/icons";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { Heading } from "#/components/ui/heading";
 import { Switch } from "#/components/ui/switch";
-import { cn, toTitleCase } from "#/lib/helper";
-import { useSignalingClient } from "#/hooks/use-signaling-client";
+import { cn } from "#/lib/helper";
 
 export function SettingsDialog({
 	open,
@@ -66,8 +66,9 @@ export function SettingsDialog({
 }
 
 const themes = [
-	{ key: "light", icon: IconSun, label: "Light theme" },
-	{ key: "dark", icon: IconMoon, label: "Dark theme" },
+	{ key: "light", icon: IconSun, label: "Light" },
+	{ key: "dark", icon: IconMoon, label: "Dark" },
+	{ key: "system", icon: IconMonitor, label: "Auto" },
 ] as const;
 
 function ThemeSwitch() {
@@ -77,7 +78,7 @@ function ThemeSwitch() {
 			{themes.map((opt) => (
 				<button
 					key={opt.key + "theme"}
-					title={`Switch to ${opt.label.toLowerCase()}`}
+					title={`Switch to ${opt.key} theme`}
 					onClick={() => setTheme(opt.key)}
 					className={cn(
 						"flex min-w-21 items-center justify-center gap-1.5 rounded-md py-0.5 pr-0.75",
@@ -87,7 +88,7 @@ function ThemeSwitch() {
 					)}
 				>
 					<opt.icon />
-					{toTitleCase(opt.key)}
+					{opt.label}
 				</button>
 			))}
 		</div>

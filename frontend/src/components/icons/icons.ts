@@ -38,3 +38,4 @@ export { default as IconDevices } from "~icons/material-symbols/devices";
 
 export { default as IconSun } from "~icons/tabler/sun-high";
 export { default as IconMoon } from "~icons/tabler/moon";
+export { default as IconMonitor } from "~icons/tabler/device-desktop";

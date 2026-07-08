@@ -1,23 +1,23 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ThemeContext, type ThemeKey } from "./context";
+import { getPreferredTheme, ThemeContext, type ThemeOption } from "./context";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-	const [theme, setTheme] = useState<ThemeKey>(() => {
+	const [theme, setTheme] = useState<ThemeOption>(() => {
 		const value = localStorage.getItem("theme");
 		if (value !== "light" && value !== "dark") {
-			const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-			return dark ? "dark" : "light";
+			return "system";
 		}
 		return value;
 	});
 
 	useEffect(() => {
 		const html = document.documentElement;
-		if (theme === "light") {
+		const colorScheme = theme === "system" ? getPreferredTheme() : theme;
+		if (colorScheme === "light") {
 			html.classList.remove("dark");
 		}
-		if (theme === "dark") {
-			html.classList.add(theme);
+		if (colorScheme === "dark") {
+			html.classList.add("dark");
 		}
 		localStorage.setItem("theme", theme);
 	}, [theme]);

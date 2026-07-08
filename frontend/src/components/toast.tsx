@@ -6,7 +6,7 @@ import {
 	type ToastOptions,
 } from "react-toastify";
 import type { SignalingEvent } from "#/lib/signaling/client";
-import { ThemeContext } from "#/context/theme/context";
+import { getPreferredTheme, ThemeContext } from "#/context/theme/context";
 import { Button } from "#/components/ui/button";
 
 const options: ToastOptions = {
@@ -21,7 +21,12 @@ const options: ToastOptions = {
 
 export function ToastContainer() {
 	const { theme } = useContext(ThemeContext);
-	return <ToastifyToastContainer {...options} theme={theme} />;
+	return (
+		<ToastifyToastContainer
+			{...options}
+			theme={theme === "system" ? getPreferredTheme() : theme}
+		/>
+	);
 }
 
 type InvitationProps = Partial<ToastContentProps> & {

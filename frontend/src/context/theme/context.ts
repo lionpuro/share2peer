@@ -1,15 +1,18 @@
 import { createContext } from "react";
 
-export type ThemeKey = "light" | "dark";
+export type ThemeOption = "system" | "light" | "dark";
 
 type ThemeContextValue = {
-	theme: ThemeKey;
-	setTheme: (v: ThemeKey) => void;
+	theme: ThemeOption;
+	setTheme: (v: ThemeOption) => void;
 };
 
 export const ThemeContext = createContext<ThemeContextValue>({
-	theme: window.matchMedia("(prefers-color-scheme: dark)").matches
-		? "dark"
-		: "light",
+	theme: "system",
 	setTheme: () => {},
 });
+
+export function getPreferredTheme() {
+	const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	return dark ? "dark" : "light";
+}

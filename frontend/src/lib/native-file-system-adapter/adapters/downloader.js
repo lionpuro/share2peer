@@ -62,6 +62,7 @@ export class FileHandle {
 			const headers = {
 				"content-disposition": "attachment; filename*=UTF-8''" + fileName,
 				"content-type": "application/octet-stream; charset=utf-8",
+				"X-Content-Type-Options": "nosniff",
 				...(options.size ? { "content-length": String(options.size) } : {}),
 			};
 

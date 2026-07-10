@@ -4,8 +4,21 @@ import config from "../config.js";
 const { WritableStream, TransformStream, DOMException, Blob } = config;
 
 const { GONE } = errors;
-// @ts-ignore - Don't match newer versions of Safari, but that's okay
-const isOldSafari = /constructor/i.test(window.HTMLElement);
+
+function isOldSafari() {
+	if (/constructor/i.test(window.HTMLElement)) {
+		return true;
+	}
+
+	const ua = navigator.userAgent;
+
+	if (!/Safari/.test(ua) || /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)) {
+		return false;
+	}
+
+	const m = ua.match(/Version\/(\d+)/);
+	return m && Number(m[1]) < 26;
+}
 
 export class FileHandle {
 	constructor(name = "unkown") {
@@ -32,7 +45,7 @@ export class FileHandle {
 
 		link.download = this.name;
 
-		if (isOldSafari || !sw) {
+		if (isOldSafari() || !sw) {
 			/** @type {Blob[]} */
 			let chunks = [];
 			ts.readable.pipeTo(

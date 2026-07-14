@@ -1,4 +1,4 @@
-import { showSaveFilePicker } from "#/lib/native-file-system-adapter";
+import { showSaveFilePicker } from "native-file-system-adapter";
 import type { ChunkData } from "./file";
 
 export interface DownloadStream {
@@ -52,7 +52,12 @@ type FileHeader = {
 
 async function createWritable(file: FileHeader) {
 	const handle = await showSaveFilePicker({
-		_preferPolyfill: false,
+		_preferredMethods: [
+			"native",
+			"sw-transferable-stream",
+			"sw-message-channel",
+			"constructing-blob",
+		],
 		suggestedName: file.name,
 	});
 	const stream = await handle.createWritable({ size: file.size });

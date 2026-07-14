@@ -1,4 +1,5 @@
-import { showSaveFilePicker } from "#/lib/native-file-system-adapter";
+import { showSaveFilePicker } from "native-file-system-adapter";
+import type { SaveFileMethod } from "native-file-system-adapter/types/src/showSaveFilePicker";
 import type { ChunkData } from "./file";
 
 export interface DownloadStream {
@@ -51,10 +52,40 @@ type FileHeader = {
 };
 
 async function createWritable(file: FileHeader) {
+	const methods: SaveFileMethod[] = supportsWorkerMethod
+		? [
+				"native",
+				"sw-transferable-stream",
+				"sw-message-channel",
+				"constructing-blob",
+			]
+		: ["constructing-blob"];
 	const handle = await showSaveFilePicker({
-		_preferPolyfill: false,
+		_preferredMethods: methods,
 		suggestedName: file.name,
 	});
 	const stream = await handle.createWritable({ size: file.size });
 	return stream;
+}
+
+const supportsWorkerMethod = (() => {
+	if (!isIOS()) {
+		return true;
+	}
+	const ua = navigator.userAgent;
+	const match = ua.match(/Version\/(\d+)/);
+	return match ? Number(match[1]) >= 26 : true;
+})();
+
+function isIOS() {
+	const ua = navigator.userAgent;
+	if (/iPhone|iPad|iPod/.test(ua)) {
+		return true;
+	}
+	// iPad in desktop mode will be reported as a Mac
+	const isIpad =
+		/Macintosh/i.test(ua) &&
+		navigator.maxTouchPoints &&
+		navigator.maxTouchPoints > 2;
+	return isIpad;
 }

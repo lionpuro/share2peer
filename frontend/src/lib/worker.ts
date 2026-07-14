@@ -64,23 +64,41 @@ self.addEventListener("activate", (e) => {
 type Download = {
 	url: string;
 	headers: Record<string, string>;
-	readablePort: MessagePort;
 	stream?: ReadableStream;
-};
+} & ({ readablePort: MessagePort } | { readable: ReadableStream });
 
 const downloads = new Map<string, Download>();
 
 self.addEventListener("message", (e) => {
 	const data: unknown = e.data;
 	if (!data || typeof data !== "object") return;
-	if (!("url" in data) || !("readablePort" in data)) return;
 
-	const dl = { ...(data as Download) };
-	dl.stream = new ReadableStream(
-		new MessagePortSource(e.data.readablePort),
-		new CountQueuingStrategy({ highWaterMark: 4 }),
-	);
-	downloads.set(dl.url, dl);
+	if ("type" in data && data.type === "native-file-system-adapter/ping") {
+		// Respond to handshake ping so the main thread knows this SW supports downloads
+		e.ports[0]?.postMessage({ type: "native-file-system-adapter/pong" });
+		return;
+	}
+
+	if (!("url" in data) || !("headers" in data)) return;
+
+	if ("readable" in data) {
+		// Preferred: transferred ReadableStream received directly
+		const dl = { ...(data as Download) };
+		dl.stream = data.readable as ReadableStream;
+		downloads.set(dl.url, dl);
+		return;
+	}
+
+	if ("readablePort" in data) {
+		// Fallback: reconstruct ReadableStream from MessagePort
+		const dl = { ...(data as Download) };
+		dl.stream = new ReadableStream(
+			new MessagePortSource(e.data.readablePort),
+			new CountQueuingStrategy({ highWaterMark: 4 }),
+		);
+		downloads.set(dl.url, dl);
+		return;
+	}
 });
 
 self.addEventListener("fetch", (e) => {

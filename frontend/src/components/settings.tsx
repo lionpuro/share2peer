@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { useStore } from "@nanostores/react";
-import { $settings, setSettings } from "#/stores/settings";
+import { $settings, setSettings, type Settings } from "#/stores/settings";
 import { ThemeContext } from "#/context/theme/context";
 import { useSignalingClient } from "#/hooks/use-signaling-client";
 import { IconMonitor, IconMoon, IconSun, IconX } from "#/components/icons";
@@ -19,10 +19,10 @@ export function SettingsDialog({
 	const client = useSignalingClient();
 	const settings = useStore($settings);
 
-	function updateDiscoverable(v: boolean) {
-		const updated = { ...settings, discoverable: v };
+	function updateSettings(props: Partial<Settings>) {
+		const updated = { ...settings, ...props };
 		setSettings(updated);
-		if (client.state === "connected") {
+		if (props.discoverable !== undefined && client.state === "connected") {
 			client
 				.send({ type: "settings", payload: updated })
 				.catch((err) => console.error("update settings:", err));
@@ -47,16 +47,34 @@ export function SettingsDialog({
 						<Heading order={3}>Theme</Heading>
 						<ThemeSwitch />
 					</div>
-					<div className="flex flex-wrap items-center gap-y-1">
+					<div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1">
 						<Heading order={3}>Discoverable</Heading>
 						<Switch
 							id="pref-discoverable"
 							checked={settings.discoverable}
-							onChange={(e) => updateDiscoverable(e.target.checked)}
+							onChange={(e) =>
+								updateSettings({ discoverable: e.target.checked })
+							}
 							className="ml-auto"
 						/>
 						<p className="w-full text-sm text-muted-foreground">
 							Allow other devices on your network to discover this device
+						</p>
+					</div>
+					<div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1">
+						<Heading order={3}>Streaming downloads</Heading>
+						<Switch
+							id="pref-streaming"
+							checked={settings.downloadStreaming}
+							onChange={(e) =>
+								updateSettings({ downloadStreaming: e.target.checked })
+							}
+							className="ml-auto"
+						/>
+						<p className="text-sm text-muted-foreground">
+							Write files directly to disk as they download, reducing memory
+							usage for large files. May not be supported in all browsers,
+							particularly on older iOS versions.
 						</p>
 					</div>
 				</div>

@@ -23,3 +23,25 @@ export function calcProgress(current: number, total: number): number {
 	const progress = (current / total) * 100;
 	return Math.round(progress);
 }
+
+export function isOldIOS() {
+	if (!isIOS()) {
+		return false;
+	}
+	const ua = navigator.userAgent;
+	const match = ua.match(/Version\/(\d+)/);
+	return match ? Number(match[1]) < 26 : false;
+}
+
+function isIOS() {
+	const ua = navigator.userAgent;
+	if (/iPhone|iPad|iPod/.test(ua)) {
+		return true;
+	}
+	// iPad in desktop mode will be reported as a Mac
+	const isIpad =
+		/Macintosh/i.test(ua) &&
+		navigator.maxTouchPoints &&
+		navigator.maxTouchPoints > 2;
+	return isIpad;
+}

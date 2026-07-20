@@ -30,7 +30,7 @@ export function SettingsDialog({
 	}
 
 	return (
-		<Dialog open={open} onClose={onClose}>
+		<Dialog open={open} onClose={onClose} className="max-w-lg">
 			<DialogContent>
 				<button
 					title="Close"

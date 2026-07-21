@@ -31,17 +31,17 @@ export function SettingsDialog({
 
 	return (
 		<Dialog open={open} onClose={onClose} className="max-w-lg">
-			<DialogContent>
-				<button
-					title="Close"
-					onClick={onClose}
-					className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
-				>
-					<IconX />
-				</button>
-				<Heading order={2} className="mb-6 focus:outline-none">
-					Settings
-				</Heading>
+			<Heading order={2} className="p-6 focus:outline-none">
+				Settings
+			</Heading>
+			<button
+				title="Close"
+				onClick={onClose}
+				className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground"
+			>
+				<IconX />
+			</button>
+			<DialogContent className="pt-0">
 				<div className="flex flex-col gap-4">
 					<div className="flex flex-wrap items-center justify-between gap-y-2">
 						<Heading order={3}>Theme</Heading>

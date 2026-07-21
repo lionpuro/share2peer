@@ -37,7 +37,7 @@ export function Dialog({ open, className, children, ...props }: DialogProps) {
 			onClick={handleClick}
 			ref={ref}
 			className={cn(
-				"fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 bg-transparent text-foreground backdrop:bg-black/75 max-sm:p-4 dark:backdrop:bg-black/90",
+				"fixed relative top-1/2 left-1/2 hidden w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl bg-background text-foreground backdrop:bg-black/75 open:flex max-sm:max-w-[calc(100%-(var(--spacing)*8))] dark:bg-muted dark:backdrop:bg-black/90",
 				className,
 			)}
 		>
@@ -50,12 +50,7 @@ type DialogContentProps = HTMLAttributes<HTMLDivElement>;
 
 export function DialogContent({ className, children }: DialogContentProps) {
 	return (
-		<div
-			className={cn(
-				"relative flex w-full flex-col rounded-xl bg-background p-6 dark:bg-muted",
-				className,
-			)}
-		>
+		<div className={cn("flex grow flex-col overflow-auto p-6", className)}>
 			{children}
 		</div>
 	);

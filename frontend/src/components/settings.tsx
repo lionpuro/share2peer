@@ -7,6 +7,7 @@ import { IconMonitor, IconMoon, IconSun, IconX } from "#/components/icons";
 import { Dialog, DialogContent } from "#/components/ui/dialog";
 import { Heading } from "#/components/ui/heading";
 import { Switch } from "#/components/ui/switch";
+import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/helper";
 
 export function SettingsDialog({
@@ -27,6 +28,12 @@ export function SettingsDialog({
 				.send({ type: "settings", payload: updated })
 				.catch((err) => console.error("update settings:", err));
 		}
+	}
+
+	function deleteLocalData() {
+		localStorage.clear();
+		sessionStorage.clear();
+		window.location.reload();
 	}
 
 	return (
@@ -76,6 +83,19 @@ export function SettingsDialog({
 							usage for large files. May not be supported in all browsers,
 							particularly on older iOS versions.
 						</p>
+					</div>
+					<div className="grid grid-cols-[1fr_auto] grid-rows-[auto_auto] items-center gap-x-4 gap-y-1">
+						<Heading order={3}>Delete all local data</Heading>
+						<p className="row-2 text-sm text-muted-foreground">
+							Reset settings and preferred username
+						</p>
+						<Button
+							onClick={deleteLocalData}
+							variant="outline"
+							className="col-2 row-span-2 border-secondary-darker/80 bg-transparent text-destructive dark:border-secondary dark:hover:bg-secondary/20"
+						>
+							Delete
+						</Button>
 					</div>
 				</div>
 			</DialogContent>

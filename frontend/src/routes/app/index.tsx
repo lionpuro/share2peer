@@ -65,7 +65,7 @@ function Component() {
 	}
 
 	if (connectionState === "disconnected" || connectionState === "connecting") {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 	if (connectionState === "failed") {
 		return (
@@ -84,7 +84,7 @@ function Component() {
 		);
 	}
 	if (!identity) {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 
 	return (

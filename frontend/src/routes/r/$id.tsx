@@ -54,7 +54,7 @@ function Component() {
 	useWakeLock();
 
 	if (connectionState === "disconnected" || connectionState === "connecting") {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 	if (connectionState === "failed") {
 		return (
@@ -73,17 +73,17 @@ function Component() {
 		);
 	}
 	if (!identity) {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 
 	if (status === "pending") {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 	if (status === "error") {
 		return <RoomError message={error.message} />;
 	}
 	if (status === "success" && !room) {
-		return <Loader />;
+		return <Loader minTime={250} />;
 	}
 
 	if (!room) {

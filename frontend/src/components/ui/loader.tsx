@@ -1,8 +1,30 @@
+import { useEffect, useState } from "react";
 import { cn } from "#/lib/helper";
 
-type Props = { size?: number; className?: string; text?: string };
+type Props = {
+	size?: number;
+	className?: string;
+	text?: string;
+	minTime?: number;
+};
 
-export function Loader({ size = 36, className, text }: Props) {
+export function Loader({ size = 36, className, text, minTime }: Props) {
+	const [loaded, setLoaded] = useState(minTime === undefined);
+
+	useEffect(() => {
+		if (!minTime) return;
+
+		const timer = setTimeout(() => {
+			setLoaded(true);
+		}, minTime);
+
+		return () => clearTimeout(timer);
+	}, [minTime]);
+
+	if (!loaded) {
+		return null;
+	}
+
 	return (
 		<div
 			className={cn(

@@ -21,10 +21,7 @@ import { $uploads } from "#/stores/file";
 import { $identity, $room } from "#/stores/signaling";
 
 export type ConnectionState =
-	| "disconnected"
-	| "connecting"
-	| "connected"
-	| "failed";
+	"disconnected" | "connecting" | "connected" | "failed";
 
 type PeerConnectionOptions = {
 	onIceCandidate?: (candidate: RTCIceCandidate) => void;

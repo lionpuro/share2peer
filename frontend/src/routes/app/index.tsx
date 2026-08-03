@@ -148,14 +148,23 @@ function Component() {
 							</button>
 						)}
 					</div>
-					<Link
-						to="/r/$id"
-						params={{ id: joinCode }}
-						className={`mt-1 flex items-center justify-center gap-1 rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "cursor-not-allowed bg-secondary/60 text-muted-foreground dark:bg-secondary/50" : "bg-primary text-white hover:bg-primary-darker"}`}
-						disabled={joinCode.length !== 6}
-					>
-						Join room <IconArrowRight />
-					</Link>
+					{joinCode.length === 6 ? (
+						<Link
+							to="/r/$id"
+							params={{ id: joinCode }}
+							className={`mt-1 flex items-center justify-center gap-1 rounded-lg px-4 py-2 text-center text-sm font-medium ${joinCode.length !== 6 ? "cursor-not-allowed bg-secondary/60 text-muted-foreground dark:bg-secondary/50" : "bg-primary text-white hover:bg-primary-darker"}`}
+							disabled={joinCode.length !== 6}
+						>
+							Join room <IconArrowRight />
+						</Link>
+					) : (
+						<button
+							className="mt-1 flex cursor-not-allowed items-center justify-center gap-1 rounded-lg bg-secondary/60 px-4 py-2 text-center text-sm font-medium text-muted-foreground dark:bg-secondary/50"
+							disabled
+						>
+							Join room <IconArrowRight />
+						</button>
+					)}
 				</div>
 			</div>
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)}>

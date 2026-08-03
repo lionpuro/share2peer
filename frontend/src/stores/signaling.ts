@@ -2,10 +2,7 @@ import { atom } from "nanostores";
 import type { User, Room } from "#/lib/schemas";
 
 export type SocketState =
-	| "disconnected"
-	| "connecting"
-	| "connected"
-	| "failed";
+	"disconnected" | "connecting" | "connected" | "failed";
 
 export const $connectionState = atom<SocketState>("disconnected");
 

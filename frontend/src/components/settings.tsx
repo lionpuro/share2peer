@@ -122,7 +122,7 @@ function ThemeSwitch() {
 						"flex min-w-21 items-center justify-center gap-1.5 rounded-md py-0.5 pr-0.75",
 						theme === opt.key
 							? "bg-background text-foreground dark:bg-secondary/50"
-							: "text-muted-foreground",
+							: "text-foreground/80 dark:text-muted-foreground",
 					)}
 				>
 					<opt.icon />
